@@ -111,7 +111,7 @@
 
             api.RegisterLabel(manifest, "General Tweaks", null);
 
-            api.RegisterChoiceOption(manifest, "Stop Seed Growth in Shade", "Seeds don't sprout in the 8 surrounding tiles of a tree", () => BoolToString(config.StopShadeSaplingGrowth), (string val) => config.StopShadeSaplingGrowth = StringToBool(val), BoolChoices);
+            api.RegisterChoiceOption(manifest, "Stop Seed Growth In Shade", "Seeds don't sprout in the 8 surrounding tiles of a tree", () => BoolToString(config.StopShadeSaplingGrowth), (string val) => config.StopShadeSaplingGrowth = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Growth Ignores Stumps", "Trees can grow even if a small stump is next to them", () => BoolToString(config.GrowthIgnoresStumps), (string val) => config.GrowthIgnoresStumps = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Save Sprouts From Tools", "Normal and fruit trees can't be killed by the selected tools", () => GetElementFromConfig(SSChoices, config.SaveSprouts), (string val) => config.SaveSprouts = GetIndexFromArrayElement(SSChoices, val), SSChoices);
 
