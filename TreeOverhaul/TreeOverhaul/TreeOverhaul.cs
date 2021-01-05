@@ -32,11 +32,20 @@
     /// </summary>
     public class TreeOverhaul : Mod
     {
+        /// <summary>
+        /// The terrain features (should be only trees and fruit trees) that are currently tracked by the 'Save Sprouts' feature
+        /// </summary>
         private readonly List<TerrainFeature> terrainFeatures = new List<TerrainFeature>();
 
-        private TreeOverhaulConfig treeOverhaulConfig;
-
+        /// <summary>
+        /// Whether the 'Save Sprouts' feature is currently waiting for the tool animation to finish
+        /// </summary>
         private bool waitingForAnimationToFinish = false;
+
+        /// <summary>
+        /// The current config file
+        /// </summary>
+        private TreeOverhaulConfig config;
 
         /// <summary>
         /// The mod entry point, called after the mod is first loaded.
@@ -45,33 +54,36 @@
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
-            treeOverhaulConfig = helper.ReadConfig<TreeOverhaulConfig>();
+            config = Helper.ReadConfig<TreeOverhaulConfig>();
 
-            if (Context.IsMainPlayer)
-            {
-                helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
+            TreeOverhaulConfig.VerifyConfigValues(config, this);
 
-                if (treeOverhaulConfig.BuffMahoganyTrees)
-                {
-                    helper.Events.GameLoop.DayEnding += delegate { SaveMahoganyTreeGrowth(); };
-                }
-            }
-
-            // when we return to title reset all relevant data for 'SafeSprouts' feature just to be sure.
-            helper.Events.GameLoop.ReturnedToTitle += delegate { ResetSprouts(); };
+            Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
 
             // when the day ends reset all relevant data for 'SafeSprouts' feature just to be sure. This could happen if the day ends in the middle of an animation.
-            helper.Events.GameLoop.DayEnding += delegate { ResetSprouts(); };
-
-            if (treeOverhaulConfig.SaveSprouts > 0)
+            Helper.Events.GameLoop.DayEnding += delegate
             {
-                helper.Events.GameLoop.UpdateTicked += delegate { CheckForToolUseToSaveSprouts(); };
-            }
+                ResetSprouts();
+                SaveMahoganyTreeGrowth();
+            };
 
-            if (treeOverhaulConfig.SaveSprouts > 1)
-            {
-                helper.Events.Input.ButtonPressed += CheckForWeaponUseToSaveSprouts;
-            }
+            // when we return to title reset all relevant data for 'SafeSprouts' feature just to be sure.
+            Helper.Events.GameLoop.ReturnedToTitle += delegate { ResetSprouts(); };
+
+            Helper.Events.GameLoop.UpdateTicked += delegate { CheckForToolUseToSaveSprouts(); };
+
+            Helper.Events.Input.ButtonPressed += CheckForWeaponUseToSaveSprouts;
+
+            Helper.Events.GameLoop.GameLaunched += delegate { TreeOverhaulConfig.SetUpModConfigMenu(config, this); };
+        }
+
+        /// <summary>
+        /// Small helper method to log to the console because I keep forgetting the signature
+        /// </summary>
+        /// <param name="o">the object I want to log as a string</param>
+        public void DebugLog(object o)
+        {
+            this.Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
         }
 
         /// <summary>
@@ -79,6 +91,11 @@
         /// </summary>
         private void SaveMahoganyTreeGrowth()
         {
+            if (!config.BuffMahoganyTrees)
+            {
+                return;
+            }
+
             foreach (var location in Game1.locations)
             {
                 foreach (var terrainfeature in location.terrainFeatures.Pairs)
@@ -104,15 +121,15 @@
         /// <param name="args">the button pressed event args, useful to know which button was pressed</param>
         private void CheckForWeaponUseToSaveSprouts(object sender, ButtonPressedEventArgs args)
         {
-            if (!Context.IsWorldReady || waitingForAnimationToFinish)
+            if (!Context.IsWorldReady || waitingForAnimationToFinish || config.SaveSprouts <= 1)
             {
                 return;
             }
 
-            if (args.Button.IsUseToolButton() || args.Button.IsActionButton())
+            if (args.Button.IsUseToolButton() || (config.SaveSprouts > 2 && args.Button.IsActionButton()))
             {
                 var tool = Game1.player.CurrentTool;
-                if (tool != null && tool is MeleeWeapon && (treeOverhaulConfig.SaveSprouts > 2 || ((MeleeWeapon)tool).isScythe(-1)))
+                if (tool != null && tool is MeleeWeapon && (config.SaveSprouts > 2 || ((MeleeWeapon)tool).isScythe(-1)))
                 {
                     foreach (var terrainfeature in Game1.currentLocation.terrainFeatures.Pairs)
                     {
@@ -132,7 +149,7 @@
         /// </summary>
         private void CheckForToolUseToSaveSprouts()
         {
-            if (!Context.IsWorldReady)
+            if (!Context.IsWorldReady || config.SaveSprouts <= 0)
             {
                 return;
             }
@@ -227,9 +244,14 @@
         /// </summary>
         private void OnDayStarted()
         {
+            if (!Context.IsMainPlayer)
+            {
+                return;
+            }
+
             foreach (var location in Game1.locations)
             {
-                if (IsWinter(location) && treeOverhaulConfig.MushroomTreesGrowInWinter)
+                if (IsWinter(location) && config.MushroomTreesGrowInWinter)
                 {
                     foreach (var terrainfeature in location.terrainFeatures.Pairs)
                     {
@@ -249,6 +271,7 @@
                         case Tree tree:
                             CalculateTreeGrowth(tree, location, terrainfeature.Key);
                             RevertSaplingGrowthInShade(tree, location, terrainfeature.Key);
+                            RecalculateSeedChance(tree);
                             break;
 
                         case FruitTree fruittree:
@@ -273,7 +296,7 @@
                 return;
             }
 
-            if (tree.growthStage.Value != 1 || !treeOverhaulConfig.StopShadeSaplingGrowth)
+            if (tree.growthStage.Value != 1 || !config.StopShadeSaplingGrowth)
             {
                 return;
             }
@@ -312,12 +335,12 @@
             // so we get exactly one growth call if the config says to grow in winter
             if (IsWinter(location) && !location.CanPlantTreesHere(-1, (int)tileLocation.X, (int)tileLocation.Y) && !tree.fertilized.Value)
             {
-                if (tree.treeType.Value != (int)TreeType.mushroomTree && treeOverhaulConfig.NormalTreesGrowInWinter)
+                if (tree.treeType.Value != (int)TreeType.mushroomTree && config.NormalTreesGrowInWinter)
                 {
                     GrowTree(tree, location, tileLocation);
                 }
 
-                if (tree.treeType.Value == (int)TreeType.mushroomTree && treeOverhaulConfig.MushroomTreesGrowInWinter)
+                if (tree.treeType.Value == (int)TreeType.mushroomTree && config.MushroomTreesGrowInWinter)
                 {
                     GrowTree(tree, location, tileLocation);
                 }
@@ -328,16 +351,16 @@
                 FixAlreadyGrownTree(tree, location, tileLocation);
             }
 
-            if (treeOverhaulConfig.FasterNormalTreeGrowth)
+            if (config.FasterNormalTreeGrowth)
             {
                 if (IsWinter(location))
                 {
-                    if (tree.treeType.Value != (int)TreeType.mushroomTree && (treeOverhaulConfig.NormalTreesGrowInWinter || location.CanPlantTreesHere(-1, (int)tileLocation.X, (int)tileLocation.Y) || tree.fertilized.Value))
+                    if (tree.treeType.Value != (int)TreeType.mushroomTree && (config.NormalTreesGrowInWinter || location.CanPlantTreesHere(-1, (int)tileLocation.X, (int)tileLocation.Y) || tree.fertilized.Value))
                     {
                         GrowTree(tree, location, tileLocation);
                     }
 
-                    if (tree.treeType.Value == (int)TreeType.mushroomTree && (treeOverhaulConfig.MushroomTreesGrowInWinter || location.CanPlantTreesHere(-1, (int)tileLocation.X, (int)tileLocation.Y) || tree.fertilized.Value))
+                    if (tree.treeType.Value == (int)TreeType.mushroomTree && (config.MushroomTreesGrowInWinter || location.CanPlantTreesHere(-1, (int)tileLocation.X, (int)tileLocation.Y) || tree.fertilized.Value))
                     {
                         GrowTree(tree, location, tileLocation);
                     }
@@ -363,7 +386,7 @@
                 return;
             }
 
-            if (treeOverhaulConfig.GrowthIgnoresStumps && tree.growthStage == 4 && (!treeOverhaulConfig.BuffMahoganyTrees || tree.treeType != (int)TreeType.mahoganyTree) && IsGrowthOnlyBlockedByStump(tree, location, tileLocation))
+            if (config.GrowthIgnoresStumps && tree.growthStage == 4 && (!config.BuffMahoganyTrees || tree.treeType != (int)TreeType.mahoganyTree) && IsGrowthOnlyBlockedByStump(tree, location, tileLocation))
             {
                 // mahogany trees have a lower chance to grow for some reason
                 if (tree.treeType == (int)TreeType.mahoganyTree)
@@ -389,7 +412,7 @@
                 return;
             }
 
-            if (treeOverhaulConfig.BuffMahoganyTrees && tree.treeType == (int)TreeType.mahoganyTree)
+            if (config.BuffMahoganyTrees && tree.treeType == (int)TreeType.mahoganyTree)
             {
                 string moddata;
                 tree.modData.TryGetValue($"{this.ModManifest.UniqueID}/growthStage", out moddata);
@@ -398,7 +421,7 @@
                 {
                     int yesterdaysGrowthStage = int.Parse(moddata);
 
-                    if (!(Game1.random.NextDouble() < 0.2 || tree.fertilized.Value) || ((yesterdaysGrowthStage == 4 || (yesterdaysGrowthStage < 4 && treeOverhaulConfig.StopShadeSaplingGrowth)) && IsGrowthBlocked(tree, location, tileLocation)))
+                    if (!(Game1.random.NextDouble() < 0.2 || tree.fertilized.Value) || ((yesterdaysGrowthStage == 4 || (yesterdaysGrowthStage < 4 && config.StopShadeSaplingGrowth)) && IsGrowthBlocked(tree, location, tileLocation)))
                     {
                         tree.growthStage.Set(yesterdaysGrowthStage);
                     }
@@ -407,6 +430,43 @@
                         tree.growthStage.Set(yesterdaysGrowthStage + 1);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Uses a slightly edited version of the seed chance calculation call in StardewValley.TerrainFeatures.Tree.dayUpdate.
+        /// </summary>
+        /// <param name="tree">the tree to recalculate the chance of</param>
+        private void RecalculateSeedChance(Tree tree)
+        {
+            // stop if it's a palm tree
+            if (tree.treeType.Value == (int)TreeType.palmTree || tree.treeType.Value == (int)TreeType.palmTree2)
+            {
+                return;
+            }
+
+            tree.hasSeed.Value = false;
+
+            if (tree.growthStage < 5)
+            {
+                return;
+            }
+
+            float defaultSeedChance = 0.05f;
+            float seedChance = config.ShakingSeedChance;
+
+            if (seedChance < 0f)
+            {
+                seedChance = defaultSeedChance;
+            }
+            else
+            {
+                seedChance /= 100f;
+            }
+
+            if (Game1.random.NextDouble() < seedChance)
+            {
+                tree.hasSeed.Value = true;
             }
         }
 
@@ -461,7 +521,7 @@
                 while (enumerator.MoveNext())
                 {
                     KeyValuePair<Vector2, TerrainFeature> t = enumerator.Current;
-                    if (t.Value is Tree && !t.Value.Equals(tree) && ((Tree)t.Value).growthStage >= 5 && (!((Tree)t.Value).stump || !treeOverhaulConfig.GrowthIgnoresStumps) && t.Value.getBoundingBox(t.Key).Intersects(growthRect))
+                    if (t.Value is Tree && !t.Value.Equals(tree) && ((Tree)t.Value).growthStage >= 5 && (!((Tree)t.Value).stump || !config.GrowthIgnoresStumps) && t.Value.getBoundingBox(t.Key).Intersects(growthRect))
                     {
                         return true;
                     }
@@ -485,7 +545,7 @@
                 return;
             }
 
-            if ((tree.growthStage == 4 || (tree.growthStage < 4 && treeOverhaulConfig.StopShadeSaplingGrowth)) && IsGrowthBlocked(tree, location, tileLocation))
+            if ((tree.growthStage == 4 || (tree.growthStage < 4 && config.StopShadeSaplingGrowth)) && IsGrowthBlocked(tree, location, tileLocation))
             {
                 return;
             }
@@ -498,7 +558,7 @@
             // mahogany trees have a lower chance to grow for some reason
             if (tree.treeType == (int)TreeType.mahoganyTree)
             {
-                if (treeOverhaulConfig.BuffMahoganyTrees)
+                if (config.BuffMahoganyTrees)
                 {
                     if (Game1.random.NextDouble() < 0.2 || tree.fertilized.Value)
                     {
@@ -547,7 +607,7 @@
         /// <param name="tileLocation">position in said location</param>
         private void CalculateFruitTreeGrowth(FruitTree fruittree, GameLocation location, Vector2 tileLocation)
         {
-            if (treeOverhaulConfig.FruitTreesDontGrowInWinter)
+            if (config.FruitTreesDontGrowInWinter)
             {
                 if (IsWinter(location))
                 {
@@ -580,12 +640,12 @@
         /// <param name="tileLocation">position in said location</param>
         private void CheckForExtraGrowth(FruitTree fruittree, GameLocation location, Vector2 tileLocation)
         {
-            if (treeOverhaulConfig.FruitTreeGrowth == 1)
+            if (config.FruitTreeGrowth == 1)
             {
                 GrowFruitTree(fruittree, location, tileLocation, true);
             }
 
-            if (treeOverhaulConfig.FruitTreeGrowth == 2)
+            if (config.FruitTreeGrowth == 2)
             {
                 // odd day
                 if (Game1.dayOfMonth % 2 == 1)
@@ -657,29 +717,5 @@
                 UpdateGrowthStage(fruittree);
             }
         }
-    }
-
-    /// <summary>
-    /// Config file for the mod
-    /// </summary>
-    public class TreeOverhaulConfig
-    {
-        public bool StopShadeSaplingGrowth { get; set; } = true;
-
-        public bool NormalTreesGrowInWinter { get; set; } = true;
-
-        public bool MushroomTreesGrowInWinter { get; set; } = false;
-
-        public bool FruitTreesDontGrowInWinter { get; set; } = false;
-
-        public bool FasterNormalTreeGrowth { get; set; } = false;
-
-        public int SaveSprouts { get; set; } = 0;
-
-        public bool BuffMahoganyTrees { get; set; } = false;
-
-        public bool GrowthIgnoresStumps { get; set; } = false;
-
-        public int FruitTreeGrowth { get; set; } = 0;
     }
 }
