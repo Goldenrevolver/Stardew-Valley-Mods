@@ -91,7 +91,7 @@
         /// </summary>
         private void SaveMahoganyTreeGrowth()
         {
-            if (!config.BuffMahoganyTrees)
+            if (!Context.IsMainPlayer || !config.BuffMahoganyTrees)
             {
                 return;
             }

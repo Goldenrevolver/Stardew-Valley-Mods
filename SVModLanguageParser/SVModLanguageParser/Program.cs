@@ -23,7 +23,7 @@ namespace SVModLanguageParser
             }
 
             // english
-            GenerateEntry("", "", "", "", "", "", false, false, false);
+            GenerateEntry("", "Survival Burger", "(Sp)", "(Su)", "(Fa)", "(Wi)", true, false);
             Console.WriteLine("English parsed");
 
             // custom spanish
@@ -131,7 +131,7 @@ namespace SVModLanguageParser
             GenerateEntry(ending, survivalBurger, spring, summer, fall, winter);
         }
 
-        private static void GenerateEntry(string ending, string survivalBurger, string spring, string summer, string fall, string winter, bool addSpace = true, bool addSeperator = true, bool addDot = true)
+        private static void GenerateEntry(string ending, string survivalBurger, string spring, string summer, string fall, string winter, bool addSpace = true, bool addDot = true, bool addSeperator = true)
         {
             string template = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "template.txt"));
 

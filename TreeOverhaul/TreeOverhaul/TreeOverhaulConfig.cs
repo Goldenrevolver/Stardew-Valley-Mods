@@ -57,9 +57,9 @@
 
         private static string[] BoolChoices { get; set; } = new string[] { "Disabled", "Enabled" };
 
-        private static string[] SSChoices { get; set; } = new string[] { "Disabled", "Hoe and pickaxe", "Hoe, pickaxe and scythe", "Hoe, pickaxe and all melee weapons" };
+        private static string[] SSChoices { get; set; } = new string[] { "Disabled", "Hoe And Pickaxe", "Hoe, Pickaxe And Scythe", "Hoe, Pickaxe And All Melee Weapons" };
 
-        private static string[] FTChoices { get; set; } = new string[] { "Default", "Twice as fast", "Half as fast" };
+        private static string[] FTChoices { get; set; } = new string[] { "Default", "Twice As Fast", "Half As Fast" };
 
         public static void VerifyConfigValues(TreeOverhaulConfig config, TreeOverhaul mod)
         {
@@ -121,9 +121,9 @@
             api.RegisterChoiceOption(manifest, "Mushroom Trees Grow In Winter", null, () => BoolToString(config.MushroomTreesGrowInWinter), (string val) => config.MushroomTreesGrowInWinter = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Fruit Trees Don't Grow In Winter", null, () => BoolToString(config.FruitTreesDontGrowInWinter), (string val) => config.FruitTreesDontGrowInWinter = StringToBool(val), BoolChoices);
 
-            api.RegisterLabel(manifest, "Buffs and Nerfs", null);
+            api.RegisterLabel(manifest, "Buffs And Nerfs", null);
             api.RegisterChoiceOption(manifest, "Buff Mahogany Tree Growth", "20% unfertilized and 100% fertilized (from 15% and 60%)", () => BoolToString(config.BuffMahoganyTrees), (string val) => config.BuffMahoganyTrees = StringToBool(val), BoolChoices);
-            api.RegisterClampedOption(manifest, "Seed Chance From Shaking", "Chance that a seed drops from shaking a tree (default: 5%)", () => config.ShakingSeedChance, (int val) => config.ShakingSeedChance = val, 0, 100);
+            api.RegisterClampedOption(manifest, "Seed Chance From Shaking", "Chance that a seed drops from shaking a tree (default: 5%, chance depends on host)", () => config.ShakingSeedChance, (int val) => config.ShakingSeedChance = val, 0, 100);
             api.RegisterChoiceOption(manifest, "Faster Normal Tree Growth", "Normal trees try to grow twice every day, still random whether they succeed", () => BoolToString(config.FasterNormalTreeGrowth), (string val) => config.FasterNormalTreeGrowth = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Fruit Tree Growth Options", null, () => GetElementFromConfig(FTChoices, config.FruitTreeGrowth), (string val) => config.FruitTreeGrowth = GetIndexFromArrayElement(FTChoices, val), FTChoices);
         }
@@ -146,7 +146,7 @@
             }
             else
             {
-                return FTChoices[0];
+                return options[0];
             }
         }
 
