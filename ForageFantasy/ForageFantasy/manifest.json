@@ -1,0 +1,10 @@
+{
+  "Name": "Forage Fantasy",
+  "Author": "Goldenrevolver",
+  "Version": "1.0",
+  "Description": "Tapper products and mushroom cave mushrooms have quality and more",
+  "UniqueID": "Goldenrevolver.ForageFantasy",
+  "EntryDll": "ForageFantasy.dll",
+  "MinimumApiVersion": "3.8.2",
+  "UpdateKeys": [ "Nexus:7554" ]
+}
