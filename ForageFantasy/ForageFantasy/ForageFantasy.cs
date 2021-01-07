@@ -1,20 +1,22 @@
-﻿using Microsoft.Xna.Framework;
-using StardewModdingAPI;
-using StardewModdingAPI.Events;
-using StardewValley;
-using StardewValley.Locations;
-using StardewValley.TerrainFeatures;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace ForageFantasy
+﻿namespace ForageFantasy
 {
+    using Microsoft.Xna.Framework;
+    using StardewModdingAPI;
+    using StardewModdingAPI.Events;
+    using StardewValley;
+    using StardewValley.Locations;
+    using StardewValley.TerrainFeatures;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
     public class ForageFantasy : Mod, IAssetEditor
     {
-        private List<StardewValley.Object> mushroomsToWatch = new List<StardewValley.Object>();
+        private readonly List<StardewValley.Object> mushroomsToWatch = new List<StardewValley.Object>();
 
-        private List<Tuple<StardewValley.Object, GameLocation>> tappersToWatch = new List<Tuple<StardewValley.Object, GameLocation>>();
+        private readonly List<Tuple<StardewValley.Object, GameLocation>> tappersToWatch = new List<Tuple<StardewValley.Object, GameLocation>>();
+
+        private readonly List<Vector2> forageLocationsToWatch = new List<Vector2>();
 
         private bool checkMushrooms;
 
@@ -46,6 +48,120 @@ namespace ForageFantasy
             Helper.Events.GameLoop.GameLaunched += delegate { ForageFantasyConfig.SetUpModConfigMenu(config, this); };
         }
 
+        /// <summary>
+        /// Get whether this instance can edit the given asset.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public bool CanEdit<T>(IAssetInfo asset)
+        {
+            if (config.CommonFiddleheadFern)
+            {
+                if (asset.AssetNameEquals("Data/Locations"))
+                {
+                    return true;
+                }
+            }
+
+            if (config.ForageSurvivalBurger)
+            {
+                if (asset.AssetNameEquals("Data/CookingRecipes"))
+                {
+                    return true;
+                }
+                else if (asset.AssetNameEquals("Data/CraftingRecipes"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Edit a matched asset.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="asset"></param>
+        public void Edit<T>(IAssetData asset)
+        {
+            if (config.CommonFiddleheadFern && asset.AssetNameEquals("Data/Locations"))
+            {
+                IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+
+                var keys = data.Keys.ToList();
+
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    string location = keys[i];
+                    string[] fields = data[location].Split('/');
+
+                    switch (location)
+                    {
+                        case "BusStop":
+                            fields[1] = "396 .6 398 .6 402 .6";
+                            break;
+
+                        case "Forest":
+                            fields[1] = "396 .8 402 .8 259 0.8";
+                            break;
+
+                        case "Mountain":
+                            fields[1] = "396 .7 398 .7 259 0.7";
+                            break;
+
+                        case "Backwoods":
+                            fields[1] = "396 .7 398 .7 259 .7";
+                            break;
+
+                        case "Railroad":
+                            fields[1] = "396 .6 259 .6 398 .6";
+                            break;
+
+                        case "Woods":
+                            fields[1] = "259 .4 420 .6";
+                            break;
+                    }
+
+                    data[location] = string.Join("/", fields);
+                }
+            }
+
+            if (config.ForageSurvivalBurger)
+            {
+                if (asset.AssetNameEquals("Data/CookingRecipes"))
+                {
+                    IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+
+                    data.Remove("Survival Burger");
+                    data.Add("Survival Burger (Sp)", "216 1 16 1 20 1 22 1/70 1/241 2/s Foraging 2/Survival Burger (Sp)");
+                    data.Add("Survival Burger (Su)", "216 1 398 1 396 1 259 1/70 1/241 2/s Foraging 2/Survival Burger (Su)");
+                    data.Add("Survival Burger (Fa)", "216 1 404 1 406 1 408 1/70 1/241 2/s Foraging 2/Survival Burger (Fa)");
+                    data.Add("Survival Burger (Wi)", "216 1 412 1 414 1 416 1/70 1/241 2/s Foraging 2/Survival Burger (Wi)");
+                }
+
+                if (asset.AssetNameEquals("Data/CraftingRecipes"))
+                {
+                    IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
+
+                    data.Add("Survival Burger (Sp)", "216 1 16 1 20 1 22 1/Field/241/false/s Foraging 2/Survival Burger (Sp)");
+                    data.Add("Survival Burger (Su)", "216 1 398 1 396 1 259 1/Field/241/false/s Foraging 2/Survival Burger (Su)");
+                    data.Add("Survival Burger (Fa)", "216 1 404 1 406 1 408 1/Field/241/false/s Foraging 2/Survival Burger (Fa)");
+                    data.Add("Survival Burger (Wi)", "216 1 412 1 414 1 416 1/Field/241/false/s Foraging 2/Survival Burger (Wi)");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Small helper method to log to the console because I keep forgetting the signature
+        /// </summary>
+        /// <param name="o">the object I want to log as a string</param>
+        public void DebugLog(object o)
+        {
+            this.Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
+        }
+
         private void OnDayStarted()
         {
             if (!Context.IsMainPlayer)
@@ -66,7 +182,7 @@ namespace ForageFantasy
                     }
                 }
 
-                if (config.CommonFiddleheadFern)
+                if (config.CommonFiddleheadFern && Game1.currentSeason == "summer")
                 {
                     foreach (var vec in forageLocationsToWatch)
                     {
@@ -110,6 +226,7 @@ namespace ForageFantasy
                             {
                                 tree.modData[$"{this.ModManifest.UniqueID}/treeAge"] = 1.ToString();
                             }
+
                             break;
                     }
                 }
@@ -118,40 +235,29 @@ namespace ForageFantasy
 
         private void ChangeBundle()
         {
-            if (!Context.IsMainPlayer || !config.CommonFiddleheadFern)
+            if (!config.CommonFiddleheadFern)
             {
                 return;
             }
 
-            Dictionary<string, string> BundleData = Game1.netWorldState.Value.BundleData;
+            Dictionary<string, string> bundleData = Game1.netWorldState.Value.BundleData;
 
             // Summer Foraging
             string key = "Crafts Room/14";
 
-            string[] bundle = BundleData[key].Split('/');
+            string[] bundle = bundleData[key].Split('/');
 
             if (!bundle[2].Contains("259 1 0"))
             {
                 bundle[2] += " 259 1 0";
             }
 
-            BundleData[key] = string.Join("/", bundle);
+            bundleData[key] = string.Join("/", bundle);
         }
-
-        /// <summary>
-        /// Small helper method to log to the console because I keep forgetting the signature
-        /// </summary>
-        /// <param name="o">the object I want to log as a string</param>
-        public void DebugLog(object o)
-        {
-            this.Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
-        }
-
-        private List<Vector2> forageLocationsToWatch = new List<Vector2>();
 
         private void OnDayEnded()
         {
-            if (!Context.IsMainPlayer || !config.CommonFiddleheadFern)
+            if (!Context.IsMainPlayer || !config.CommonFiddleheadFern || Game1.currentSeason != "summer")
             {
                 return;
             }
@@ -174,6 +280,7 @@ namespace ForageFantasy
                                     forageLocationsToWatch.Add(terrainfeature.Key);
                                 }
                             }
+
                             break;
                     }
                 }
@@ -332,154 +439,27 @@ namespace ForageFantasy
 
         private void RerandomizeWildSeedForage(Vector2 vec, GameLocation location)
         {
-            string season = Game1.currentSeason;
-
             location.objects.Remove(vec);
-            location.objects.Add(vec, new StardewValley.Object(vec, GetWildSeedForage(season), 1)
-            {
-                IsSpawnedObject = true,
-                CanBeGrabbed = true
-            });
+            location.objects.Add(vec, new StardewValley.Object(vec, GetWildSeedSummerForage(), 1) { IsSpawnedObject = true, CanBeGrabbed = true });
         }
 
-        private int GetWildSeedForage(string season)
+        private int GetWildSeedSummerForage()
         {
-            if (season == "spring")
-            {
-                return 16 + Game1.random.Next(4) * 2;
-            }
-            if (!(season == "summer"))
-            {
-                if (season == "fall")
-                {
-                    return 404 + Game1.random.Next(4) * 2;
-                }
-                if (!(season == "winter"))
-                {
-                    return 22;
-                }
-                return 412 + Game1.random.Next(4) * 2;
-            }
-            else
-            {
-                int ran = Game1.random.Next(4);
+            int ran = Game1.random.Next(4);
 
-                if (ran == 0)
-                {
+            switch (ran)
+            {
+                case 0:
                     return 259;
-                }
-                else if (ran == 1)
-                {
+
+                case 1:
                     return 396;
-                }
-                else if (ran == 2)
-                {
-                    return 402;
-                }
-                else
-                {
+
+                case 2:
                     return 398;
-                }
-            }
-        }
 
-        /// <summary>Get whether this instance can edit the given asset.</summary>
-        /// <param name="asset">Basic metadata about the asset being loaded.</param>
-        public bool CanEdit<T>(IAssetInfo asset)
-        {
-            if (config.CommonFiddleheadFern)
-            {
-                if (asset.AssetNameEquals("Data/Locations"))
-                {
-                    return true;
-                }
-            }
-
-            if (config.ForageSurvivalBurger)
-            {
-                if (asset.AssetNameEquals("Data/CookingRecipes"))
-                {
-                    return true;
-                }
-                if (asset.AssetNameEquals("Data/CraftingRecipes"))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>Edit a matched asset.</summary>
-        /// <param name="asset">A helper which encapsulates metadata about an asset and enables changes to it.</param>
-        public void Edit<T>(IAssetData asset)
-        {
-            if (config.CommonFiddleheadFern && asset.AssetNameEquals("Data/Locations"))
-            {
-                IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
-
-                var keys = data.Keys.ToList();
-
-                for (int i = 0; i < keys.Count; i++)
-                {
-                    string location = keys[i];
-                    string[] fields = data[location].Split('/');
-
-                    if (location == "BusStop")
-                    {
-                        fields[1] = "396 .4 398 .4 402 .7";
-                    }
-                    else if (location == "Forest")
-                    {
-                        fields[1] = "396 .6 402 .9 259 0.9";
-                    }
-                    else if (location == "Town")
-                    {
-                        fields[1] = "402 .5 398 0.5";
-                    }
-                    else if (location == "Mountain")
-                    {
-                        fields[1] = "396 .5 398 .8 259 0.8";
-                    }
-                    else if (location == "Backwoods")
-                    {
-                        fields[1] = "396 .5 398 .5 259 .5";
-                    }
-                    else if (location == "Railroad")
-                    {
-                        fields[1] = "396 .4 259 .4 402 .7";
-                    }
-                    else if (location == "Woods")
-                    {
-                        fields[1] = "259 .4 420 .6";
-                    }
-
-                    data[location] = string.Join("/", fields);
-                }
-            }
-
-            if (config.ForageSurvivalBurger)
-            {
-                if (asset.AssetNameEquals("Data/CookingRecipes"))
-                {
-                    IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
-
-                    data.Remove("Survival Burger");
-                    data.Add("Survival Burger (Sp)", "216 1 16 1 20 1 22 1/70 1/241 2/s Foraging 2/Survival Burger (Sp)");
-                    data.Add("Survival Burger (Su)", "216 1 398 1 396 1 259 1/70 1/241 2/s Foraging 2/Survival Burger (Su)");
-                    data.Add("Survival Burger (Fa)", "216 1 404 1 406 1 408 1/70 1/241 2/s Foraging 2/Survival Burger (Fa)");
-                    data.Add("Survival Burger (Wi)", "216 1 412 1 414 1 416 1/70 1/241 2/s Foraging 2/Survival Burger (Wi)");
-                }
-
-                if (asset.AssetNameEquals("Data/CraftingRecipes"))
-                {
-                    IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
-
-                    data.Add("Survival Burger (Sp)", "216 1 16 1 20 1 22 1/Field/241/false/s Foraging 2/Survival Burger (Sp)");
-                    data.Add("Survival Burger (Su)", "216 1 398 1 396 1 259 1/Field/241/false/s Foraging 2/Survival Burger (Su)");
-                    data.Add("Survival Burger (Fa)", "216 1 404 1 406 1 408 1/Field/241/false/s Foraging 2/Survival Burger (Fa)");
-                    data.Add("Survival Burger (Wi)", "216 1 412 1 414 1 416 1/Field/241/false/s Foraging 2/Survival Burger (Wi)");
-                }
+                default:
+                    return 402;
             }
         }
     }
