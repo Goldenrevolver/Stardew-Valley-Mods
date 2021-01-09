@@ -22,6 +22,10 @@
 
         private bool checkTappers;
 
+        private bool hasBotanist;
+
+        private Farmer bestPlayer;
+
         /// <summary>
         /// The current config file
         /// </summary>
@@ -162,6 +166,30 @@
             this.Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
         }
 
+        private void UseCompatibibilityMode()
+        {
+            hasBotanist = false;
+            bestPlayer = Game1.player;
+
+            foreach (var item in Game1.getOnlineFarmers())
+            {
+                if (item != null)
+                {
+                    // if hasBotanist is true or the player has botanist
+                    // calculates if any player has the botanist perk, not necessarily the ones with the highest foraging level
+                    hasBotanist |= item.professions.Contains(16);
+
+                    if (item.ForagingLevel > bestPlayer.ForagingLevel)
+                    {
+                        bestPlayer = item;
+                    }
+                }
+            }
+
+            CalculateMushroomQuality(bestPlayer);
+            CalculateTapperQuality(bestPlayer);
+        }
+
         private void OnDayStarted()
         {
             if (!Context.IsMainPlayer)
@@ -169,13 +197,16 @@
                 return;
             }
 
+            mushroomsToWatch.Clear();
+            tappersToWatch.Clear();
+
             foreach (var location in Game1.locations)
             {
                 if (config.MushroomCaveQuality && location is FarmCave && Game1.player.caveChoice == 2 && Game1.getFarm().farmCaveReady)
                 {
                     foreach (StardewValley.Object o in location.objects.Values)
                     {
-                        if (o.bigCraftable && o.heldObject.Value != null && o.ParentSheetIndex == 128)
+                        if (o != null && o.bigCraftable && o.heldObject.Value != null && o.ParentSheetIndex == 128)
                         {
                             mushroomsToWatch.Add(o);
                         }
@@ -202,7 +233,7 @@
                 {
                     foreach (StardewValley.Object o in location.objects.Values)
                     {
-                        if (o.bigCraftable && o.heldObject.Value != null && (o.ParentSheetIndex == 105 || o.parentSheetIndex == 264))
+                        if (o != null && o.bigCraftable && o.heldObject.Value != null && (o.ParentSheetIndex == 105 || o.parentSheetIndex == 264))
                         {
                             tappersToWatch.Add(new Tuple<StardewValley.Object, GameLocation>(o, location));
                         }
@@ -230,6 +261,11 @@
                             break;
                     }
                 }
+            }
+
+            if (config.CompatibilityMode)
+            {
+                UseCompatibibilityMode();
             }
         }
 
@@ -289,6 +325,11 @@
 
         private void ResetWatchedObjects()
         {
+            if (config.CompatibilityMode)
+            {
+                return;
+            }
+
             if (checkMushrooms && config.MushroomCaveQuality)
             {
                 foreach (var o in mushroomsToWatch)
@@ -318,63 +359,74 @@
 
         private void WatchMushrooms(object sender, ButtonPressedEventArgs args)
         {
-            if (!config.MushroomCaveQuality || !Context.IsWorldReady || !(Game1.currentLocation is FarmCave))
+            if (!config.MushroomCaveQuality || config.CompatibilityMode || !Context.IsWorldReady || !(Game1.currentLocation is FarmCave))
             {
                 return;
             }
 
             if (args.Button.IsUseToolButton() || args.Button.IsActionButton())
             {
-                foreach (var o in mushroomsToWatch)
+                CalculateMushroomQuality(Game1.player);
+            }
+        }
+
+        private void CalculateMushroomQuality(Farmer player)
+        {
+            foreach (var o in mushroomsToWatch)
+            {
+                if (o != null && o.minutesUntilReady <= 0 && o.heldObject != null && o.heldObject.Value != null)
                 {
-                    if (o != null && o.minutesUntilReady <= 0 && o.heldObject != null && o.heldObject.Value != null)
-                    {
-                        checkMushrooms = true;
-                        o.heldObject.Value.quality.Value = DetermineForageQuality(Game1.player);
-                    }
+                    checkMushrooms = true;
+                    o.heldObject.Value.quality.Value = DetermineForageQuality(player);
                 }
             }
         }
 
         private void WatchTappers(object sender, ButtonPressedEventArgs args)
         {
-            if (config.TapperQualityOptions <= 0 || !Context.IsWorldReady)
+            if (config.TapperQualityOptions <= 0 || config.CompatibilityMode || !Context.IsWorldReady)
             {
                 return;
             }
 
             if (args.Button.IsUseToolButton() || args.Button.IsActionButton())
             {
-                foreach (var t in tappersToWatch)
+                CalculateTapperQuality(Game1.player);
+            }
+        }
+
+        private void CalculateTapperQuality(Farmer player)
+        {
+            foreach (var t in tappersToWatch)
+            {
+                var o = t.Item1;
+                if (o != null && o.minutesUntilReady <= 0 && o.heldObject != null && o.heldObject.Value != null)
                 {
-                    var o = t.Item1;
-                    if (o != null && o.minutesUntilReady <= 0 && o.heldObject != null && o.heldObject.Value != null)
+                    checkTappers = true;
+
+                    int option = config.TapperQualityOptions;
+
+                    if (option == 1 || option == 2)
                     {
-                        checkTappers = true;
-
-                        int option = config.TapperQualityOptions;
-
-                        if (option == 1 || option == 2)
+                        // has tapper profession or it's not required
+                        if (!config.TapperQualityRequiresTapperPerk || player.professions.Contains(15))
                         {
-                            // has tapper profession
-                            if (!config.TapperQualityRequiresTapperPerk || Game1.player.professions.Contains(15))
-                            {
-                                o.heldObject.Value.quality.Value = DetermineForageQuality(Game1.player, config.TapperQualityOptions == 1);
-                            }
+                            bool forceBotanist = config.CompatibilityMode ? hasBotanist : false;
+                            o.heldObject.Value.quality.Value = DetermineForageQuality(player, forceBotanist);
                         }
-                        else if (option == 3 || option == 4)
-                        {
-                            // quality increase once a year
-                            o.heldObject.Value.quality.Value = DetermineTreeQuality(t);
-                        }
+                    }
+                    else if (option == 3 || option == 4)
+                    {
+                        // quality increase once a year
+                        o.heldObject.Value.quality.Value = DetermineTreeQuality(t);
                     }
                 }
             }
         }
 
-        private int DetermineForageQuality(Farmer farmer, bool allowBotanist = true)
+        private int DetermineForageQuality(Farmer farmer, bool forceBotanist = false)
         {
-            if (allowBotanist && farmer.professions.Contains(16))
+            if (config.TapperQualityOptions == 1 && (forceBotanist || farmer.professions.Contains(16)))
             {
                 return 4;
             }

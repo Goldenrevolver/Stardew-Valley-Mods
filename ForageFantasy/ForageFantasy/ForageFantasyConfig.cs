@@ -41,6 +41,8 @@
 
         public bool ForageSurvivalBurger { get; set; } = true;
 
+        public bool CompatibilityMode { get; set; } = false;
+
         public int TapperQualityOptions { get; set; } = 1;
 
         public bool TapperQualityRequiresTapperPerk { get; set; } = false;
@@ -84,6 +86,7 @@
             api.RegisterChoiceOption(manifest, "Mushroom Cave Quality", "Mushrooms have quality based on forage perk", () => BoolToString(config.MushroomCaveQuality), (string val) => config.MushroomCaveQuality = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Common Fiddlehead Fern", "Fiddlehead fern is a common forage,\nadded to wild seeds pack and summer forage bundle", () => BoolToString(config.CommonFiddleheadFern), (string val) => config.CommonFiddleheadFern = StringToBool(val), BoolChoices);
             api.RegisterChoiceOption(manifest, "Forage Survival Burger", "Forage based early game crafting recipes and even more efficient cooking recipes", () => BoolToString(config.ForageSurvivalBurger), (string val) => config.ForageSurvivalBurger = StringToBool(val), BoolChoices);
+            api.RegisterChoiceOption(manifest, "Auto Pickup Compatibility", "Ensures compatibility with automatic pickup mods.\nSets the quality of mushrooms and tapper products based\non the player that would have the best result.\nIn multiplayer it only works if the host has the mod and\neveryone who has the mod has enabled this.", () => BoolToString(config.CompatibilityMode), (string val) => config.CompatibilityMode = StringToBool(val), BoolChoices);
 
             api.RegisterLabel(manifest, "Tapper Quality", null);
 
