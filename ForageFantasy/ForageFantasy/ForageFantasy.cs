@@ -22,10 +22,6 @@
 
         private bool checkTappers;
 
-        private bool hasBotanist;
-
-        private Farmer bestPlayer;
-
         /// <summary>
         /// The current config file
         /// </summary>
@@ -168,16 +164,16 @@
 
         private void UseCompatibibilityMode()
         {
-            hasBotanist = false;
-            bestPlayer = Game1.player;
+            // will be if any player has the botanist perk, not necessarily the one with the highest foraging level
+            bool botanistOverride = false;
+            Farmer bestPlayer = Game1.player;
 
             foreach (var item in Game1.getOnlineFarmers())
             {
                 if (item != null)
                 {
-                    // if hasBotanist is true or the player has botanist
-                    // calculates if any player has the botanist perk, not necessarily the ones with the highest foraging level
-                    hasBotanist |= item.professions.Contains(16);
+                    // if botanistOverride is true or the player has botanist
+                    botanistOverride |= item.professions.Contains(16);
 
                     if (item.ForagingLevel > bestPlayer.ForagingLevel)
                     {
@@ -186,8 +182,8 @@
                 }
             }
 
-            CalculateMushroomQuality(bestPlayer);
-            CalculateTapperQuality(bestPlayer);
+            CalculateMushroomQuality(bestPlayer, botanistOverride);
+            CalculateTapperQuality(bestPlayer, botanistOverride);
         }
 
         private void OnDayStarted()
@@ -370,14 +366,14 @@
             }
         }
 
-        private void CalculateMushroomQuality(Farmer player)
+        private void CalculateMushroomQuality(Farmer player, bool botanistOverride = false)
         {
             foreach (var o in mushroomsToWatch)
             {
                 if (o != null && o.minutesUntilReady <= 0 && o.heldObject != null && o.heldObject.Value != null)
                 {
                     checkMushrooms = true;
-                    o.heldObject.Value.quality.Value = DetermineForageQuality(player);
+                    o.heldObject.Value.quality.Value = DetermineForageQuality(player, botanistOverride);
                 }
             }
         }
@@ -395,7 +391,7 @@
             }
         }
 
-        private void CalculateTapperQuality(Farmer player)
+        private void CalculateTapperQuality(Farmer player, bool botanistOverride = false)
         {
             foreach (var t in tappersToWatch)
             {
@@ -411,7 +407,7 @@
                         // has tapper profession or it's not required
                         if (!config.TapperQualityRequiresTapperPerk || player.professions.Contains(15))
                         {
-                            bool forceBotanist = config.CompatibilityMode ? hasBotanist : false;
+                            bool forceBotanist = config.CompatibilityMode ? botanistOverride : false;
                             o.heldObject.Value.quality.Value = DetermineForageQuality(player, forceBotanist);
                         }
                     }
