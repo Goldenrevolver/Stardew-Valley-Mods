@@ -100,15 +100,12 @@
             {
                 foreach (var terrainfeature in location.terrainFeatures.Pairs)
                 {
-                    switch (terrainfeature.Value)
+                    if (terrainfeature.Value is Tree tree)
                     {
-                        case Tree tree:
-                            if (tree.treeType == (int)TreeType.mahoganyTree)
-                            {
-                                tree.modData[$"{this.ModManifest.UniqueID}/growthStage"] = tree.growthStage.Value.ToString();
-                            }
-
-                            break;
+                        if (tree.treeType == (int)TreeType.mahoganyTree)
+                        {
+                            tree.modData[$"{this.ModManifest.UniqueID}/growthStage"] = tree.growthStage.Value.ToString();
+                        }
                     }
                 }
             }
@@ -255,11 +252,9 @@
                 {
                     foreach (var terrainfeature in location.terrainFeatures.Pairs)
                     {
-                        switch (terrainfeature.Value)
+                        if (terrainfeature.Value is Tree tree)
                         {
-                            case Tree tree:
-                                FixMushroomStump(tree);
-                                break;
+                            FixMushroomStump(tree);
                         }
                     }
                 }

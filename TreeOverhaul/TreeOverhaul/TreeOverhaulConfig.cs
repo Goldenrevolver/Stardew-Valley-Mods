@@ -55,8 +55,6 @@
 
         public int FruitTreeGrowth { get; set; } = 0;
 
-        private static string[] BoolChoices { get; set; } = new string[] { "Disabled", "Enabled" };
-
         private static string[] SSChoices { get; set; } = new string[] { "Disabled", "Hoe And Pickaxe", "Hoe, Pickaxe And Scythe", "Hoe, Pickaxe And All Melee Weapons" };
 
         private static string[] FTChoices { get; set; } = new string[] { "Default", "Twice As Fast", "Half As Fast" };
@@ -91,7 +89,7 @@
 
             if (invalidConfig)
             {
-                mod.DebugLog("A config value was out of range and was reset.");
+                mod.DebugLog("At least one config value was out of range and was reset.");
                 mod.Helper.WriteConfig(config);
             }
         }
@@ -107,35 +105,26 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new TreeOverhaulConfig(), () => mod.Helper.WriteConfig(config));
+            api.RegisterModConfig(manifest, () => config = new TreeOverhaulConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
 
             api.RegisterLabel(manifest, "General Tweaks", null);
 
-            api.RegisterChoiceOption(manifest, "Stop Seed Growth In Shade", "Seeds don't sprout in the 8 surrounding tiles of a tree", () => BoolToString(config.StopShadeSaplingGrowth), (string val) => config.StopShadeSaplingGrowth = StringToBool(val), BoolChoices);
-            api.RegisterChoiceOption(manifest, "Growth Ignores Stumps", "Trees can grow even if a small stump is next to them", () => BoolToString(config.GrowthIgnoresStumps), (string val) => config.GrowthIgnoresStumps = StringToBool(val), BoolChoices);
+            api.RegisterSimpleOption(manifest, "Stop Seed Growth In Shade", "Seeds don't sprout in the 8 surrounding tiles of a tree", () => config.StopShadeSaplingGrowth, (bool val) => config.StopShadeSaplingGrowth = val);
+            api.RegisterSimpleOption(manifest, "Growth Ignores Stumps", "Trees can grow even if a small stump is next to them", () => config.GrowthIgnoresStumps, (bool val) => config.GrowthIgnoresStumps = val);
             api.RegisterChoiceOption(manifest, "Save Sprouts From Tools", "Normal and fruit trees can't be killed by the selected tools", () => GetElementFromConfig(SSChoices, config.SaveSprouts), (string val) => config.SaveSprouts = GetIndexFromArrayElement(SSChoices, val), SSChoices);
 
             api.RegisterLabel(manifest, "Winter Tweaks", null);
 
-            api.RegisterChoiceOption(manifest, "Normal Trees Grow In Winter", null, () => BoolToString(config.NormalTreesGrowInWinter), (string val) => config.NormalTreesGrowInWinter = StringToBool(val), BoolChoices);
-            api.RegisterChoiceOption(manifest, "Mushroom Trees Grow In Winter", null, () => BoolToString(config.MushroomTreesGrowInWinter), (string val) => config.MushroomTreesGrowInWinter = StringToBool(val), BoolChoices);
-            api.RegisterChoiceOption(manifest, "Fruit Trees Don't Grow In Winter", null, () => BoolToString(config.FruitTreesDontGrowInWinter), (string val) => config.FruitTreesDontGrowInWinter = StringToBool(val), BoolChoices);
+            api.RegisterSimpleOption(manifest, "Normal Trees Grow In Winter", null, () => config.NormalTreesGrowInWinter, (bool val) => config.NormalTreesGrowInWinter = val);
+            api.RegisterSimpleOption(manifest, "Mushroom Trees Grow In Winter", null, () => config.MushroomTreesGrowInWinter, (bool val) => config.MushroomTreesGrowInWinter = val);
+            api.RegisterSimpleOption(manifest, "Fruit Trees Don't Grow In Winter", null, () => config.FruitTreesDontGrowInWinter, (bool val) => config.FruitTreesDontGrowInWinter = val);
 
             api.RegisterLabel(manifest, "Buffs And Nerfs", null);
-            api.RegisterChoiceOption(manifest, "Buff Mahogany Tree Growth", "20% unfertilized and 100% fertilized (from 15% and 60%)", () => BoolToString(config.BuffMahoganyTrees), (string val) => config.BuffMahoganyTrees = StringToBool(val), BoolChoices);
+
+            api.RegisterSimpleOption(manifest, "Buff Mahogany Tree Growth", "20% unfertilized and 100% fertilized (from 15% and 60%)", () => config.BuffMahoganyTrees, (bool val) => config.BuffMahoganyTrees = val);
             api.RegisterClampedOption(manifest, "Seed Chance From Shaking", "Chance that a seed drops from shaking a tree (default: 5%, chance depends on host)", () => config.ShakingSeedChance, (int val) => config.ShakingSeedChance = val, 0, 100);
-            api.RegisterChoiceOption(manifest, "Faster Normal Tree Growth", "Normal trees try to grow twice every day, still random whether they succeed", () => BoolToString(config.FasterNormalTreeGrowth), (string val) => config.FasterNormalTreeGrowth = StringToBool(val), BoolChoices);
+            api.RegisterSimpleOption(manifest, "Faster Normal Tree Growth", "Normal trees try to grow twice every day, still random whether they succeed", () => config.FasterNormalTreeGrowth, (bool val) => config.FasterNormalTreeGrowth = val);
             api.RegisterChoiceOption(manifest, "Fruit Tree Growth Options", null, () => GetElementFromConfig(FTChoices, config.FruitTreeGrowth), (string val) => config.FruitTreeGrowth = GetIndexFromArrayElement(FTChoices, val), FTChoices);
-        }
-
-        private static bool StringToBool(string s)
-        {
-            return s == BoolChoices[1];
-        }
-
-        private static string BoolToString(bool b)
-        {
-            return BoolChoices[b ? 1 : 0];
         }
 
         private static string GetElementFromConfig(string[] options, int config)
