@@ -69,9 +69,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SubModules\BerryBushLogic.cs" />
+    <Compile Include="SubModules\FernAndBurgerLogic.cs" />
     <Compile Include="ForageFantasy.cs" />
     <Compile Include="ForageFantasyConfig.cs" />
+    <Compile Include="SubModules\MushroomQualityLogic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SubModules\TapperQualityLogic.cs" />
+    <Compile Include="SubModules\TestItemSpawner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE" />
