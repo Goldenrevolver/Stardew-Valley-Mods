@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="AnimalsDie.cs" />
     <Compile Include="AnimalsDieConfig.cs" />
+    <Compile Include="Patcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

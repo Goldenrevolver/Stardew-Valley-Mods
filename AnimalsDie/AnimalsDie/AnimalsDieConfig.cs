@@ -51,30 +51,39 @@
         public int IllnessScoreToDie { get; set; } = 7;
 
         public int MinAgeCow { get; set; } = 14;
+
         public int MaxAgeCow { get; set; } = 16;
 
         public int MinAgeChicken { get; set; } = 5;
+
         public int MaxAgeChicken { get; set; } = 7;
 
         public int MinAgeDuck { get; set; } = 8;
+
         public int MaxAgeDuck { get; set; } = 12;
 
         public int MinAgeRabbit { get; set; } = 8;
+
         public int MaxAgeRabbit { get; set; } = 12;
 
         public int MinAgeGoat { get; set; } = 8;
+
         public int MaxAgeGoat { get; set; } = 12;
 
         public int MinAgeSheep { get; set; } = 10;
+
         public int MaxAgeSheep { get; set; } = 12;
 
         public int MinAgePig { get; set; } = 15;
+
         public int MaxAgePig { get; set; } = 20;
 
         public int MinAgeOstrich { get; set; } = 40;
+
         public int MaxAgeOstrich { get; set; } = 45;
 
         public int MinAgeDinosaur { get; set; } = 100;
+
         public int MaxAgeDinosaur { get; set; } = 100;
 
         public static void VerifyConfigValues(AnimalsDieConfig config, AnimalsDie mod)
