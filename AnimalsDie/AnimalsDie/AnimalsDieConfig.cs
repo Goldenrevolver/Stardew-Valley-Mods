@@ -40,9 +40,13 @@
 
         public bool DeathByStarvation { get; set; } = true;
 
+        public bool DeathByDehydrationWithAnimalsNeedWaterMod { get; set; } = true;
+
         public bool DeathByIllness { get; set; } = true;
 
-        public int DaysToDieDueToStarvation { get; set; } = 3;
+        public int DaysToDieDueToStarvation { get; set; } = 5;
+
+        public int DaysToDieDueToDehydrationWithAnimalsNeedWaterMod { get; set; } = 3;
 
         public int IllnessScoreToDie { get; set; } = 7;
 
@@ -101,7 +105,9 @@
                     }
                 }
 
-                if (prop.Name == "DaysToDieDueToStarvation" || prop.Name == "IllnessScoreToDie")
+                if (prop.Name == nameof(config.DaysToDieDueToStarvation)
+                    || prop.Name == nameof(config.DaysToDieDueToDehydrationWithAnimalsNeedWaterMod)
+                    || prop.Name == nameof(config.IllnessScoreToDie))
                 {
                     int value = (int)prop.GetValue(config);
 
@@ -120,7 +126,7 @@
             }
         }
 
-        public static void SetUpModConfigMenu(AnimalsDieConfig config, AnimalsDie mod)
+        public static void SetUpModConfigMenu(AnimalsDieConfig config, AnimalsDie mod, bool isWaterModInstalled)
         {
             GenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
 
@@ -140,15 +146,44 @@
                 if (prop.PropertyType == typeof(bool))
                 {
                     string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                    if (prop.Name == nameof(config.DeathByDehydrationWithAnimalsNeedWaterMod))
+                    {
+                        if (!isWaterModInstalled)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            betterName = Regex.Replace(prop.Name.Remove(prop.Name.Length - "WithAnimalsNeedWaterMod".Length), "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                        }
+                    }
 
                     api.RegisterSimpleOption(manifest, betterName, null, () => (bool)prop.GetValue(config), (bool b) => prop.SetValue(config, b));
                 }
-
-                if (prop.Name == "DaysToDieDueToStarvation" || prop.Name == "IllnessScoreToDie")
+                else
                 {
-                    string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                    if (prop.Name == nameof(config.DaysToDieDueToStarvation) || prop.Name == nameof(config.IllnessScoreToDie))
+                    {
+                        string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
-                    api.RegisterSimpleOption(manifest, betterName, null, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b));
+                        api.RegisterSimpleOption(manifest, betterName, null, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b));
+                    }
+
+                    if (prop.Name == nameof(config.DaysToDieDueToDehydrationWithAnimalsNeedWaterMod))
+                    {
+                        string betterName = string.Empty;
+
+                        if (!isWaterModInstalled)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            betterName = Regex.Replace(prop.Name.Remove(prop.Name.Length - "WithAnimalsNeedWaterMod".Length), "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                        }
+
+                        api.RegisterSimpleOption(manifest, betterName, null, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b));
+                    }
                 }
             }
 

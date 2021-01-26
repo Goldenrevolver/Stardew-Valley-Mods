@@ -1,10 +1,13 @@
 ﻿namespace AnimalsDie
 {
+    using Harmony;
+    using Netcode;
     using StardewModdingAPI;
     using StardewValley;
+    using StardewValley.Buildings;
+    using StardewValley.Events;
     using System;
     using System.Collections.Generic;
-    using System.Linq;
 
     public enum AnimalType
     {
@@ -20,28 +23,247 @@
         Other
     }
 
+    public interface IAnimalsNeedWaterAPI
+    {
+        List<string> GetCoopsWithWateredTrough();
+
+        List<string> GetBarnsWithWateredTrough();
+
+        bool IsAnimalFull(string displayName);
+    }
+
+    //// planned features: healing item, display messages
+
     public class AnimalsDie : Mod
     {
-        private List<string> messages = new List<string>();
+        private static readonly List<string> messages = new List<string>();
 
-        private List<FarmAnimal> lastDaysAnimals = null;
+        private static readonly List<Tuple<FarmAnimal, string>> animalsToKill = new List<Tuple<FarmAnimal, string>>();
+
+        private static readonly List<FarmAnimal> sickAnimals = new List<FarmAnimal>();
+
+        private static FarmAnimal wildAnimalVictim;
+
+        private static IAnimalsNeedWaterAPI waterMod;
 
         /// <summary>
         /// The current config file
         /// </summary>
-        private AnimalsDieConfig config;
+        private static AnimalsDieConfig config;
+
+        private static AnimalsDie mod;
 
         public override void Entry(IModHelper helper)
         {
+            mod = this;
             config = Helper.ReadConfig<AnimalsDieConfig>();
+
             AnimalsDieConfig.VerifyConfigValues(config, this);
 
-            Helper.Events.GameLoop.SaveLoaded += delegate { lastDaysAnimals = null; messages = new List<string>(); };
-            Helper.Events.GameLoop.DayStarted += delegate { CheckForAnimalDeath(); };
-            Helper.Events.GameLoop.UpdateTicked += delegate { TryToSendMessage(); };
-            Helper.Events.GameLoop.DayEnding += delegate { SaveFarmAnimalsFromPriorDay(); };
+            Helper.Events.GameLoop.GameLaunched += delegate { SetupWaterMod(); AnimalsDieConfig.SetUpModConfigMenu(config, this, waterMod != null); };
 
-            Helper.Events.GameLoop.GameLaunched += delegate { AnimalsDieConfig.SetUpModConfigMenu(config, this); };
+            Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
+
+            Helper.Events.GameLoop.SaveLoaded += delegate { ResetVariables(); };
+            Helper.Events.GameLoop.ReturnedToTitle += delegate { ResetVariables(); };
+            Helper.Events.GameLoop.UpdateTicked += delegate { TryToSendMessage(); };
+
+            var harmony = HarmonyInstance.Create(ModManifest.UniqueID);
+
+            try
+            {
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(FarmAnimal), "dayUpdate"),
+                   prefix: new HarmonyMethod(typeof(AnimalsDie), nameof(PatchDayUpdate))
+                );
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(QuestionEvent), "setUp"),
+                   postfix: new HarmonyMethod(typeof(AnimalsDie), nameof(DetectPregnancy))
+                );
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(SoundInTheNightEvent), "makeChangesToLocation"),
+                   prefix: new HarmonyMethod(typeof(AnimalsDie), nameof(DetectAnimalAttack))
+                );
+            }
+            catch (Exception e)
+            {
+                ErrorLog("Error while trying to setup required patches:", e);
+            }
+        }
+
+        public static bool DetectAnimalAttack(ref SoundInTheNightEvent __instance)
+        {
+            try
+            {
+                if (!Game1.IsMasterGame)
+                {
+                    return true;
+                }
+
+                var behavior = mod.Helper.Reflection.GetField<NetInt>(__instance, "behavior");
+                var targetBuilding = mod.Helper.Reflection.GetField<Building>(__instance, "targetBuilding");
+
+                if (behavior.GetValue() != null && behavior.GetValue().Value == SoundInTheNightEvent.dogs && targetBuilding != null && targetBuilding.GetValue() != null)
+                {
+                    AnimalHouse indoors = targetBuilding.GetValue().indoors.Value as AnimalHouse;
+                    long idOfRemove = 0L;
+                    foreach (long a in indoors.animalsThatLiveHere)
+                    {
+                        if (!indoors.animals.ContainsKey(a))
+                        {
+                            idOfRemove = a;
+                            break;
+                        }
+                    }
+
+                    if (!Game1.getFarm().animals.ContainsKey(idOfRemove))
+                    {
+                        return true;
+                    }
+
+                    wildAnimalVictim = Game1.getFarm().animals[idOfRemove];
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
+        public static void DetectPregnancy(ref QuestionEvent __instance, ref bool __result)
+        {
+            try
+            {
+                var whichQuestion = mod.Helper.Reflection.GetField<int>(__instance, "whichQuestion");
+
+                if (!__result && whichQuestion.GetValue() == 2 && __instance.animal != null)
+                {
+                    string moddata;
+                    __instance.animal.modData.TryGetValue($"{mod.ModManifest.UniqueID}/illness", out moddata);
+
+                    // add one point of illness due to pregnancy stress
+                    int illness = 1;
+
+                    if (!string.IsNullOrEmpty(moddata))
+                    {
+                        illness += int.Parse(moddata);
+                    }
+
+                    mod.VerboseLog($"{__instance.animal.name} received illness point due to pregnancy");
+
+                    __instance.animal.modData[$"{mod.ModManifest.UniqueID}/illness"] = illness.ToString();
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+            }
+        }
+
+        // yes, there is a typo in environtment in the base game and whenever it gets fixed this doesn't work anymore
+        [HarmonyPriority(Priority.High)]
+        public static bool PatchDayUpdate(ref FarmAnimal __instance, ref GameLocation environtment)
+        {
+            try
+            {
+                FarmAnimal animal = __instance;
+                if (animal.home == null)
+                {
+                    mod.DebugLog($"{animal.name} has no home anymore! This should have been fixed at the start of the day. Please report this to the mod page.");
+                    return true;
+                }
+
+                if (environtment == null)
+                {
+                    mod.DebugLog($"{animal.name} is nowhere? Please report this to the mod page. A game update or another mod probably caused this.");
+                    return true;
+                }
+
+                bool wasLeftOutLastNight = false;
+                if (!(animal.home.indoors.Value as AnimalHouse).animals.ContainsKey(animal.myID) && environtment is Farm)
+                {
+                    if (!animal.home.animalDoorOpen.Value)
+                    {
+                        wasLeftOutLastNight = true;
+                    }
+                }
+
+                byte actualFullness = animal.fullness.Value;
+
+                if (!wasLeftOutLastNight)
+                {
+                    if (actualFullness < 200 && animal.home.indoors.Value is AnimalHouse)
+                    {
+                        for (int i = animal.home.indoors.Value.objects.Count() - 1; i >= 0; i--)
+                        {
+                            if (animal.home.indoors.Value.objects.Pairs.ElementAt(i).Value.Name.Equals("Hay"))
+                            {
+                                actualFullness = byte.MaxValue;
+                            }
+                        }
+                    }
+                }
+
+                int starvation = CalculateStarvation(animal, actualFullness);
+
+                if (config.DeathByStarvation && starvation >= config.DaysToDieDueToStarvation)
+                {
+                    animalsToKill.Add(new Tuple<FarmAnimal, string>(animal, "starvation"));
+                    return true;
+                }
+
+                bool gotWater = false;
+
+                if (waterMod != null)
+                {
+                    if (animal.isCoopDweller())
+                    {
+                        gotWater = waterMod.IsAnimalFull(animal.displayName) || (!wasLeftOutLastNight && waterMod.GetCoopsWithWateredTrough().Contains(animal.home.nameOfIndoors.ToLower()));
+                    }
+                    else
+                    {
+                        gotWater = waterMod.IsAnimalFull(animal.displayName) || (!wasLeftOutLastNight && waterMod.GetBarnsWithWateredTrough().Contains(animal.home.nameOfIndoors.ToLower()));
+                    }
+
+                    int dehydration = CalculateDehydration(animal, gotWater);
+
+                    if (config.DeathByDehydrationWithAnimalsNeedWaterMod && dehydration >= config.DaysToDieDueToDehydrationWithAnimalsNeedWaterMod)
+                    {
+                        animalsToKill.Add(new Tuple<FarmAnimal, string>(animal, "dehydration"));
+                        return true;
+                    }
+                }
+
+                int illness = CalculateIllness(animal, actualFullness, gotWater, wasLeftOutLastNight);
+
+                if (config.DeathByIllness && illness >= config.IllnessScoreToDie)
+                {
+                    animalsToKill.Add(new Tuple<FarmAnimal, string>(animal, "illness"));
+                    return true;
+                }
+                else if (illness >= config.IllnessScoreToDie / 2)
+                {
+                    sickAnimals.Add(animal);
+                }
+
+                if (config.DeathByOldAge && ShouldDieOfOldAge(animal))
+                {
+                    animalsToKill.Add(new Tuple<FarmAnimal, string>(animal, "oldAge"));
+                    return true;
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
         }
 
         public void DebugLog(object o)
@@ -49,159 +271,168 @@
             Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
         }
 
-        private void PostMessage(object o)
+        public void ErrorLog(object o, Exception e = null)
+        {
+            string baseMessage = o == null ? "null" : o.ToString();
+
+            string errorMessage = e == null ? string.Empty : $"\n{e.Message}\n{e.StackTrace}";
+
+            Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
+        }
+
+        public void VerboseLog(object o)
+        {
+            if (this.Monitor.IsVerbose)
+            {
+                Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
+            }
+        }
+
+        private static void PostMessage(object o)
         {
             messages.Add(o == null ? "null" : o.ToString());
         }
 
-        /// <summary>
-        /// For some reason Game1.getFarm().animals is always empty for me?
-        /// </summary>
-        /// <returns></returns>
-        private List<FarmAnimal> GetFarmAnimals()
+        private static bool IsWinter()
         {
-            return Game1.getFarm().getAllFarmAnimals();
+            return Game1.currentSeason.Equals("winter");
         }
 
-        private void TryToSendMessage()
+        private static bool WasColdOutside()
         {
-            if (!Context.IsWorldReady || !Context.IsMainPlayer)
-            {
-                return;
-            }
-
-            if (messages.Count > 0 && Game1.activeClickableMenu == null)
-            {
-                Game1.drawObjectDialogue(messages[0]);
-                messages.RemoveAt(0);
-            }
+            return Game1.wasRainingYesterday || IsWinter(); ////Game1.isRaining || Game1.isSnowing || Game1.isLightning
         }
 
-        private void CheckForAnimalDeath()
+        private static bool HasHeater(FarmAnimal animal)
         {
-            if (!Context.IsMainPlayer)
-            {
-                return;
-            }
-
-            CheckForWildAnimalAttack();
-
-            foreach (var animal in GetFarmAnimals())
-            {
-                int starvation = CalculateStarvation(animal);
-
-                if (config.DeathByStarvation && starvation > config.DaysToDieDueToStarvation)
-                {
-                    KillAnimal(animal, "starvation");
-                    continue;
-                }
-
-                int illness = CalculateIllness(animal);
-
-                if (config.DeathByIllness && illness > config.IllnessScoreToDie)
-                {
-                    KillAnimal(animal, "illness");
-                    continue;
-                }
-
-                if (config.DeathByOldAge && ShouldDieOfOldAge(animal))
-                {
-                    KillAnimal(animal, "old age");
-                    continue;
-                }
-            }
+            return animal.home.indoors.Value.numberOfObjectsWithName("Heater") > 0;
         }
 
-        private void SaveFarmAnimalsFromPriorDay()
+        private static int CalculateIllness(FarmAnimal animal, byte actualFullness, bool gotWater, bool wasLeftOutLastNight)
         {
-            if (!Context.IsMainPlayer)
+            int addIllness = 0;
+            string potentialLog = string.Empty;
+
+            // was trapped outdoors overnight
+            if (wasLeftOutLastNight)
             {
-                return;
-            }
-
-            // shallow copy is enough
-            lastDaysAnimals = new List<FarmAnimal>(GetFarmAnimals());
-        }
-
-        private void CheckForWildAnimalAttack()
-        {
-            if (lastDaysAnimals == null)
-            {
-                return;
-            }
-
-            var removedAnimals = lastDaysAnimals.Except(GetFarmAnimals());
-
-            // if the last animal died we simply assume it was a wild animal attack
-            bool wasAnimalAttack = GetFarmAnimals().Count == 0;
-
-            foreach (var animal in GetFarmAnimals())
-            {
-                if (animal.moodMessage == 5)
+                addIllness++;
+                potentialLog += "leftOutside ";
+                if (WasColdOutside())
                 {
-                    wasAnimalAttack = true;
-                    break;
+                    addIllness++;
+                    potentialLog += "alsoCold ";
                 }
             }
-
-            if (wasAnimalAttack)
+            else
             {
-                foreach (var deadAnimal in removedAnimals)
+                // not trapped outside: if it's cold weather
+                if (WasColdOutside())
                 {
-                    if (deadAnimal != null)
+                    // and the door was left open
+                    if (animal.home.animalDoorOpen)
                     {
-                        CalculateDeathMessage(deadAnimal, "a wild animal attack");
+                        // if it's winter it's too cold regardless of if there is a heater (no heater even grants one more point)
+                        if (IsWinter())
+                        {
+                            addIllness++;
+                            potentialLog += "openDoorWinter ";
+                        }
+
+                        // if it's just cold then a heater is enough to prevent damage
+                        if (!HasHeater(animal))
+                        {
+                            addIllness++;
+                            potentialLog += "openDoorNoHeater ";
+                        }
+                    }
+                    else if (IsWinter() && !HasHeater(animal))
+                    {
+                        addIllness++;
+                        potentialLog += "WinterNoHeater ";
                     }
                 }
             }
-        }
 
-        private int CalculateIllness(FarmAnimal animal)
-        {
+            // an animal died to a wild animal attack
+            if (wildAnimalVictim != null)
+            {
+                addIllness++;
+                potentialLog += "wildAnimalAttackHappened ";
+            }
+
+            // animal was not fed (also works if it was outside and found nothing to eat)
+            // if this fails there will be a water check, so a maximum of one illness point if not fed and no water
+            if (actualFullness < 30 && config.DeathByStarvation)
+            {
+                addIllness++;
+                potentialLog += "notFed ";
+            }
+            else if (waterMod != null && config.DeathByDehydrationWithAnimalsNeedWaterMod && !gotWater)
+            {
+                addIllness++;
+                potentialLog += "noWater ";
+            }
+
             string moddata;
-            animal.modData.TryGetValue($"{this.ModManifest.UniqueID}/illness", out moddata);
+            animal.modData.TryGetValue($"{mod.ModManifest.UniqueID}/illness", out moddata);
 
-            int illness = 0;
+            int illness = addIllness;
 
             if (!string.IsNullOrEmpty(moddata))
             {
-                illness = int.Parse(moddata);
+                illness += int.Parse(moddata);
             }
 
-            if (animal.moodMessage == 5 || animal.moodMessage == 6 || animal.fullness < 30)
+            // taking care of your animal always reduces illness
+            if (illness > 0 && (addIllness == 0 || animal.wasPet.Value))
             {
-                // was trapped outdoors overnight
-                if (animal.moodMessage == 6)
-                {
-                    illness++;
-                }
-
-                // an animal died to a wild animal attack (if it was also outdoors illness increases by 2)
-                if (animal.moodMessage == 5)
-                {
-                    illness++;
-                }
-
-                // animal was not fed (also works if it was outside and found nothing to eat)
-                if (animal.fullness < 30)
-                {
-                    illness++;
-                }
-            }
-            else if (illness > 0)
-            {
+                addIllness--;
                 illness--;
+                potentialLog += "healed";
             }
 
-            animal.modData[$"{this.ModManifest.UniqueID}/illness"] = illness.ToString();
+            if (!string.IsNullOrEmpty(potentialLog))
+            {
+                mod.VerboseLog($"{animal.name} illness change, total: {illness}, new: {addIllness}, reasons: {potentialLog}");
+            }
+
+            animal.modData[$"{mod.ModManifest.UniqueID}/illness"] = illness.ToString();
 
             return illness;
         }
 
-        private int CalculateStarvation(FarmAnimal animal)
+        private static int CalculateDehydration(FarmAnimal animal, bool gotWater)
         {
             string moddata;
-            animal.modData.TryGetValue($"{this.ModManifest.UniqueID}/starvation", out moddata);
+            animal.modData.TryGetValue($"{mod.ModManifest.UniqueID}/dehydration", out moddata);
+
+            int dehydration = 0;
+
+            if (!string.IsNullOrEmpty(moddata))
+            {
+                dehydration = int.Parse(moddata);
+            }
+
+            if (!gotWater)
+            {
+                dehydration++;
+                mod.VerboseLog($"{animal.name} didn't get water, dehydration: {dehydration}");
+            }
+            else
+            {
+                dehydration = 0;
+            }
+
+            animal.modData[$"{mod.ModManifest.UniqueID}/dehydration"] = dehydration.ToString();
+
+            return dehydration;
+        }
+
+        private static int CalculateStarvation(FarmAnimal animal, byte actualFullness)
+        {
+            string moddata;
+            animal.modData.TryGetValue($"{mod.ModManifest.UniqueID}/starvation", out moddata);
 
             int starvation = 0;
 
@@ -210,21 +441,22 @@
                 starvation = int.Parse(moddata);
             }
 
-            if (animal.fullness < 30)
+            if (actualFullness < 30)
             {
                 starvation++;
+                mod.VerboseLog($"{animal.name} didn't get fed, fullness: {actualFullness}, starvation: {starvation}");
             }
             else
             {
                 starvation = 0;
             }
 
-            animal.modData[$"{this.ModManifest.UniqueID}/starvation"] = starvation.ToString();
+            animal.modData[$"{mod.ModManifest.UniqueID}/starvation"] = starvation.ToString();
 
             return starvation;
         }
 
-        private bool ShouldDieOfOldAge(FarmAnimal animal)
+        private static bool ShouldDieOfOldAge(FarmAnimal animal)
         {
             int age = animal.GetDaysOwned();
 
@@ -249,7 +481,7 @@
             return false;
         }
 
-        private double Map(double from, double fromMin, double fromMax, double toMin, double toMax)
+        private static double Map(double from, double fromMin, double fromMax, double toMin, double toMax)
         {
             var fromAbs = from - fromMin;
             var fromMaxAbs = fromMax - fromMin;
@@ -264,7 +496,7 @@
             return to;
         }
 
-        private Tuple<int, int> GetMinAndMaxAnimalAgeInYears(FarmAnimal animal)
+        private static Tuple<int, int> GetMinAndMaxAnimalAgeInYears(FarmAnimal animal)
         {
             int barnPlaceHolderAge = 10;
             int coopPlaceHolderAge = 5;
@@ -305,7 +537,7 @@
             }
         }
 
-        private AnimalType GetAnimalType(FarmAnimal animal)
+        private static AnimalType GetAnimalType(FarmAnimal animal)
         {
             var animalTypes = Enum.GetNames(typeof(AnimalType));
 
@@ -321,35 +553,44 @@
             return AnimalType.Other;
         }
 
-        private void CalculateDeathMessage(FarmAnimal animal, string cause)
+        private static void CalculateDeathMessage(FarmAnimal animal, string cause)
         {
-            // age is the value that doesn't increase if you haven't fed the animal
+            // animal.age is the value that doesn't increase if you haven't fed the animal
             int age = animal.GetDaysOwned() + 1;
+            string causeString = mod.Helper.Translation.Get($"Cause.{cause}");
 
             string ageString;
 
             if (age >= 28 * 4)
             {
-                int val = age / (28 * 4) + 1;
-                ageString = val == 1 ? "1 year" : val + " years";
+                int yearCount = (age / (28 * 4)) + 1;
+                ageString = mod.Helper.Translation.Get(yearCount == 1 ? "Age.year" : "Age.years", new { yearCount });
 
-                int restAge = age - (val * 28 * 4);
+                int restAge = age - (yearCount * 28 * 4);
                 if (restAge >= 28)
                 {
-                    val = (restAge / 28) + 1;
-                    ageString += val == 1 ? " and 1 month" : $" and {val} months";
+                    int monthCount = (restAge / 28) + 1;
+
+                    if (yearCount == 1)
+                    {
+                        ageString = mod.Helper.Translation.Get(monthCount == 1 ? "Age.yearAndMonth" : "Age.yearAndMonths", new { yearCount, monthCount });
+                    }
+                    else
+                    {
+                        ageString = mod.Helper.Translation.Get(monthCount == 1 ? "Age.yearsAndMonth" : "Age.yearsAndMonths", new { yearCount, monthCount });
+                    }
                 }
             }
             else
             {
                 if (age >= 28)
                 {
-                    int val = (age / 28) + 1;
-                    ageString = val == 1 ? "1 month" : val + " months";
+                    int monthCount = (age / 28) + 1;
+                    ageString = mod.Helper.Translation.Get(monthCount == 1 ? "Age.month" : "Age.months", new { monthCount });
                 }
                 else
                 {
-                    ageString = age == 1 ? "1 day" : age + " days";
+                    ageString = mod.Helper.Translation.Get(age == 1 ? "Age.day" : "Age.days", new { dayCount = age });
                 }
             }
 
@@ -357,23 +598,28 @@
 
             if (animal.happiness < 30)
             {
-                happiness = "sad";
+                happiness = mod.Helper.Translation.Get("Happiness.sad");
             }
             else if (animal.happiness < 200)
             {
-                happiness = "fine";
+                happiness = mod.Helper.Translation.Get("Happiness.fine");
             }
             else
             {
-                happiness = "happy";
+                happiness = mod.Helper.Translation.Get("Happiness.happy");
             }
 
             double hearts = animal.friendshipTowardFarmer < 1000 ? animal.friendshipTowardFarmer / 200.0 : 5;
 
-            double withHalfHearts = (int)(hearts * 2) / 2;
-            string loveString = withHalfHearts == 1 ? "1 heart" : withHalfHearts + " hearts";
+            double withHalfHearts = ((int)(hearts * 2.0)) / 2.0;
+            string loveString = mod.Helper.Translation.Get(withHalfHearts == 1 ? "Love.heart" : "Love.hearts", new { heartCount = withHalfHearts });
 
-            PostMessage($"Your {animal.type.ToString().ToLower()} {animal.name} died due to {cause}.\n{animal.name} got {ageString} old, was feeling {happiness} and had {loveString} of friendship towards you.");
+            // if the locale is the default locale, keep the english animal type
+            string animalType = string.IsNullOrWhiteSpace(mod.Helper.Translation.Locale) ? animal.type.Value.ToLower() : animal.displayType;
+
+            string message = mod.Helper.Translation.Get("AnimalDeathMessage", new { animalType, animalName = animal.name, cause = causeString, entireAgeText = ageString, happinessText = happiness, lovestring = loveString });
+
+            PostMessage(message);
         }
 
         /// <summary>
@@ -381,10 +627,17 @@
         /// </summary>
         /// <param name="animal"></param>
         /// <param name="cause"></param>
-        private void KillAnimal(FarmAnimal animal, string cause)
+        private static void KillAnimal(FarmAnimal animal, string cause)
         {
-            (animal.home.indoors.Value as AnimalHouse).animalsThatLiveHere.Remove(animal.myID);
-            (animal.home.indoors.Value as AnimalHouse).animals.Remove(animal.myID);
+            mod.VerboseLog($"Killed {animal.name} due to {cause}");
+
+            // right before this Utility.fixAllAnimals gets called, so if it's still not fixed then... it truly doesn't have a home and I don't need to remove it
+            if (animal.home != null)
+            {
+                (animal.home.indoors.Value as AnimalHouse).animalsThatLiveHere.Remove(animal.myID);
+                (animal.home.indoors.Value as AnimalHouse).animals.Remove(animal.myID);
+            }
+
             Game1.getFarm().animals.Remove(animal.myID);
 
             animal.health.Value = -1;
@@ -395,6 +648,104 @@
             }
 
             CalculateDeathMessage(animal, cause);
+        }
+
+        private void ResetVariables()
+        {
+            wildAnimalVictim = null;
+            messages.Clear();
+            animalsToKill.Clear();
+            sickAnimals.Clear();
+        }
+
+        private void SetupWaterMod()
+        {
+            // the null check is somewhere else
+            waterMod = mod.Helper.ModRegistry.GetApi<IAnimalsNeedWaterAPI>("GZhynko.AnimalsNeedWater");
+        }
+
+        private void OnDayStarted()
+        {
+            if (!Context.IsMainPlayer)
+            {
+                return;
+            }
+
+            CheckHomeStatus();
+            KillAnimals();
+            DisplayIllMessage();
+        }
+
+        private void CheckHomeStatus()
+        {
+            foreach (var animal in Game1.getFarm().getAllFarmAnimals())
+            {
+                if (animal.home == null)
+                {
+                    Utility.fixAllAnimals();
+                    DebugLog("Fixed at least one animal from the base game animal home bug");
+                    break;
+                }
+            }
+        }
+
+        private void KillAnimals()
+        {
+            if (wildAnimalVictim != null)
+            {
+                CalculateDeathMessage(wildAnimalVictim, "wildAnimalAttack");
+                wildAnimalVictim = null;
+            }
+
+            foreach (var item in animalsToKill)
+            {
+                if (item.Item1 != null)
+                {
+                    KillAnimal(item.Item1, item.Item2);
+                }
+            }
+
+            animalsToKill.Clear();
+        }
+
+        private void DisplayIllMessage()
+        {
+            if (sickAnimals.Count == 1)
+            {
+                Game1.showGlobalMessage(Helper.Translation.Get("SickAnimalMessage.oneAnimal", new { firstAnimalName = sickAnimals[0].name }));
+            }
+            else if (sickAnimals.Count == 2)
+            {
+                Game1.showGlobalMessage(Helper.Translation.Get("SickAnimalMessage.twoAnimals", new { firstAnimalName = sickAnimals[0].name, secondAnimalName = sickAnimals[1].name, }));
+            }
+            else if (sickAnimals.Count == 3)
+            {
+                Game1.showGlobalMessage(Helper.Translation.Get("SickAnimalMessage.threeAnimals", new { firstAnimalName = sickAnimals[0].name, secondAnimalName = sickAnimals[1].name, thirdAnimalName = sickAnimals[2].name }));
+            }
+            else if (sickAnimals.Count == 4)
+            {
+                Game1.showGlobalMessage(Helper.Translation.Get("SickAnimalMessage.fourAnimals", new { firstAnimalName = sickAnimals[0].name, secondAnimalName = sickAnimals[1].name, thirdAnimalName = sickAnimals[2].name, sickAnimalCount = sickAnimals.Count - 3 }));
+            }
+            else if (sickAnimals.Count > 4)
+            {
+                Game1.showGlobalMessage(Helper.Translation.Get("SickAnimalMessage.morethanfourAnimals", new { firstAnimalName = sickAnimals[0].name, secondAnimalName = sickAnimals[1].name, thirdAnimalName = sickAnimals[2].name, sickAnimalCount = sickAnimals.Count - 3 }));
+            }
+
+            sickAnimals.Clear();
+        }
+
+        private void TryToSendMessage()
+        {
+            if (!Context.IsWorldReady || !Context.IsMainPlayer)
+            {
+                return;
+            }
+
+            if (messages.Count > 0 && Game1.activeClickableMenu == null)
+            {
+                Game1.drawObjectDialogue(messages[0]);
+                messages.RemoveAt(0);
+            }
         }
     }
 }
