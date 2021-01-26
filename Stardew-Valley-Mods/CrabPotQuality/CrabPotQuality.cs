@@ -3,6 +3,7 @@
     using StardewModdingAPI;
     using StardewValley;
     using StardewValley.Objects;
+    using StardewObject = StardewValley.Object;
 
     public class CrabPotQuality : Mod
     {
@@ -36,7 +37,7 @@
             if (pot.bait != null && pot.bait.Value != null && pot.bait.Value.ParentSheetIndex == 908)
             {
                 // give the crab pot a rainbow shell
-                pot.heldObject.Value = new Object(394, 1, false, -1, 0);
+                pot.heldObject.Value = new StardewObject(394, 1, false, -1, 0);
             }
 
             // item is trash

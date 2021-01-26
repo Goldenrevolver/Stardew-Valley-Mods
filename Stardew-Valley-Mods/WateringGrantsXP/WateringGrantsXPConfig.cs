@@ -114,7 +114,7 @@
             api.RegisterSimpleOption(manifest, "Forage Seed Watering\nGrants Foraging XP", null, () => config.ForageSeedWateringGrantsForagingXP, (bool val) => config.ForageSeedWateringGrantsForagingXP = val);
 
             // this is a spacer due to the line break above
-            api.RegisterLabel(manifest, "", null);
+            api.RegisterLabel(manifest, string.Empty, null);
             api.RegisterLabel(manifest, "Crops Die Without Water", null);
 
             api.RegisterSimpleOption(manifest, "Withering Feature Enabled", null, () => config.CropsCanDieWithoutWater, (bool val) => config.CropsCanDieWithoutWater = val);

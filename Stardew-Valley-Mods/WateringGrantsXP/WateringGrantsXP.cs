@@ -8,9 +8,9 @@
 
     public class WateringGrantsXP : Mod
     {
-        private WateringGrantsXPConfig config;
-
         private static WateringGrantsXP mod;
+
+        private WateringGrantsXPConfig config;
 
         private string key;
 
@@ -38,6 +38,43 @@
         public void DebugLog(object o)
         {
             this.Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
+        }
+
+        private static bool GiveWateringExp(HoeDirt __instance, ref Tool t)
+        {
+            try
+            {
+                double chance = mod.config.WateringChanceToGetXP / 100.0;
+
+                if (t != null && t is WateringCan && __instance.state.Value == 0 && __instance.needsWatering() && !__instance.crop.dead)
+                {
+                    if (Game1.random.NextDouble() < chance)
+                    {
+                        if (__instance.crop.isWildSeedCrop() && mod.config.ForageSeedWateringGrantsForagingXP)
+                        {
+                            if (t.getLastFarmerToUse() != null)
+                            {
+                                t.getLastFarmerToUse().gainExperience(2, mod.config.WateringExperienceAmount);
+                            }
+                        }
+                        else
+                        {
+                            if (t.getLastFarmerToUse() != null)
+                            {
+                                t.getLastFarmerToUse().gainExperience(0, mod.config.WateringExperienceAmount);
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                mod.Monitor.Log($"Failed in {nameof(GiveWateringExp)}:\n{ex}", LogLevel.Error);
+
+                return true;
+            }
         }
 
         private void CheckForUnwateredCrops()
@@ -91,43 +128,6 @@
                     dirt.crop.Kill();
                     dirt.modData.Remove(key);
                 }
-            }
-        }
-
-        private static bool GiveWateringExp(HoeDirt __instance, ref Tool t)
-        {
-            try
-            {
-                double chance = mod.config.WateringChanceToGetXP / 100.0;
-
-                if (t != null && t is WateringCan && __instance.state.Value == 0 && __instance.needsWatering() && !__instance.crop.dead)
-                {
-                    if (Game1.random.NextDouble() < chance)
-                    {
-                        if (__instance.crop.isWildSeedCrop() && mod.config.ForageSeedWateringGrantsForagingXP)
-                        {
-                            if (t.getLastFarmerToUse() != null)
-                            {
-                                t.getLastFarmerToUse().gainExperience(2, mod.config.WateringExperienceAmount);
-                            }
-                        }
-                        else
-                        {
-                            if (t.getLastFarmerToUse() != null)
-                            {
-                                t.getLastFarmerToUse().gainExperience(0, mod.config.WateringExperienceAmount);
-                            }
-                        }
-                    }
-                }
-
-                return true;
-            }
-            catch (System.Exception ex)
-            {
-                mod.Monitor.Log($"Failed in {nameof(GiveWateringExp)}:\n{ex}", LogLevel.Error);
-
-                return true;
             }
         }
     }
