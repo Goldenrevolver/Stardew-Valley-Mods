@@ -1,8 +1,8 @@
 {
   "Name": "Forage Fantasy",
   "Author": "Goldenrevolver",
-  "Version": "1.1",
-  "Description": "Tapper products and mushroom cave mushrooms have quality and more",
+  "Version": "2.0",
+  "Description": "Tappers, mushroom boxes and berry bushes give XP and products with quality and more",
   "UniqueID": "Goldenrevolver.ForageFantasy",
   "EntryDll": "ForageFantasy.dll",
   "MinimumApiVersion": "3.8.2",

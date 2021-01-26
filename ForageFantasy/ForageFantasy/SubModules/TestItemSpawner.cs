@@ -1,16 +1,16 @@
-﻿using Microsoft.Xna.Framework;
-using StardewValley;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-
-namespace ForageFantasy
+﻿namespace ForageFantasy
 {
+    using Microsoft.Xna.Framework;
+    using StardewValley;
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+
     internal class TestItemSpawner
     {
         public static void TestValues(ForageFantasy mod, bool showOnlyTotals, bool ignoreSecretForest)
         {
-            List<string> seasons = new List<string>() { "summer" }; //, "spring", "fall", "winter" };
+            List<string> seasons = new List<string>() { "summer" }; ////, "spring", "fall", "winter" };
 
             foreach (var season in seasons)
             {
@@ -22,7 +22,7 @@ namespace ForageFantasy
 
                 foreach (var loc in Game1.locations)
                 {
-                    Random r = new Random((int)Game1.uniqueIDForThisGame / 2 + (int)Game1.stats.DaysPlayed);
+                    Random r = new Random(((int)Game1.uniqueIDForThisGame / 2) + (int)Game1.stats.DaysPlayed);
                     Dictionary<string, string> locationData = Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
 
                     int id = -1;
@@ -48,7 +48,11 @@ namespace ForageFantasy
                             break;
 
                         case "Woods":
-                            if (ignoreSecretForest) continue;
+                            if (ignoreSecretForest)
+                            {
+                                continue;
+                            }
+
                             id = 4;
                             break;
 
@@ -70,7 +74,8 @@ namespace ForageFantasy
                         {
                     '/'
                         })[Utility.getSeasonNumber(season)];
-                        if (!rawData.Equals("-1"))// && loc.numberOfSpawnedObjectsOnMap < 6)
+                        //// && loc.numberOfSpawnedObjectsOnMap < 6)
+                        if (!rawData.Equals("-1"))
                         {
                             string[] split = rawData.Split(new char[]
                             {
@@ -100,9 +105,12 @@ namespace ForageFantasy
                 float totaltotal = 0;
                 for (int j = 0; j < results.Length; j++)
                 {
-                    if (j == 4 && ignoreSecretForest) continue;
+                    if (j == 4 && ignoreSecretForest)
+                    {
+                        continue;
+                    }
 
-                    string s = "";
+                    string s = string.Empty;
                     switch (j)
                     {
                         case 0:
@@ -139,13 +147,14 @@ namespace ForageFantasy
                     {
                         total += results[j][i];
                     }
+
                     totaltotal += total;
                     s += $"({total} items)";
 
                     if (!showOnlyTotals)
                     {
                         mod.DebugLog(s);
-                        mod.DebugLog("");
+                        mod.DebugLog(string.Empty);
                     }
 
                     for (int i = 0; i < results[j].Length; i++)
@@ -158,19 +167,23 @@ namespace ForageFantasy
                             float percentage = number / total;
                             string percentageString = percentage.ToString("P", CultureInfo.InvariantCulture);
                             if (!showOnlyTotals)
+                            {
                                 mod.DebugLog($"{o.DisplayName}: {number}, {percentageString}");
+                            }
                         }
 
                         totals[i] += results[j][i];
                     }
 
                     if (!showOnlyTotals)
-                        mod.DebugLog("");
+                    {
+                        mod.DebugLog(string.Empty);
+                    }
                 }
 
                 mod.DebugLog($"Total ({totaltotal} items)");
 
-                mod.DebugLog("");
+                mod.DebugLog(string.Empty);
 
                 for (int i = 0; i < totals.Length; i++)
                 {
@@ -185,7 +198,7 @@ namespace ForageFantasy
                     }
                 }
 
-                mod.DebugLog("");
+                mod.DebugLog(string.Empty);
             }
         }
     }

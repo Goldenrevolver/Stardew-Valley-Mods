@@ -35,23 +35,27 @@
     /// </summary>
     public class ForageFantasyConfig
     {
-        public bool MushroomCaveQuality { get; set; } = true;
+        public bool BerryBushQuality { get; set; } = true;
 
-        public bool CommonFiddleheadFern { get; set; } = true;
-
-        public bool ForageSurvivalBurger { get; set; } = true;
-
-        public bool CompatibilityMode { get; set; } = false;
+        public bool MushroomBoxQuality { get; set; } = true;
 
         public int TapperQualityOptions { get; set; } = 1;
 
         public bool TapperQualityRequiresTapperPerk { get; set; } = false;
 
-        public bool BerryBushQuality { get; set; } = true;
-
         public int BerryBushChanceToGetXP { get; set; } = 100;
 
         public int BerryBushXPAmount { get; set; } = 1;
+
+        public int MushroomXPAmount { get; set; } = 1;
+
+        public int TapperXPAmount { get; set; } = 3;
+
+        public bool CommonFiddleheadFern { get; set; } = true;
+
+        public bool ForageSurvivalBurger { get; set; } = true;
+
+        public bool AutomateHarvestsGrantXP { get; set; } = false;
 
         private static string[] TQChoices { get; set; } = new string[] { "Disabled", "Forage Level Based", "Forage Level Based (No Botanist)", "Tree Age Based (Months)", "Tree Age Based (Years)" };
 
@@ -83,6 +87,18 @@
                 config.BerryBushXPAmount = 0;
             }
 
+            if (config.TapperXPAmount < 0)
+            {
+                invalidConfig = true;
+                config.TapperXPAmount = 0;
+            }
+
+            if (config.MushroomXPAmount < 0)
+            {
+                invalidConfig = true;
+                config.MushroomXPAmount = 0;
+            }
+
             if (invalidConfig)
             {
                 mod.DebugLog("At least one config value was out of range and was reset.");
@@ -103,25 +119,28 @@
 
             api.RegisterModConfig(manifest, () => config = new ForageFantasyConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
 
-            api.RegisterLabel(manifest, "General Tweaks", null);
+            api.RegisterLabel(manifest, "Quality Tweaks", null);
 
-            api.RegisterSimpleOption(manifest, "Mushroom Cave Quality", "Mushrooms have quality based on forage level and botanist perk", () => config.MushroomCaveQuality, (bool val) => config.MushroomCaveQuality = val);
-            api.RegisterSimpleOption(manifest, "Common Fiddlehead Fern¹", "Fiddlehead fern is available outside of the secret forest\nand added to the wild seeds pack and summer foraging bundle", () => config.CommonFiddleheadFern, (bool val) => config.CommonFiddleheadFern = val);
-            api.RegisterSimpleOption(manifest, "Forage Survival Burger¹", "Forage based early game crafting recipes and even more efficient cooking recipes", () => config.ForageSurvivalBurger, (bool val) => config.ForageSurvivalBurger = val);
-            api.RegisterSimpleOption(manifest, "Auto Pickup Compatibility", "Ensures compatibility with automatic pickup mods.\nSets the quality of mushrooms and tapper products based\non the player that would have the best result.\nIn multiplayer it only works if the host has the mod and\neveryone who has the mod has enabled this.", () => config.CompatibilityMode, (bool val) => config.CompatibilityMode = val);
-
-            api.RegisterLabel(manifest, "Tapper Quality", null);
-
+            api.RegisterSimpleOption(manifest, "Berry Bush Quality", "Salmonberries and blackberries have quality based\non forage level even without botanist perk.", () => config.BerryBushQuality, (bool val) => config.BerryBushQuality = val);
+            api.RegisterSimpleOption(manifest, "Mushroom Box Quality", "Mushrooms have quality based on forage level and botanist perk.", () => config.MushroomBoxQuality, (bool val) => config.MushroomBoxQuality = val);
             api.RegisterChoiceOption(manifest, "Tapper Quality Options", null, () => GetElementFromConfig(TQChoices, config.TapperQualityOptions), (string val) => config.TapperQualityOptions = GetIndexFromArrayElement(TQChoices, val), TQChoices);
             api.RegisterSimpleOption(manifest, "Tapper Perk Is Required", null, () => config.TapperQualityRequiresTapperPerk, (bool val) => config.TapperQualityRequiresTapperPerk = val);
 
-            api.RegisterLabel(manifest, "Berry Bushes", null);
+            api.RegisterLabel(manifest, "XP Rewards", null);
 
-            api.RegisterSimpleOption(manifest, "Berry Bush Quality", "Salmonberries and blackberries have quality based\non forage level even without botanist perk.", () => config.BerryBushQuality, (bool val) => config.BerryBushQuality = val);
             api.RegisterClampedOption(manifest, "Berry Bush Chance To Get XP", "Chance to get foraging experience when harvesting bushes.\nSet to 0 to disable feature.", () => config.BerryBushChanceToGetXP, (int val) => config.BerryBushChanceToGetXP = val, 0, 100);
-            api.RegisterSimpleOption(manifest, "Berry Bush XP Amount", "Amount of XP gained per bush. For reference:\nChopping down a tree is 12XP, a foraging good is 7XP", () => config.BerryBushXPAmount, (int val) => config.BerryBushXPAmount = val);
+            api.RegisterSimpleOption(manifest, "Berry Bush XP Amount", "Amount of XP gained per bush. For reference:\nChopping down a tree is 12XP, a foraging good is 7XP\nNegative values will be reset to 0.", () => config.BerryBushXPAmount, (int val) => config.BerryBushXPAmount = val);
+            api.RegisterSimpleOption(manifest, "Mushroom Box XP Amount", "For reference:\nChopping down a tree is 12XP, a foraging good is 7XP\nNegative values will be reset to 0.", () => config.MushroomXPAmount, (int val) => config.MushroomXPAmount = val);
+            api.RegisterSimpleOption(manifest, "Tapper XP Amount", "For reference:\nChopping down a tree is 12XP, a foraging good is 7XP\nNegative values will be reset to 0.", () => config.TapperXPAmount, (int val) => config.TapperXPAmount = val);
+            api.RegisterSimpleOption(manifest, "Automate Harvests Grant XP", "Whether automatic harvests with the Automate mod should grant XP. Keep in mind that Automate always only affects the host.", () => config.AutomateHarvestsGrantXP, (bool val) => config.AutomateHarvestsGrantXP = val);
 
-            api.RegisterLabel(manifest, "", null);
+            api.RegisterLabel(manifest, "Other Features", null);
+
+            api.RegisterSimpleOption(manifest, "Common Fiddlehead Fern¹", "Fiddlehead fern is available outside of the secret forest\nand added to the wild seeds pack and summer foraging bundle.", () => config.CommonFiddleheadFern, (bool val) => config.CommonFiddleheadFern = val);
+            api.RegisterSimpleOption(manifest, "Forage Survival Burger¹", "Forage based early game crafting recipes and even more efficient cooking recipes.", () => config.ForageSurvivalBurger, (bool val) => config.ForageSurvivalBurger = val);
+
+            // this is a spacer
+            api.RegisterLabel(manifest, string.Empty, null);
             api.RegisterLabel(manifest, "1: Restart Needed For Changes To Take Effect", null);
         }
 

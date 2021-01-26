@@ -1,9 +1,7 @@
 ﻿namespace ForageFantasy
 {
-    using Microsoft.Xna.Framework;
     using StardewModdingAPI;
     using StardewValley;
-    using StardewValley.TerrainFeatures;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -117,62 +115,6 @@
             }
         }
 
-        public static void OnDayStarted(ForageFantasy mod, GameLocation location)
-        {
-            if (!Context.IsMainPlayer)
-            {
-                return;
-            }
-
-            if (mod.Config.CommonFiddleheadFern && Game1.currentSeason == "summer")
-            {
-                foreach (var vec in mod.ForageLocationsToWatch)
-                {
-                    if (location.objects.ContainsKey(vec))
-                    {
-                        Object o = location.objects[vec];
-
-                        if (o.IsSpawnedObject && o.CanBeGrabbed)
-                        {
-                            RerandomizeWildSeedForage(vec, location);
-                        }
-                    }
-                }
-            }
-        }
-
-        public static void OnDayEnded(ForageFantasy mod)
-        {
-            if (!Context.IsMainPlayer || !mod.Config.CommonFiddleheadFern || Game1.currentSeason != "summer")
-            {
-                return;
-            }
-
-            mod.ForageLocationsToWatch.Clear();
-
-            foreach (var location in Game1.locations)
-            {
-                foreach (var terrainfeature in location.terrainFeatures.Pairs)
-                {
-                    switch (terrainfeature.Value)
-                    {
-                        case HoeDirt hoeDirt:
-                            if (hoeDirt.crop != null)
-                            {
-                                Crop crop = hoeDirt.crop;
-
-                                if (crop.isWildSeedCrop())
-                                {
-                                    mod.ForageLocationsToWatch.Add(terrainfeature.Key);
-                                }
-                            }
-
-                            break;
-                    }
-                }
-            }
-        }
-
         public static void ChangeBundle(ForageFantasy mod)
         {
             if (!mod.Config.CommonFiddleheadFern)
@@ -195,13 +137,7 @@
             bundleData[key] = string.Join("/", bundle);
         }
 
-        private static void RerandomizeWildSeedForage(Vector2 vec, GameLocation location)
-        {
-            location.objects.Remove(vec);
-            location.objects.Add(vec, new Object(vec, GetWildSeedSummerForage(), 1) { IsSpawnedObject = true, CanBeGrabbed = true });
-        }
-
-        private static int GetWildSeedSummerForage()
+        public static int GetWildSeedSummerForage()
         {
             int ran = Game1.random.Next(4);
 

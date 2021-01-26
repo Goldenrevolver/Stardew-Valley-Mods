@@ -1,105 +1,48 @@
 ﻿namespace ForageFantasy
 {
-    using Microsoft.Xna.Framework;
-    using StardewModdingAPI;
     using StardewValley;
     using StardewValley.TerrainFeatures;
-    using System.Linq;
+    using StardewObject = StardewValley.Object;
 
     internal class BerryBushLogic
     {
-        public static void OnDayStarted(ForageFantasy mod, GameLocation location)
+        public static bool IsHarvestableBush(Bush bush)
         {
-            if (mod.Config.BerryBushQuality && (Game1.currentSeason == "spring" || Game1.currentSeason == "fall"))
+            return bush != null && !bush.townBush && bush.inBloom(Game1.GetSeasonForLocation(bush.currentLocation), Game1.dayOfMonth) && bush.size == 1;
+        }
+
+        public static void RewardBerryXP(ForageFantasy mod)
+        {
+            double chance = mod.Config.BerryBushChanceToGetXP / 100.0;
+
+            if (mod.Config.BerryBushXPAmount > 0 && Game1.random.NextDouble() < chance)
             {
-                foreach (Bush bush in location.largeTerrainFeatures.OfType<Bush>())
-                {
-                    if (bush != null && !bush.townBush && bush.tileSheetOffset == 1 && bush.inBloom(Game1.GetSeasonForLocation(bush.currentLocation), Game1.dayOfMonth))
-                    {
-                        if (bush.size != 3 && bush.size != 4)
-                        {
-                            mod.BushesReadyForHarvest.Add(bush);
-                        }
-                    }
-                }
+                Game1.player.gainExperience(2, mod.Config.BerryBushXPAmount);
             }
         }
 
-        public static void FindBushShake(ForageFantasy mod)
+        public static void ChangeBerryQuality(Bush bush, ForageFantasy mod)
         {
-            // this feature is unnecessary if you are foraging level 10 and have the botanist perk
-            if (!Context.IsWorldReady || Game1.player.professions.Contains(16))
+            if (mod.Config.BerryBushQuality)
             {
-                return;
-            }
+                int shakeOff = -1;
 
-            for (int i = mod.BushesReadyForHarvest.Count - 1; i >= 0; i--)
-            {
-                Bush bush = mod.BushesReadyForHarvest[i];
-
-                if (bush != null && bush.tileSheetOffset.Value == 0)
+                if (Game1.currentSeason == "spring")
                 {
-                    mod.BushesReadyForHarvest.RemoveAt(i);
-
-                    var maxShake = mod.Helper.Reflection.GetField<float>(bush, "maxShake");
-
-                    if (maxShake.GetValue() > 0f)
-                    {
-                        ChangeBerryQualityAndRewardXP(bush, mod);
-                    }
+                    shakeOff = 296;
                 }
-            }
-        }
-
-        private static void ChangeBerryQualityAndRewardXP(Bush bush, ForageFantasy mod)
-        {
-            Farmer closestPlayer = null;
-            float smallestDistance = float.MaxValue;
-
-            foreach (Farmer player in Game1.getOnlineFarmers())
-            {
-                if (player != null && player.currentLocation == bush.currentLocation)
+                else if (Game1.currentSeason == "fall")
                 {
-                    float currentDistance = Vector2.Distance(player.getTileLocation(), bush.tilePosition);
-
-                    if (currentDistance < smallestDistance)
-                    {
-                        closestPlayer = player;
-                        smallestDistance = currentDistance;
-                    }
-                }
-            }
-
-            if (closestPlayer != null && closestPlayer == Game1.player)
-            {
-                double chance = mod.Config.BerryBushChanceToGetXP / 100.0;
-
-                if (mod.Config.BerryBushXPAmount > 0 && Game1.random.NextDouble() < chance)
-                {
-                    Game1.player.gainExperience(2, mod.Config.BerryBushXPAmount);
+                    shakeOff = 410;
                 }
 
-                if (mod.Config.BerryBushQuality)
+                foreach (var item in bush.currentLocation.debris)
                 {
-                    int shakeOff = -1;
-
-                    if (Game1.currentSeason == "spring")
+                    if (item.item.ParentSheetIndex == shakeOff)
                     {
-                        shakeOff = 296;
-                    }
-                    else if (Game1.currentSeason == "fall")
-                    {
-                        shakeOff = 410;
-                    }
+                        int quality = ForageFantasy.DetermineForageQuality(Game1.player);
 
-                    foreach (var item in bush.currentLocation.debris)
-                    {
-                        if (item.item.ParentSheetIndex == shakeOff)
-                        {
-                            int quality = ForageFantasy.DetermineForageQuality(closestPlayer);
-
-                            ((Object)item.item).Quality = quality;
-                        }
+                        ((StardewObject)item.item).Quality = quality;
                     }
                 }
             }
