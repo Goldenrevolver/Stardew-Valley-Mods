@@ -26,7 +26,13 @@
 
         List<string> GetBarnsWithWateredTrough();
 
-        bool IsAnimalFull(string displayName);
+        List<long> GetAnimalsLeftThirstyYesterday();
+
+        List<long> GetFullAnimals();
+
+        bool WasAnimalLeftThirstyYesterday(FarmAnimal animal);
+
+        bool IsAnimalFull(FarmAnimal animal);
     }
 
     //// planned features: healing item, display messages

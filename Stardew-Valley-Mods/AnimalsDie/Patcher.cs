@@ -168,14 +168,7 @@
 
                 if (mod.WaterMod != null)
                 {
-                    if (animal.isCoopDweller())
-                    {
-                        gotWater = mod.WaterMod.IsAnimalFull(animal.displayName) || (!wasLeftOutLastNight && mod.WaterMod.GetCoopsWithWateredTrough().Contains(animal.home.nameOfIndoors.ToLower()));
-                    }
-                    else
-                    {
-                        gotWater = mod.WaterMod.IsAnimalFull(animal.displayName) || (!wasLeftOutLastNight && mod.WaterMod.GetBarnsWithWateredTrough().Contains(animal.home.nameOfIndoors.ToLower()));
-                    }
+                    gotWater = !mod.WaterMod.WasAnimalLeftThirstyYesterday(animal);
 
                     int dehydration = mod.CalculateDehydration(animal, gotWater);
 

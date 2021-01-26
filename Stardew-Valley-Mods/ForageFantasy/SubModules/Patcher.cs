@@ -1,11 +1,10 @@
 ﻿namespace ForageFantasy
 {
     using Harmony;
-    using Pathoschild.Stardew.Automate;
-    using Pathoschild.Stardew.Automate.Framework;
     using StardewValley;
     using StardewValley.TerrainFeatures;
     using System;
+    using System.Reflection;
     using StardewObject = StardewValley.Object;
 
     internal class Patcher
@@ -46,7 +45,23 @@
                 {
                     mod.DebugLog("This mod patches Automate. If you notice issues with Automate, make sure it happens without this mod before reporting it to the Automate page.");
 
-                    var assembly = typeof(AutomateAPI).Assembly;
+                    // this is so ugly but I can't include a reference
+                    Assembly assembly = null;
+
+                    foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        if (item.GetName().Name.Trim() == "Automate")
+                        {
+                            assembly = item;
+                            break;
+                        }
+                    }
+
+                    if (assembly == null)
+                    {
+                        mod.ErrorLog($"Error while trying to patch Automate. Please report this to the mod page of {mod.ModManifest.Name}, not Automate.");
+                        return;
+                    }
 
                     // I don't see a use in using MachineWrapper because it's also internal I need to check for the type of the machine anyway which would be way too much reflection at runtime
                     var mushroomBox = assembly.GetType("Pathoschild.Stardew.Automate.Framework.Machines.Objects.MushroomBoxMachine");
@@ -65,12 +80,12 @@
 
                     harmony.Patch(
                        original: AccessTools.Method(berryBush, "GetOutput"),
-                       prefix: new HarmonyMethod(typeof(Patcher), nameof(PatchBushMachineOutput))
+                       postfix: new HarmonyMethod(typeof(Patcher), nameof(PatchPostBushMachineXP))
                     );
                 }
                 catch (Exception e)
                 {
-                    mod.ErrorLog("Error while trying to setup Automate patches:", e);
+                    mod.ErrorLog($"Error while trying to patch Automate. Please report this to the mod page of {mod.ModManifest.Name}, not Automate:", e);
                 }
             }
         }
@@ -229,7 +244,7 @@
             }
         }
 
-        public static bool PatchBushMachineOutput(ref object __instance, ref TrackedItem __result)
+        public static void PatchPostBushMachineXP()
         {
             try
             {
@@ -238,39 +253,12 @@
                     BerryBushLogic.RewardBerryXP(mod);
                 }
 
-                if (!mod.Config.BerryBushQuality)
-                {
-                    return true;
-                }
-
-                var bush = mod.Helper.Reflection.GetProperty<Bush>(__instance, "Machine").GetValue();
-
-                // tea bush
-                if (bush.size.Value == Bush.greenTeaBush)
-                {
-                    return true;
-                }
-
-                // berry bush
-                int itemId = Game1.currentSeason == "fall" ? 410 : 296; // blackberry or salmonberry
-                int quality = ForageFantasy.DetermineForageQuality(Game1.player);
-
-                int count = 1 + (Game1.player.ForagingLevel / 4);
-
-                __result = new TrackedItem(new StardewObject(itemId, initialStack: count, quality: quality), item => { OnOutputReduced(ref bush); });
-                return false;
+                // I can't give quality because I would need to get the return value of type TrackedItem, but Harmony only gives me null if I define object __result (unlike with variables)
             }
             catch (Exception e)
             {
                 mod.ErrorLog("There was an exception in a patch", e);
-                return true;
             }
-        }
-
-        private static void OnOutputReduced(ref Bush bush)
-        {
-            bush.tileSheetOffset.Value = 0;
-            bush.setUpSourceRect();
         }
     }
 }
