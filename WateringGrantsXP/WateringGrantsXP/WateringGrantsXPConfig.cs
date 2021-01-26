@@ -119,7 +119,7 @@
 
             api.RegisterSimpleOption(manifest, "Withering Feature Enabled", null, () => config.CropsCanDieWithoutWater, (bool val) => config.CropsCanDieWithoutWater = val);
             api.RegisterSimpleOption(manifest, "Days For Chance Of Withering", null, () => config.DaysWithoutWaterForChanceToDie, (int val) => config.DaysWithoutWaterForChanceToDie = val);
-            api.RegisterClampedOption(manifest, "Chance for Withering", null, () => config.ChanceToDieWhenLeftForTooLong, (int val) => config.ChanceToDieWhenLeftForTooLong = val, 0, 100);
+            api.RegisterClampedOption(manifest, "Chance For Withering", null, () => config.ChanceToDieWhenLeftForTooLong, (int val) => config.ChanceToDieWhenLeftForTooLong = val, 0, 100);
         }
     }
 }
