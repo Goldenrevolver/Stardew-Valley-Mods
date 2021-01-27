@@ -31,6 +31,11 @@
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Bush), "shake"),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DetectHarvestableBerryBush))
+                );
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Bush), "shake"),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixBerryQuality))
                 );
             }
@@ -169,19 +174,36 @@
             }
         }
 
-        public static void FixBerryQuality(ref Bush __instance)
+        [HarmonyPriority(Priority.High)]
+        public static bool DetectHarvestableBerryBush(ref Bush __instance, ref bool __state)
         {
             try
             {
-                // config calls are in the individual methods
-                if (BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset == 0)
+                // if other mods also define a __state variable of type bool they will have different values (aka harmony does not make us fight over the __state variable)
+                __state = BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset == 1;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                __state = false;
+                return true;
+            }
+        }
+
+        public static void FixBerryQuality(ref Bush __instance, ref bool __state)
+        {
+            try
+            {
+                // config calls are in ChangeBerryQualityAndGiveExp
+                if (__state && BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset == 0)
                 {
                     var maxShake = mod.Helper.Reflection.GetField<float>(__instance, "maxShake");
 
                     if (maxShake.GetValue() == 0.0245436933f)
                     {
-                        BerryBushLogic.RewardBerryXP(mod);
-                        BerryBushLogic.ChangeBerryQuality(__instance, mod);
+                        BerryBushLogic.ChangeBerryQualityAndGiveExp(__instance, mod);
                     }
                 }
             }

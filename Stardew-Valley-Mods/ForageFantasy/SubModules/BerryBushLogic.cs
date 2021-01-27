@@ -21,28 +21,36 @@
             }
         }
 
-        public static void ChangeBerryQuality(Bush bush, ForageFantasy mod)
+        public static void ChangeBerryQualityAndGiveExp(Bush bush, ForageFantasy mod)
         {
-            if (mod.Config.BerryBushQuality)
+            int shakeOff;
+
+            if (Game1.currentSeason == "spring")
             {
-                int shakeOff;
+                shakeOff = 296;
+            }
+            else if (Game1.currentSeason == "fall")
+            {
+                shakeOff = 410;
+            }
+            else
+            {
+                return;
+            }
 
-                if (Game1.currentSeason == "spring")
-                {
-                    shakeOff = 296;
-                }
-                else if (Game1.currentSeason == "fall")
-                {
-                    shakeOff = 410;
-                }
-                else
-                {
-                    return;
-                }
+            bool gaveExp = false;
 
-                foreach (var item in bush.currentLocation.debris)
+            foreach (var item in bush.currentLocation.debris)
+            {
+                if (item != null && item.item != null && item.item.ParentSheetIndex == shakeOff)
                 {
-                    if (item != null && item.item != null && item.item.ParentSheetIndex == shakeOff)
+                    if (!gaveExp)
+                    {
+                        gaveExp = true;
+                        RewardBerryXP(mod);
+                    }
+
+                    if (mod.Config.BerryBushQuality)
                     {
                         int quality = ForageFantasy.DetermineForageQuality(Game1.player);
 
