@@ -171,16 +171,23 @@
 
         public static void FixBerryQuality(ref Bush __instance)
         {
-            // config calls are in the individual methods
-            if (BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset == 0)
+            try
             {
-                var maxShake = mod.Helper.Reflection.GetField<float>(__instance, "maxShake");
-
-                if (maxShake.GetValue() == 0.0245436933f)
+                // config calls are in the individual methods
+                if (BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset == 0)
                 {
-                    BerryBushLogic.RewardBerryXP(mod);
-                    BerryBushLogic.ChangeBerryQuality(__instance, mod);
+                    var maxShake = mod.Helper.Reflection.GetField<float>(__instance, "maxShake");
+
+                    if (maxShake.GetValue() == 0.0245436933f)
+                    {
+                        BerryBushLogic.RewardBerryXP(mod);
+                        BerryBushLogic.ChangeBerryQuality(__instance, mod);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
             }
         }
 

@@ -25,7 +25,7 @@
         {
             if (mod.Config.BerryBushQuality)
             {
-                int shakeOff = -1;
+                int shakeOff;
 
                 if (Game1.currentSeason == "spring")
                 {
@@ -35,10 +35,14 @@
                 {
                     shakeOff = 410;
                 }
+                else
+                {
+                    return;
+                }
 
                 foreach (var item in bush.currentLocation.debris)
                 {
-                    if (item.item.ParentSheetIndex == shakeOff)
+                    if (item != null && item.item != null && item.item.ParentSheetIndex == shakeOff)
                     {
                         int quality = ForageFantasy.DetermineForageQuality(Game1.player);
 
