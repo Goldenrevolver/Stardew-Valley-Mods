@@ -169,7 +169,7 @@
 
                     if (mod.Config.ThinHorse)
                     {
-                        __instance.doEmote(20);
+                        __instance.doEmote(Character.heartEmote);
                     }
 
                     __result = true;

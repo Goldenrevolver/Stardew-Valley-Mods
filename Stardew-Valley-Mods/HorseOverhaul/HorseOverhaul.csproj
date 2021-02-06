@@ -74,11 +74,14 @@
     <Compile Include="HorseOverhaul.cs" />
     <Compile Include="HorseWrapper.cs" />
     <Compile Include="Patcher.cs" />
+    <Compile Include="PetMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="i18n\de.json" />
     <None Include="i18n\default.json" />
+    <None Include="i18n\ko.json" />
+    <None Include="i18n\zh.json" />
     <None Include="manifest.json" />
     <None Include="packages.config" />
   </ItemGroup>

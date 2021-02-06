@@ -8,8 +8,8 @@
   "No": "Nein",
   "GotPetted": "Gestreichelt: {{value}}",
   "GotWater": "Wasser gegeben: {{value}}",
-  "GotFood": "Extra Essen: {{value}}",
+  "GotFood": "Essen gegeben: {{value}}",
   "Friendship2": "Freundschaft: {{value}}",
-  "AteEnough": "{{horseName}} hat für heute genug gegessen.",
-  "AteFood": "{{horseName}} hat deine/n {{foodName}} gegessen."
+  "AteEnough": "{{name}} hat für heute genug gegessen.",
+  "AteFood": "{{name}} hat deine/n {{foodName}} gegessen."
 }

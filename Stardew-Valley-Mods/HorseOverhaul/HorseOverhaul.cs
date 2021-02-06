@@ -53,7 +53,7 @@
 
         private Lazy<Texture2D> EmptyTroughOverlay { get; set; }
 
-        //// TODO do the same interaction menu for the cat/dog, including feeding and also especially liked food
+        //// TODO add food preferences
         //// TODO fix menu for zoom
 
         public static bool IsTractor(Horse horse)
@@ -134,14 +134,14 @@
             usingMyTextures = false;
             FilledTroughOverlay = null;
 
-            ////if (Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
-            ////{
-            ////    // seasonal overlays are assigned in LateDayStarted
-            ////    EmptyTroughOverlay = null;
+            if (Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
+            {
+                // seasonal overlays are assigned in LateDayStarted
+                EmptyTroughOverlay = null;
 
-            ////    seasonalVersion = SeasonalVersion.Sonr;
-            ////    return;
-            ////}
+                seasonalVersion = SeasonalVersion.Sonr;
+                return;
+            }
 
             if (Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))
             {
@@ -345,6 +345,16 @@
             // for LateDayStarted, so we can change the textures after content patcher did
             dayJustStarted = true;
 
+            if (Game1.player.hasPet())
+            {
+                Pet pet = Game1.player.getPet();
+
+                if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
+                {
+                    pet.modData.Remove($"{ModManifest.UniqueID}/gotFed");
+                }
+            }
+
             foreach (Building building in Game1.getFarm().buildings)
             {
                 if (building is Stable stable && !IsGarage(stable))
@@ -526,9 +536,16 @@
 
             // this is done in buttonsChanged instead of buttonPressed as recommend
             // in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
-            if (Config.MenuKey.JustPressed())
+            if (Config.HorseMenuKey.JustPressed())
             {
                 OpenHorseMenu();
+                return;
+            }
+
+            if (Config.PetMenuKey.JustPressed())
+            {
+                OpenPetMenu();
+                return;
             }
         }
 
@@ -552,10 +569,9 @@
                     continue;
                 }
 
-                if (Utility.withinRadiusOfPlayer((int)horse.Position.X, (int)horse.Position.Y, 1, Game1.player)
-                && (Utility.distance(x, horse.Position.X, y, horse.Position.Y) <= 110 || wasController))
+                if (IsInRange(horse, x, y, wasController))
                 {
-                    if (Game1.player.CurrentItem != null && Config.Food)
+                    if (Game1.player.CurrentItem != null && Config.Feeding)
                     {
                         // Holding food
                         Item currentItem = Game1.player.CurrentItem;
@@ -565,15 +581,15 @@
 
                             if (horseW.GotFed)
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { horseName = horse.name }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { horseName = horse.displayName }));
                             }
                             else
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { horseName = horse.name, foodName = food.DisplayName }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { horseName = horse.displayName, foodName = food.DisplayName }));
 
                                 if (Config.ThinHorse)
                                 {
-                                    horse.doEmote(20);
+                                    horse.doEmote(Character.happyEmote);
                                 }
 
                                 Game1.player.reduceActiveItemByOne();
@@ -595,6 +611,51 @@
                     }
                 }
             }
+
+            if (Config.PetFeeding && Game1.player.hasPet())
+            {
+                Pet pet = Game1.player.getPet();
+
+                if (pet != null)
+                {
+                    if (IsInRange(pet, x, y, wasController))
+                    {
+                        if (Game1.player.CurrentItem != null)
+                        {
+                            // Holding food
+                            Item currentItem = Game1.player.CurrentItem;
+                            if (IsEdible(currentItem))
+                            {
+                                Item food = Game1.player.CurrentItem;
+
+                                if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
+                                {
+                                    Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = pet.displayName }));
+                                }
+                                else
+                                {
+                                    pet.modData.Add($"{ModManifest.UniqueID}/gotFed", "fed");
+
+                                    Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = pet.displayName, foodName = food.DisplayName }));
+
+                                    pet.doEmote(Character.happyEmote);
+
+                                    Game1.player.reduceActiveItemByOne();
+
+                                    pet.friendshipTowardFarmer.Set(Math.Min(1000, pet.friendshipTowardFarmer.Value + CalculateExpGain(currentItem, pet.friendshipTowardFarmer.Value)));
+                                }
+
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private bool IsInRange(Character chara, int x, int y, bool wasController)
+        {
+            return Utility.withinRadiusOfPlayer((int)chara.Position.X, (int)chara.Position.Y, 1, Game1.player) && (Utility.distance(x, chara.Position.X, y, chara.Position.Y) <= 110 || wasController);
         }
 
         private void OpenHorseMenu(int? x = null, int? y = null)
@@ -609,8 +670,22 @@
                 {
                     Game1.activeClickableMenu = new HorseMenu(this, horse);
                 }
+            }
+        }
 
-                return;
+        private void OpenPetMenu(int? x = null, int? y = null)
+        {
+            if (x == null && y == null)
+            {
+                if (Game1.player.hasPet())
+                {
+                    Pet pet = Game1.player.getPet();
+
+                    if (pet != null)
+                    {
+                        Game1.activeClickableMenu = new PetMenu(this, pet);
+                    }
+                }
             }
         }
 

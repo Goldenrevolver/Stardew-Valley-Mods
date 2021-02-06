@@ -48,9 +48,13 @@
 
         public bool Water { get; set; } = true;
 
-        public bool Food { get; set; } = true;
+        public bool Feeding { get; set; } = true;
 
-        public KeybindList MenuKey { get; set; } = KeybindList.Parse("H");
+        public bool PetFeeding { get; set; } = true;
+
+        public KeybindList HorseMenuKey { get; set; } = KeybindList.Parse("H");
+
+        public KeybindList PetMenuKey { get; set; } = KeybindList.Parse("P");
 
         public bool DisableStableSpriteChanges { get; set; } = false;
 
@@ -95,11 +99,12 @@
             api.RegisterSimpleOption(manifest, "Maximum MS Bonus", null, () => config.MaxMovementSpeedBonus, (float val) => config.MaxMovementSpeedBonus = val);
             api.RegisterSimpleOption(manifest, "Petting", null, () => config.Petting, (bool val) => config.Petting = val);
             api.RegisterSimpleOption(manifest, "Water", null, () => config.Water, (bool val) => config.Water = val);
-            api.RegisterSimpleOption(manifest, "Extra Food", null, () => config.Food, (bool val) => config.Food = val);
+            api.RegisterSimpleOption(manifest, "Feeding", null, () => config.Feeding, (bool val) => config.Feeding = val);
 
             api.RegisterLabel(manifest, "Other", null);
 
             api.RegisterSimpleOption(manifest, "Disable Stable Sprites", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
+            api.RegisterSimpleOption(manifest, "Pet Feeding", null, () => config.PetFeeding, (bool val) => config.PetFeeding = val);
 
             api.RegisterLabel(manifest, "(Menu Key Rebinding Only Available In Config File)", null);
         }
