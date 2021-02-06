@@ -1,10 +1,19 @@
-﻿using StardewValley.Characters;
-using StardewValley.Objects;
-
-namespace HorseOverhaul
+﻿namespace HorseOverhaul
 {
+    using StardewValley.Characters;
+    using StardewValley.Objects;
+
     public class HorseWrapper
     {
+        private HorseOverhaul mod;
+
+        public HorseWrapper(Horse horse, HorseOverhaul mod, Chest saddleBag)
+        {
+            Horse = horse;
+            this.mod = mod;
+            SaddleBag = saddleBag;
+        }
+
         public Horse Horse { get; set; }
 
         public bool WasPet { get; set; }
@@ -17,15 +26,6 @@ namespace HorseOverhaul
 
         public int Friendship { get => GetFriendship(Horse); set => SetFriendship(Horse, value); }
 
-        private HorseOverhaul mod;
-
-        public HorseWrapper(Horse horse, HorseOverhaul mod, Chest saddleBag)
-        {
-            Horse = horse;
-            this.mod = mod;
-            SaddleBag = saddleBag;
-        }
-
         public void JustGotWater()
         {
             if (!GotWater)
@@ -35,12 +35,12 @@ namespace HorseOverhaul
             }
         }
 
-        public void JustGotFood(int xpAmount)
+        public void JustGotFood(int expAmount)
         {
             if (!GotFed)
             {
                 GotFed = true;
-                Friendship += xpAmount;
+                Friendship += expAmount;
             }
         }
 

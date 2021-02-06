@@ -1,39 +1,70 @@
-﻿using Harmony;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using StardewModdingAPI;
-using StardewModdingAPI.Events;
-using StardewValley;
-using StardewValley.Buildings;
-using StardewValley.Characters;
-using StardewValley.Objects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace HorseOverhaul
+﻿namespace HorseOverhaul
 {
+    using Harmony;
+    using Microsoft.Xna.Framework;
+    using Microsoft.Xna.Framework.Graphics;
+    using StardewModdingAPI;
+    using StardewModdingAPI.Events;
+    using StardewModdingAPI.Utilities;
+    using StardewValley;
+    using StardewValley.Buildings;
+    using StardewValley.Characters;
+    using StardewValley.Objects;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
+    public enum SeasonalVersion
+    {
+        None,
+        Sonr,
+        Gwen
+    }
+
     public class HorseOverhaul : Mod, IAssetEditor
     {
-        // how stable cords look
+        //// how stable cords look
 
-        // (tile.x, tile.y), (tile.x+1, tile.y), (tile.x+2, tile.y), (tile.x+3, tile.y)
-        // (tile.x, tile.y+1), (tile.x+1, tile.y+1), (tile.x+2, tile.y+1), (tile.x+3, tile.y+1)
-
-        //public static int openMenuX;
-
-        //public static int openMenuY;
-
-        //public const int INVENTORY_TAB = 0;
+        //// (tile.x, tile.y), (tile.x+1, tile.y), (tile.x+2, tile.y), (tile.x+3, tile.y)
+        //// (tile.x, tile.y+1), (tile.x+1, tile.y+1), (tile.x+2, tile.y+1), (tile.x+3, tile.y+1)
 
         public readonly List<HorseWrapper> Horses = new List<HorseWrapper>();
+
+        private string gwenOption = "1";
+
+        private bool usingMyTextures = false;
+
+        private bool dayJustStarted = false;
+
+        private SeasonalVersion seasonalVersion = SeasonalVersion.None;
 
         public Texture2D HorseSpriteWithHead { get; set; }
 
         public HorseConfig Config { get; set; }
 
-        // TODO do the same interaction menu for the cat/dog, including feeding and also especially liked food
-        // TODO fix menu for zoom
+        public Lazy<Texture2D> CurrentStableTexture => new Lazy<Texture2D>(() => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent));
+
+        public Lazy<Texture2D> FilledTroughTexture => FilledTroughOverlay == null ? CurrentStableTexture : MergeTextures(FilledTroughOverlay, CurrentStableTexture);
+
+        public Lazy<Texture2D> EmptyTroughTexture => EmptyTroughOverlay == null ? CurrentStableTexture : MergeTextures(EmptyTroughOverlay, CurrentStableTexture);
+
+        private Lazy<Texture2D> FilledTroughOverlay { get; set; }
+
+        private Lazy<Texture2D> EmptyTroughOverlay { get; set; }
+
+        //// TODO do the same interaction menu for the cat/dog, including feeding and also especially liked food
+        //// TODO fix menu for zoom
+
+        public static bool IsTractor(Horse horse)
+        {
+            return horse?.modData.TryGetValue("Pathoschild.TractorMod", out _) == true || horse?.Name.StartsWith("tractor/") == true;
+        }
+
+        public static bool IsGarage(Stable stable)
+        {
+            return stable != null && (stable.maxOccupants.Value == -794739 || stable.buildingType.Value == "TractorGarage");
+        }
 
         public override void Entry(IModHelper helper)
         {
@@ -43,20 +74,21 @@ namespace HorseOverhaul
 
             Helper.Events.GameLoop.GameLaunched += delegate { HorseConfig.SetUpModConfigMenu(Config, this); };
 
+            Helper.Events.GameLoop.SaveLoaded += delegate { SetStableOverlays(); };
+
             Helper.Events.GameLoop.Saving += delegate { SaveChest(); };
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
+            helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
 
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Input.ButtonsChanged += OnButtonsChanged;
-
-            //helper.Events.Display.MenuChanged += OnMenuChanged;
 
             Patcher.PatchAll(this);
         }
 
         public bool CanEdit<T>(IAssetInfo asset)
         {
-            return asset.AssetName == "Animals\\horse" && Config.ThinHorse;
+            return asset.AssetNameEquals("Animals/horse") && Config.ThinHorse;
         }
 
         public void Edit<T>(IAssetData asset)
@@ -73,7 +105,231 @@ namespace HorseOverhaul
                 HorseSpriteWithHead.SetData(data);
 
                 Texture2D sourceImage = Helper.Content.Load<Texture2D>("assets/empty.png", ContentSource.ModFolder);
-                editor.PatchImage(sourceImage, targetArea: new Rectangle?(new Rectangle(160, 96, 9, 15)));
+                editor.PatchImage(sourceImage, targetArea: new Microsoft.Xna.Framework.Rectangle?(new Rectangle(160, 96, 9, 15)));
+            }
+        }
+
+        public void DebugLog(object o)
+        {
+            Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
+        }
+
+        public void ErrorLog(object o, Exception e = null)
+        {
+            string baseMessage = o == null ? "null" : o.ToString();
+
+            string errorMessage = e == null ? string.Empty : $"\n{e.Message}\n{e.StackTrace}";
+
+            Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
+        }
+
+        private void SetStableOverlays()
+        {
+            if (!Config.Water)
+            {
+                return;
+            }
+
+            seasonalVersion = SeasonalVersion.None;
+            usingMyTextures = false;
+            FilledTroughOverlay = null;
+
+            ////if (Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
+            ////{
+            ////    // seasonal overlays are assigned in LateDayStarted
+            ////    EmptyTroughOverlay = null;
+
+            ////    seasonalVersion = SeasonalVersion.Sonr;
+            ////    return;
+            ////}
+
+            if (Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))
+            {
+                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder));
+
+                return;
+            }
+
+            if (Helper.ModRegistry.IsLoaded("Elle.SeasonalBuildings"))
+            {
+                var data = Helper.ModRegistry.Get("Elle.SeasonalBuildings");
+
+                var path = data.GetType().GetProperty("DirectoryPath");
+
+                if (path != null && path.GetValue(data) != null)
+                {
+                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "color palette", "stable" }, data.Manifest.Name);
+
+                    if (list["stable"] != "false")
+                    {
+                        EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/elle/overlay_empty_{list["color palette"]}.png", ContentSource.ModFolder));
+
+                        return;
+                    }
+                }
+            }
+
+            if (Helper.ModRegistry.IsLoaded("Elle.SeasonalVanillaBuildings"))
+            {
+                var data = Helper.ModRegistry.Get("Elle.SeasonalVanillaBuildings");
+
+                var path = data.GetType().GetProperty("DirectoryPath");
+
+                if (path != null && path.GetValue(data) != null)
+                {
+                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stable" }, data.Manifest.Name);
+
+                    if (list["stable"] == "true")
+                    {
+                        FilledTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_filled_tone.png", ContentSource.ModFolder));
+                        EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty_tone.png", ContentSource.ModFolder));
+
+                        return;
+                    }
+                }
+            }
+
+            if (Helper.ModRegistry.IsLoaded("Gweniaczek.Medieval_stables"))
+            {
+                IModInfo data = Helper.ModRegistry.Get("Gweniaczek.Medieval_stables");
+
+                var path = data.GetType().GetProperty("DirectoryPath");
+
+                if (path != null && path.GetValue(data) != null)
+                {
+                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stableOption" }, data.Manifest.Name);
+
+                    SetupGwenTextures(dict);
+
+                    return;
+                }
+            }
+
+            if (Helper.ModRegistry.IsLoaded("Gweniaczek.Medieval_buildings"))
+            {
+                var data = Helper.ModRegistry.Get("Gweniaczek.Medieval_buildings");
+
+                var path = data.GetType().GetProperty("DirectoryPath");
+
+                if (path != null && path.GetValue(data) != null)
+                {
+                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "buildingsReplaced", "stableOption" }, data.Manifest.Name);
+
+                    if (dict["buildingsReplaced"].Contains("stable"))
+                    {
+                        SetupGwenTextures(dict);
+
+                        return;
+                    }
+                }
+            }
+
+            if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings"))
+            {
+                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty_no_bucket.png", ContentSource.ModFolder));
+
+                return;
+            }
+
+            // no compatible texture mod found so we will use mine
+            usingMyTextures = true;
+
+            EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder));
+        }
+
+        private void SetupGwenTextures(Dictionary<string, string> dict)
+        {
+            if (dict["stableOption"] == "4")
+            {
+                FilledTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}_full.png", ContentSource.ModFolder));
+            }
+
+            EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}.png", ContentSource.ModFolder));
+
+            seasonalVersion = SeasonalVersion.Gwen;
+            gwenOption = dict["stableOption"];
+        }
+
+        private Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName)
+        {
+            string fullPath = Path.Combine(modFolderPath, PathUtilities.NormalizePath(path));
+
+            var result = new Dictionary<string, string>();
+
+            try
+            {
+                string fullText = File.ReadAllText(fullPath).ToLower();
+                var split = fullText.Split('\"');
+
+                for (int i = 0; i < split.Length; i++)
+                {
+                    foreach (var option in options)
+                    {
+                        if (option.ToLower() == split[i].Trim() && i + 2 < split.Length)
+                        {
+                            string optionText = split[i + 2].Trim();
+
+                            result.Add(option, optionText);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorLog($"There was an exception while {ModManifest.Name} was reading the config for {modName}:", e);
+            }
+
+            return result;
+        }
+
+        private Lazy<Texture2D> MergeTextures(Lazy<Texture2D> overlay, Lazy<Texture2D> oldTexture)
+        {
+            int count = overlay.Value.Width * overlay.Value.Height;
+            var newData = new Color[count];
+            overlay.Value.GetData(newData);
+            var origData = new Color[count];
+            oldTexture.Value.GetData(origData);
+
+            for (int i = 0; i < newData.Length; i++)
+            {
+                newData[i] = newData[i].A != 0 ? newData[i] : origData[i];
+            }
+
+            oldTexture.Value.SetData(newData);
+            return oldTexture;
+        }
+
+        private void LateDayStarted()
+        {
+            if (!Context.IsWorldReady || !dayJustStarted || !Config.Water || Config.DisableStableSpriteChanges)
+            {
+                return;
+            }
+
+            dayJustStarted = false;
+
+            if (seasonalVersion == SeasonalVersion.Sonr)
+            {
+                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/sonr/overlay_empty_{Game1.currentSeason}.png", ContentSource.ModFolder));
+            }
+            else if (seasonalVersion == SeasonalVersion.Gwen)
+            {
+                if (Game1.currentSeason == "winter" && Game1.isSnowing)
+                {
+                    EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_1_snow_peta.png", ContentSource.ModFolder));
+                }
+                else
+                {
+                    EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{gwenOption}.png", ContentSource.ModFolder));
+                }
+            }
+
+            foreach (Building building in Game1.getFarm().buildings)
+            {
+                if (building is Stable stable && !IsGarage(stable))
+                {
+                    stable.texture = EmptyTroughTexture;
+                }
             }
         }
 
@@ -86,23 +342,18 @@ namespace HorseOverhaul
 
             Horses.Clear();
 
+            // for LateDayStarted, so we can change the textures after content patcher did
+            dayJustStarted = true;
+
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable)
+                if (building is Stable stable && !IsGarage(stable))
                 {
-                    if (Config.Water)
-                    {
-                        stable.texture = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>("assets/stable_empty.png"));
-                    }
-
                     Chest saddleBag = null;
 
-                    int stableID = 0;
+                    stable.modData.TryGetValue($"{ModManifest.UniqueID}/stableID", out string modData);
 
-                    string modData;
-
-                    stable.modData.TryGetValue($"{ModManifest.UniqueID}/stableID", out modData);
-
+                    int stableID;
                     if (string.IsNullOrEmpty(modData))
                     {
                         if (Config.SaddleBag)
@@ -118,6 +369,7 @@ namespace HorseOverhaul
                                     stableID = i;
                                     break;
                                 }
+
                                 i++;
                             }
 
@@ -185,7 +437,7 @@ namespace HorseOverhaul
 
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable)
+                if (building is Stable stable && !IsGarage(stable))
                 {
                     stable.getStableHorse().forceOneTileWide.Value = false;
 
@@ -206,6 +458,7 @@ namespace HorseOverhaul
                                 stableID = i;
                                 break;
                             }
+
                             i++;
                         }
 
@@ -257,11 +510,10 @@ namespace HorseOverhaul
 
             if (e.Button.IsUseToolButton())
             {
+                bool wasController = e.Button.TryGetController(out _);
                 Point cursorPosition = Game1.getMousePosition();
 
-                CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y);
-
-                //OpenHorseMenu(cursorPosition.X, cursorPosition.Y);
+                CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
             }
         }
 
@@ -272,22 +524,23 @@ namespace HorseOverhaul
                 return;
             }
 
-            // this is done in buttonsChanged instead of buttonPressed as recommend in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
+            // this is done in buttonsChanged instead of buttonPressed as recommend
+            // in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
             if (Config.MenuKey.JustPressed())
             {
                 OpenHorseMenu();
             }
         }
 
-        private void CheckHorseInteraction(GameLocation currentLocation, int x, int y)
+        private void CheckHorseInteraction(GameLocation currentLocation, int x, int y, bool wasController)
         {
             // Find if click was on Horse
             foreach (Horse horse in currentLocation.characters.OfType<Horse>())
             {
                 // Can only feed your own horse
-                if (horse.getOwner() != Game1.player && horse.getName() == Game1.player.horseName)
+                if (horse.getOwner() != Game1.player || IsTractor(horse))
                 {
-                    return;
+                    continue;
                 }
 
                 HorseWrapper horseW = null;
@@ -296,11 +549,11 @@ namespace HorseOverhaul
 
                 if (horseW == null)
                 {
-                    return;
+                    continue;
                 }
 
-                if (Utility.withinRadiusOfPlayer((int)(horse.Position.X), (int)(horse.Position.Y), 1, Game1.player)
-                && (Utility.distance((float)x, horse.Position.X, (float)y, horse.Position.Y) <= 110))
+                if (Utility.withinRadiusOfPlayer((int)horse.Position.X, (int)horse.Position.Y, 1, Game1.player)
+                && (Utility.distance(x, horse.Position.X, y, horse.Position.Y) <= 110 || wasController))
                 {
                     if (Game1.player.CurrentItem != null && Config.Food)
                     {
@@ -316,7 +569,7 @@ namespace HorseOverhaul
                             }
                             else
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { horseName = horse.name, foodName = food.Name }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { horseName = horse.name, foodName = food.DisplayName }));
 
                                 if (Config.ThinHorse)
                                 {
@@ -337,6 +590,7 @@ namespace HorseOverhaul
                         if (horseW.SaddleBag != null)
                         {
                             horseW.SaddleBag.ShowMenu();
+                            return;
                         }
                     }
                 }
@@ -358,42 +612,6 @@ namespace HorseOverhaul
 
                 return;
             }
-
-            // TODO fix this including for zoom
-            //if (Game1.activeClickableMenu is GameMenu menu)
-            //{
-            //    if (menu.currentTab == INVENTORY_TAB)
-            //    {
-            //        Vector2 rectangle = new Vector2((float)((double)(openMenuX + Game1.tileSize * 5 + Game1.pixelZoom * 2) + (double)Math.Max((float)Game1.tileSize, Game1.dialogueFont.MeasureString(Game1.player.name).X / 2f) + (Game1.player.getPetDisplayName() != null ? (double)Math.Max((float)Game1.tileSize, Game1.dialogueFont.MeasureString(Game1.player.getPetDisplayName()).X) : 0.0)), (float)(openMenuY + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + 7 * Game1.tileSize - Game1.pixelZoom));
-            //        if (Utility.distance((float)x, rectangle.X, (float)y, rectangle.Y) <= 100)
-            //        {
-            //            HorseWrapper horse = null;
-
-            //            Horses.Where(h => h.Horse.getOwner() == Game1.player && h.Horse.getName() == Game1.player.horseName).Do(h => horse = h);
-
-            //            if (horse != null)
-            //            {
-            //                Game1.activeClickableMenu = (IClickableMenu)new HorseMenu(this, horse);
-            //            }
-
-            //            return;
-            //        }
-            //    }
-            //}
-        }
-
-        public void DebugLog(object o)
-        {
-            Monitor.Log(o == null ? "null" : o.ToString(), LogLevel.Debug);
-        }
-
-        public void ErrorLog(object o, Exception e = null)
-        {
-            string baseMessage = o == null ? "null" : o.ToString();
-
-            string errorMessage = e == null ? string.Empty : $"\n{e.Message}\n{e.StackTrace}";
-
-            Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
         }
 
         private bool IsEdible(Item item)
@@ -415,30 +633,12 @@ namespace HorseOverhaul
         {
             if (item.getCategoryName() == "Cooking")
             {
-                return (int)Math.Floor((10 + item.healthRecoveredOnConsumption() / 10) * Math.Pow(1.2, -currentFriendship / 200));
+                return (int)Math.Floor((10 + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
             }
             else
             {
-                return (int)Math.Floor((5 + item.healthRecoveredOnConsumption() / 10) * Math.Pow(1.2, -currentFriendship / 200));
+                return (int)Math.Floor((5 + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
             }
         }
-
-        //private void OnMenuChanged(object sender, MenuChangedEventArgs args)
-        //{
-        //    if (!Context.IsMainPlayer)
-        //    {
-        //        return;
-        //    }
-        //    if (args.NewMenu is GameMenu gm)
-        //    {
-        //        openMenuX = gm.xPositionOnScreen;
-        //        openMenuY = gm.yPositionOnScreen;
-        //    }
-        //    else if (args.OldMenu is GameMenu ogm)
-        //    {
-        //        openMenuX = ogm.xPositionOnScreen;
-        //        openMenuY = ogm.yPositionOnScreen;
-        //    }
-        //}
     }
 }

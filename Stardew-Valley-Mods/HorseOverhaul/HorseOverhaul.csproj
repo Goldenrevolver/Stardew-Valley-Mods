@@ -83,9 +83,29 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\elle\overlay_empty_earthy.png" />
+    <Content Include="assets\elle\overlay_empty_eemie.png" />
+    <Content Include="assets\elle\overlay_empty_elle.png" />
+    <Content Include="assets\elle\overlay_empty_foliage.png" />
+    <Content Include="assets\elle\overlay_empty_starblue.png" />
+    <Content Include="assets\elle\overlay_empty_vanilla.png" />
+    <Content Include="assets\elle\overlay_empty_wittily.png" />
     <Content Include="assets\empty.png" />
+    <Content Include="assets\gwen\overlay_1.png" />
+    <Content Include="assets\gwen\overlay_1_snow_peta.png" />
+    <Content Include="assets\gwen\overlay_2.png" />
+    <Content Include="assets\gwen\overlay_3.png" />
+    <Content Include="assets\gwen\overlay_4.png" />
+    <Content Include="assets\gwen\overlay_4_full.png" />
+    <Content Include="assets\overlay_empty.png" />
+    <Content Include="assets\overlay_empty_no_bucket.png" />
+    <Content Include="assets\overlay_empty_tone.png" />
+    <Content Include="assets\overlay_filled_tone.png" />
+    <Content Include="assets\sonr\overlay_empty_fall.png" />
+    <Content Include="assets\sonr\overlay_empty_spring.png" />
+    <Content Include="assets\sonr\overlay_empty_summer.png" />
+    <Content Include="assets\sonr\overlay_empty_winter.png" />
     <Content Include="assets\stable.png" />
-    <Content Include="assets\stable_empty.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Pathoschild.Stardew.ModBuildConfig.3.2.2\build\Pathoschild.Stardew.ModBuildConfig.targets" Condition="Exists('..\packages\Pathoschild.Stardew.ModBuildConfig.3.2.2\build\Pathoschild.Stardew.ModBuildConfig.targets')" />

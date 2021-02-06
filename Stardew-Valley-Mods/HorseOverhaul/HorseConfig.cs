@@ -52,6 +52,8 @@
 
         public KeybindList MenuKey { get; set; } = KeybindList.Parse("H");
 
+        public bool DisableStableSpriteChanges { get; set; } = false;
+
         public static void VerifyConfigValues(HorseConfig config, HorseOverhaul mod)
         {
             bool invalidConfig = false;
@@ -94,6 +96,10 @@
             api.RegisterSimpleOption(manifest, "Petting", null, () => config.Petting, (bool val) => config.Petting = val);
             api.RegisterSimpleOption(manifest, "Water", null, () => config.Water, (bool val) => config.Water = val);
             api.RegisterSimpleOption(manifest, "Extra Food", null, () => config.Food, (bool val) => config.Food = val);
+
+            api.RegisterLabel(manifest, "Other", null);
+
+            api.RegisterSimpleOption(manifest, "Disable Stable Sprites", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
 
             api.RegisterLabel(manifest, "(Menu Key Rebinding Only Available In Config File)", null);
         }

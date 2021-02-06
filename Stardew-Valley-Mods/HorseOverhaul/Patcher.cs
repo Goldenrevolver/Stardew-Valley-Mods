@@ -1,16 +1,16 @@
-﻿using Harmony;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using StardewModdingAPI;
-using StardewValley;
-using StardewValley.Buildings;
-using StardewValley.Characters;
-using StardewValley.Tools;
-using System;
-using System.Linq;
-
-namespace HorseOverhaul
+﻿namespace HorseOverhaul
 {
+    using Harmony;
+    using Microsoft.Xna.Framework;
+    using Microsoft.Xna.Framework.Graphics;
+    using StardewModdingAPI;
+    using StardewValley;
+    using StardewValley.Buildings;
+    using StardewValley.Characters;
+    using StardewValley.Tools;
+    using System;
+    using System.Linq;
+
     public class Patcher
     {
         private static HorseOverhaul mod;
@@ -82,13 +82,16 @@ namespace HorseOverhaul
                 {
                     foreach (Building building in Game1.getFarm().buildings)
                     {
-                        if (building is Stable stable)
+                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable))
                         {
                             bool doesXHit = stable.tileX.Value + 1 == tileX || stable.tileX.Value + 2 == tileX;
 
-                            if (doesXHit && stable.tileY == tileY)
+                            if (doesXHit && stable.tileY.Value == tileY)
                             {
-                                stable.texture = new Lazy<Texture2D>(() => mod.Helper.Content.Load<Texture2D>("assets/stable.png"));
+                                if (!mod.Config.DisableStableSpriteChanges)
+                                {
+                                    stable.texture = mod.FilledTroughTexture;
+                                }
 
                                 mod.Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => x.JustGotWater());
                             }
@@ -106,7 +109,7 @@ namespace HorseOverhaul
         {
             try
             {
-                if (!mod.Config.SaddleBag)
+                if (!mod.Config.SaddleBag || HorseOverhaul.IsGarage(__instance))
                 {
                     return true;
                 }
@@ -144,7 +147,7 @@ namespace HorseOverhaul
         {
             try
             {
-                if (!mod.Config.Petting)
+                if (!mod.Config.Petting || HorseOverhaul.IsTractor(__instance))
                 {
                     return true;
                 }
@@ -242,10 +245,10 @@ namespace HorseOverhaul
                             break;
                     }
 
-                    b.Draw(Game1.emoteSpriteSheet, emotePosition, new Microsoft.Xna.Framework.Rectangle?(new Rectangle(__instance.CurrentEmoteIndex * 16 % Game1.emoteSpriteSheet.Width, __instance.CurrentEmoteIndex * 16 / Game1.emoteSpriteSheet.Width * 16, 16, 16)), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, __instance.getStandingY() / 10000f);
+                    b.Draw(Game1.emoteSpriteSheet, emotePosition, new Microsoft.Xna.Framework.Rectangle?(new Rectangle((__instance.CurrentEmoteIndex * 16) % Game1.emoteSpriteSheet.Width, __instance.CurrentEmoteIndex * 16 / Game1.emoteSpriteSheet.Width * 16, 16, 16)), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, __instance.getStandingY() / 10000f);
                 }
 
-                if (__instance.FacingDirection == 2 && __instance.rider != null)
+                if (__instance.FacingDirection == 2 && __instance.rider != null && !HorseOverhaul.IsTractor(__instance))
                 {
                     b.Draw(mod.HorseSpriteWithHead, __instance.getLocalPosition(Game1.viewport) + new Vector2(16f, -24f - __instance.rider.yOffset), new Rectangle?(new Rectangle(160, 96, 9, 15)), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, (__instance.Position.Y + 64f) / 10000f);
                 }
@@ -286,7 +289,7 @@ namespace HorseOverhaul
 
                     case 1:
                         __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, false);
-                        __instance.xOffset = 4f;
+                        __instance.xOffset = 5f;
                         break;
 
                     case 2:
@@ -299,11 +302,13 @@ namespace HorseOverhaul
                         __instance.xOffset = 0f;
                         break;
                 }
+
                 if (!__instance.isMoving())
                 {
                     __instance.yOffset = 0f;
                     return false;
                 }
+
                 switch (__instance.mount.Sprite.currentAnimationIndex)
                 {
                     case 0:
@@ -349,7 +354,7 @@ namespace HorseOverhaul
                 {
                     Horse horse = __instance.mount;
 
-                    if (horse != null)
+                    if (horse != null && !HorseOverhaul.IsTractor(horse))
                     {
                         float addedMovementSpeed = 0f;
                         mod.Horses.Where(x => x.Horse == horse).Do(x => addedMovementSpeed = x.GetMovementSpeedBonus());

@@ -1,31 +1,32 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using StardewValley;
-using StardewValley.Menus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace HorseOverhaul
+﻿namespace HorseOverhaul
 {
+    using Microsoft.Xna.Framework;
+    using Microsoft.Xna.Framework.Graphics;
+    using Microsoft.Xna.Framework.Input;
+    using StardewValley;
+    using StardewValley.Menus;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
     public class HorseMenu : IClickableMenu
     {
-        private new static int width = Game1.tileSize * 6;
-        private new static int height = Game1.tileSize * 8;
+        private static new int width = Game1.tileSize * 6;
+        private static new int height = Game1.tileSize * 8;
 
         private string hoverText = string.Empty;
 
-        private const int region_okButton = 101;
-        private const int region_love = 102;
-        private const int region_sellButton = 103;
-        private const int region_fullnessHover = 107;
-        private const int region_happinessHover = 108;
-        private const int region_loveHover = 109;
-        private const int region_textBoxCC = 110;
+        //// private const int region_okButton = 101;
+        //// private const int region_love = 102;
+        //// private const int region_sellButton = 103;
+        //// private const int region_fullnessHover = 107;
+        //// private const int region_happinessHover = 108;
+        //// private const int region_loveHover = 109;
+        //// private const int region_textBoxCC = 110;
 
         private TextBox textBox;
-        private ClickableTextureComponent okButton;
+        private ClickableTextureComponent okayButton;
+
         private ClickableTextureComponent love;
         private ClickableComponent loveHover;
         private ClickableComponent textBoxCC;
@@ -35,7 +36,7 @@ namespace HorseOverhaul
         private HorseOverhaul mod;
 
         public HorseMenu(HorseOverhaul mod, HorseWrapper horse)
-          : base(Game1.viewport.Width / 2 - HorseMenu.width / 2, Game1.viewport.Height / 2 - HorseMenu.height / 2, HorseMenu.width, HorseMenu.height, false)
+          : base((Game1.viewport.Width / 2) - (HorseMenu.width / 2), (Game1.viewport.Height / 2) - (HorseMenu.height / 2), HorseMenu.width, HorseMenu.height, false)
         {
             this.mod = mod;
             Game1.player.Halt();
@@ -43,12 +44,12 @@ namespace HorseOverhaul
             HorseMenu.height = Game1.tileSize * 8;
 
             this.textBox = new TextBox((Texture2D)null, (Texture2D)null, Game1.dialogueFont, Game1.textColor);
-            this.textBox.X = Game1.viewport.Width / 2 - Game1.tileSize * 2 - 12;
-            this.textBox.Y = this.yPositionOnScreen - 4 + Game1.tileSize * 2;
+            this.textBox.X = (Game1.viewport.Width / 2) - (Game1.tileSize * 2) - 12;
+            this.textBox.Y = this.yPositionOnScreen - 4 + (Game1.tileSize * 2);
             this.textBox.Width = Game1.tileSize * 4;
             this.textBox.Height = Game1.tileSize * 3;
 
-            this.textBoxCC = new ClickableComponent(new Rectangle(this.textBox.X, this.textBox.Y, this.textBox.Width, Game1.tileSize), "")
+            this.textBoxCC = new ClickableComponent(new Rectangle(this.textBox.X, this.textBox.Y, this.textBox.Width, Game1.tileSize), string.Empty)
             {
                 myID = 110,
                 downNeighborID = 104
@@ -62,17 +63,17 @@ namespace HorseOverhaul
             textureComponent1.myID = num1;
             int num2 = 103;
             textureComponent1.upNeighborID = num2;
-            this.okButton = textureComponent1;
+            this.okayButton = textureComponent1;
 
             ClickableTextureComponent textureComponent5 = new ClickableTextureComponent(
                 (horse.Friendship / 10.0).ToString() + "<",
-                new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + Game1.tileSize / 2 + 16, this.yPositionOnScreen - Game1.tileSize / 2 + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 4 - Game1.tileSize / 2, HorseMenu.width - Game1.tileSize * 2, Game1.tileSize),
+                new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (Game1.tileSize / 2) + 16, this.yPositionOnScreen - (Game1.tileSize / 2) + IClickableMenu.spaceToClearTopBorder + (Game1.tileSize * 4) - (Game1.tileSize / 2), HorseMenu.width - (Game1.tileSize * 2), Game1.tileSize),
                 (string)null, mod.Helper.Translation.Get("Friendship"), Game1.mouseCursors, new Rectangle(172, 512, 16, 16), 4f, false);
 
             int num10 = 102;
             textureComponent5.myID = num10;
             this.love = textureComponent5;
-            this.loveHover = new ClickableComponent(new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder, this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 3 - Game1.tileSize / 2, HorseMenu.width, Game1.tileSize), "Friendship")
+            this.loveHover = new ClickableComponent(new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder, this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (Game1.tileSize * 3) - (Game1.tileSize / 2), HorseMenu.width, Game1.tileSize), "Friendship")
             {
                 myID = 109
             };
@@ -80,7 +81,10 @@ namespace HorseOverhaul
             this.horse = horse;
 
             if (!Game1.options.SnappyMenus)
+            {
                 return;
+            }
+
             this.populateClickableComponentList();
             this.snapToDefaultClickableComponent();
         }
@@ -98,7 +102,10 @@ namespace HorseOverhaul
         public override void receiveKeyPress(Keys key)
         {
             if (Game1.globalFade)
+            {
                 return;
+            }
+
             if (((IEnumerable<InputButton>)Game1.options.menuButton).Contains<InputButton>(new InputButton(key)) && (this.textBox == null || !this.textBox.Selected))
             {
                 Game1.playSound("smallSelect");
@@ -106,13 +113,18 @@ namespace HorseOverhaul
                 {
                     Game1.exitActiveMenu();
                     if (this.textBox.Text.Length <= 0)
+                    {
                         return;
+                    }
                 }
             }
             else
             {
-                if (!Game1.options.SnappyMenus || ((IEnumerable<InputButton>)Game1.options.menuButton).Contains<InputButton>(new InputButton(key)) && this.textBox != null && this.textBox.Selected)
+                if (!Game1.options.SnappyMenus || (((IEnumerable<InputButton>)Game1.options.menuButton).Contains<InputButton>(new InputButton(key)) && this.textBox != null && this.textBox.Selected))
+                {
                     return;
+                }
+
                 base.receiveKeyPress(key);
             }
         }
@@ -122,14 +134,24 @@ namespace HorseOverhaul
             base.update(time);
             int num1 = Game1.getOldMouseX() + Game1.viewport.X;
             int num2 = Game1.getOldMouseY() + Game1.viewport.Y;
+
             if (num1 - Game1.viewport.X < Game1.tileSize)
+            {
                 Game1.panScreen(-8, 0);
+            }
             else if (num1 - (Game1.viewport.X + Game1.viewport.Width) >= -Game1.tileSize)
+            {
                 Game1.panScreen(8, 0);
+            }
+
             if (num2 - Game1.viewport.Y < Game1.tileSize)
+            {
                 Game1.panScreen(0, -8);
+            }
             else if (num2 - (Game1.viewport.Y + Game1.viewport.Height) >= -Game1.tileSize)
+            {
                 Game1.panScreen(0, 8);
+            }
         }
 
         public void finishedPlacinghorse()
@@ -147,12 +169,16 @@ namespace HorseOverhaul
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             if (Game1.globalFade)
-                return;
-
-            if (this.okButton != null)
             {
-                if (this.okButton.containsPoint(x, y))
+                return;
+            }
+
+            if (this.okayButton != null)
+            {
+                if (this.okayButton.containsPoint(x, y))
+                {
                     Game1.exitActiveMenu();
+                }
             }
         }
 
@@ -160,31 +186,42 @@ namespace HorseOverhaul
         {
             this.textBox.Selected = false;
             if (base.readyToClose())
+            {
                 return !Game1.globalFade;
+            }
+
             return false;
         }
 
         public override void receiveRightClick(int x, int y, bool playSound = true)
         {
             if (Game1.globalFade)
-                return;
-
-            if (this.okButton != null)
             {
-                if (this.okButton.containsPoint(x, y))
+                return;
+            }
+
+            if (this.okayButton != null)
+            {
+                if (this.okayButton.containsPoint(x, y))
+                {
                     Game1.exitActiveMenu();
+                }
             }
         }
 
         public override void performHoverAction(int x, int y)
         {
-            this.hoverText = "";
-            if (this.okButton != null)
+            this.hoverText = string.Empty;
+            if (this.okayButton != null)
             {
-                if (this.okButton.containsPoint(x, y))
-                    this.okButton.scale = Math.Min(1.1f, this.okButton.scale + 0.05f);
+                if (this.okayButton.containsPoint(x, y))
+                {
+                    this.okayButton.scale = Math.Min(1.1f, this.okayButton.scale + 0.05f);
+                }
                 else
-                    this.okButton.scale = Math.Max(1f, this.okButton.scale - 0.05f);
+                {
+                    this.okayButton.scale = Math.Max(1f, this.okayButton.scale - 0.05f);
+                }
             }
         }
 
@@ -194,26 +231,32 @@ namespace HorseOverhaul
             {
                 b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.75f);
                 this.textBox.Draw(b);
-                Game1.drawDialogueBox(this.xPositionOnScreen, this.yPositionOnScreen + Game1.tileSize * 2, HorseMenu.width, HorseMenu.height - Game1.tileSize * 2, false, true, (string)null, false);
+                Game1.drawDialogueBox(this.xPositionOnScreen, this.yPositionOnScreen + (Game1.tileSize * 2), HorseMenu.width, HorseMenu.height - (Game1.tileSize * 2), false, true, (string)null, false);
 
                 string status = this.getStatusMessage();
-                Utility.drawTextWithShadow(b, status, Game1.smallFont, new Vector2((float)(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + Game1.tileSize / 2), (float)(this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + Game1.tileSize / 4 + Game1.tileSize * 2)), Game1.textColor, 1f, -1f, -1, -1, 1f, 3);
+                Utility.drawTextWithShadow(b, status, Game1.smallFont, new Vector2((float)(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (Game1.tileSize / 2)), (float)(this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (Game1.tileSize / 4) + (Game1.tileSize * 2))), Game1.textColor, 1f, -1f, -1, -1, 1f, 3);
 
-                double friendshipLevel = horse.Friendship / 1000.0;
+                double friendshipLevel = horse.Friendship;
 
-                int num3 = friendshipLevel * 1000.0 % 200.0 >= 100.0 ? (int)(friendshipLevel * 1000.0 / 200.0) : -100;
+                int num3 = (int)((friendshipLevel % 200.0 >= 100.0) ? (friendshipLevel / 200.0) : -100.0);
+
                 for (int index = 0; index < 5; ++index)
                 {
-                    b.Draw(Game1.mouseCursors, new Vector2((float)(this.xPositionOnScreen + Game1.tileSize * 3 / 2 + 8 * Game1.pixelZoom * index), (float)(20 + this.yPositionOnScreen - Game1.tileSize / 2 + Game1.tileSize * 6)), new Microsoft.Xna.Framework.Rectangle?(new Microsoft.Xna.Framework.Rectangle(211 + (friendshipLevel * 1000.0 <= (double)((index + 1) * 195) ? 7 : 0), 428, 7, 6)), Color.White, 0.0f, Vector2.Zero, (float)Game1.pixelZoom, SpriteEffects.None, 0.89f);
+                    b.Draw(Game1.mouseCursors, new Vector2((float)(this.xPositionOnScreen + (Game1.tileSize * 3 / 2) + (8 * Game1.pixelZoom * index)), (float)(20 + this.yPositionOnScreen - (Game1.tileSize / 2) + (Game1.tileSize * 6))), new Microsoft.Xna.Framework.Rectangle?(new Rectangle(211 + (friendshipLevel <= (double)((index + 1) * 195) ? 7 : 0), 428, 7, 6)), Color.White, 0.0f, Vector2.Zero, (float)Game1.pixelZoom, SpriteEffects.None, 0.89f);
                     if (num3 == index)
-                        b.Draw(Game1.mouseCursors, new Vector2((float)(this.xPositionOnScreen + Game1.tileSize * 3 / 2 + 8 * Game1.pixelZoom * index), (float)(20 + this.yPositionOnScreen - Game1.tileSize / 2 + Game1.tileSize * 6)), new Microsoft.Xna.Framework.Rectangle?(new Microsoft.Xna.Framework.Rectangle(211, 428, 4, 6)), Color.White, 0.0f, Vector2.Zero, (float)Game1.pixelZoom, SpriteEffects.None, 0.891f);
+                    {
+                        b.Draw(Game1.mouseCursors, new Vector2((float)(this.xPositionOnScreen + (Game1.tileSize * 3 / 2) + (8 * Game1.pixelZoom * index)), (float)(20 + this.yPositionOnScreen - (Game1.tileSize / 2) + (Game1.tileSize * 6))), new Microsoft.Xna.Framework.Rectangle?(new Rectangle(211, 428, 4, 6)), Color.White, 0.0f, Vector2.Zero, (float)Game1.pixelZoom, SpriteEffects.None, 0.891f);
+                    }
                 }
 
-                this.okButton.draw(b);
+                this.okayButton.draw(b);
 
                 if (this.hoverText != null && this.hoverText.Length > 0)
+                {
                     IClickableMenu.drawHoverText(b, this.hoverText, Game1.smallFont, 0, 0, -1, (string)null, -1, (string[])null, (Item)null, 0, -1, -1, -1, -1, 1f, (CraftingRecipe)null);
+                }
             }
+
             base.drawMouse(b);
         }
 
