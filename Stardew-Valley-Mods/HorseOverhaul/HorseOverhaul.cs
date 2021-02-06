@@ -581,11 +581,11 @@
 
                             if (horseW.GotFed)
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { horseName = horse.displayName }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = horse.displayName }));
                             }
                             else
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { horseName = horse.displayName, foodName = food.DisplayName }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = horse.displayName, foodName = food.DisplayName }));
 
                                 if (Config.ThinHorse)
                                 {
