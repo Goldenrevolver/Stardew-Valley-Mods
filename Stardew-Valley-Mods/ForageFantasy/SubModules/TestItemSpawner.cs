@@ -23,7 +23,7 @@
                 foreach (var loc in Game1.locations)
                 {
                     Random r = new Random(((int)Game1.uniqueIDForThisGame / 2) + (int)Game1.stats.DaysPlayed);
-                    Dictionary<string, string> locationData = Game1.content.Load<Dictionary<string, string>>("Data\\Locations");
+                    Dictionary<string, string> locationData = Game1.content.Load<Dictionary<string, string>>("Data/Locations");
 
                     int id = -1;
                     switch (loc.name)

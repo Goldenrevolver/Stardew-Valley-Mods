@@ -39,6 +39,8 @@
 
             Helper.Events.GameLoop.GameLaunched += delegate { ForageFantasyConfig.SetUpModConfigMenu(Config, this); };
 
+            Helper.Events.GameLoop.GameLaunched += delegate { DeluxeGrabberCompatibility.Setup(this); };
+
             Helper.Events.GameLoop.DayStarted += delegate { TapperAndMushroomQualityLogic.IncreaseTreeAges(this); };
 
             Helper.Events.GameLoop.SaveLoaded += delegate { FernAndBurgerLogic.ChangeBundle(this); };
