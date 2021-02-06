@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChangedWateringCanAndHoeAre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HorseOverhaul", "HorseOverhaul\HorseOverhaul.csproj", "{C7D22558-91D3-43A7-B0A9-6B5D6D1EBEF1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropItHotkey", "DropItHotkey\DropItHotkey.csproj", "{2E127D50-2970-4EEA-9CBC-628439F24585}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,14 @@ Global
 		{C7D22558-91D3-43A7-B0A9-6B5D6D1EBEF1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C7D22558-91D3-43A7-B0A9-6B5D6D1EBEF1}.Release|x86.ActiveCfg = Release|x86
 		{C7D22558-91D3-43A7-B0A9-6B5D6D1EBEF1}.Release|x86.Build.0 = Release|x86
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Debug|x86.ActiveCfg = Debug|x86
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Debug|x86.Build.0 = Debug|x86
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|x86.ActiveCfg = Release|Any CPU
+		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
