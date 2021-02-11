@@ -16,74 +16,42 @@
 
         private string hoverText = string.Empty;
 
-        //// private const int region_okButton = 101;
-        //// private const int region_love = 102;
-        //// private const int region_sellButton = 103;
-        //// private const int region_fullnessHover = 107;
-        //// private const int region_happinessHover = 108;
-        //// private const int region_loveHover = 109;
-        //// private const int region_textBoxCC = 110;
+        private const int okButtonID = 101;
 
-        private TextBox textBox;
-        private ClickableTextureComponent okayButton;
+        private readonly TextBox textBox;
+        private readonly ClickableTextureComponent okayButton;
 
-        private ClickableTextureComponent love;
-        private ClickableComponent loveHover;
-        private ClickableComponent textBoxCC;
+        private readonly HorseWrapper horse;
 
-        private HorseWrapper horse;
-
-        private HorseOverhaul mod;
+        private readonly HorseOverhaul mod;
 
         public HorseMenu(HorseOverhaul mod, HorseWrapper horse)
           : base((Game1.viewport.Width / 2) - (HorseMenu.width / 2), (Game1.viewport.Height / 2) - (HorseMenu.height / 2), HorseMenu.width, HorseMenu.height, false)
         {
             this.mod = mod;
+            this.horse = horse;
+
             Game1.player.Halt();
+
             HorseMenu.width = Game1.tileSize * 6;
             HorseMenu.height = Game1.tileSize * 8;
 
-            this.textBox = new TextBox((Texture2D)null, (Texture2D)null, Game1.dialogueFont, Game1.textColor);
+            this.textBox = new TextBox(null, null, Game1.dialogueFont, Game1.textColor);
             this.textBox.X = (Game1.viewport.Width / 2) - (Game1.tileSize * 2) - 12;
             this.textBox.Y = this.yPositionOnScreen - 4 + (Game1.tileSize * 2);
             this.textBox.Width = Game1.tileSize * 4;
             this.textBox.Height = Game1.tileSize * 3;
 
-            this.textBoxCC = new ClickableComponent(new Rectangle(this.textBox.X, this.textBox.Y, this.textBox.Width, Game1.tileSize), string.Empty)
-            {
-                myID = 110,
-                downNeighborID = 104
-            };
             this.textBox.Text = Game1.player.horseName;
 
             this.textBox.Selected = false;
 
-            var yPos1 = this.yPositionOnScreen + HorseMenu.height - Game1.tileSize - IClickableMenu.borderWidth;
-            var yPos2 = this.yPositionOnScreen - (Game1.tileSize / 2) + IClickableMenu.spaceToClearTopBorder + (Game1.tileSize * 4) - (Game1.tileSize / 2);
+            var yPos = this.yPositionOnScreen + HorseMenu.height - Game1.tileSize - IClickableMenu.borderWidth;
 
-            ClickableTextureComponent textureComponent1 = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + HorseMenu.width + 4, yPos1, Game1.tileSize, Game1.tileSize), Game1.mouseCursors, Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 46, -1, -1), 1f, false)
+            this.okayButton = new ClickableTextureComponent(new Rectangle(this.xPositionOnScreen + HorseMenu.width + 4, yPos, Game1.tileSize, Game1.tileSize), Game1.mouseCursors, Game1.getSourceRectForStandardTileSheet(Game1.mouseCursors, 46, -1, -1), 1f, false)
             {
-                myID = 101,
-                upNeighborID = 103
+                myID = okButtonID
             };
-
-            this.okayButton = textureComponent1;
-
-            ClickableTextureComponent textureComponent5 = new ClickableTextureComponent(
-                (horse.Friendship / 10.0).ToString() + "<",
-                new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + (Game1.tileSize / 2) + 16, yPos2, HorseMenu.width - (Game1.tileSize * 2), Game1.tileSize),
-                (string)null, mod.Helper.Translation.Get("Friendship"), Game1.mouseCursors, new Rectangle(172, 512, 16, 16), 4f, false)
-            {
-                myID = 102
-            };
-
-            this.love = textureComponent5;
-            this.loveHover = new ClickableComponent(new Rectangle(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder, this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + (Game1.tileSize * 3) - (Game1.tileSize / 2), HorseMenu.width, Game1.tileSize), "Friendship")
-            {
-                myID = 109
-            };
-
-            this.horse = horse;
 
             if (!Game1.options.SnappyMenus)
             {
@@ -98,10 +66,6 @@
         {
             this.currentlySnappedComponent = this.getComponentWithID(101);
             this.snapCursorToCurrentSnappedComponent();
-        }
-
-        public void textBoxEnter(TextBox sender)
-        {
         }
 
         public override void receiveKeyPress(Keys key)
@@ -224,9 +188,9 @@
             {
                 b.Draw(Game1.fadeToBlackRect, Game1.graphics.GraphicsDevice.Viewport.Bounds, Color.Black * 0.75f);
                 this.textBox.Draw(b);
-                Game1.drawDialogueBox(this.xPositionOnScreen, this.yPositionOnScreen + (Game1.tileSize * 2), HorseMenu.width, HorseMenu.height - (Game1.tileSize * 2), false, true, (string)null, false);
+                Game1.drawDialogueBox(this.xPositionOnScreen, this.yPositionOnScreen + (Game1.tileSize * 2), HorseMenu.width, HorseMenu.height - (Game1.tileSize * 2), false, true, null, false);
 
-                var yPos1 = (float)(yPositionOnScreen + spaceToClearTopBorder + (Game1.tileSize / 4) + (Game1.tileSize * 2));
+                var yPos1 = (float)(yPositionOnScreen + spaceToClearTopBorder + (Game1.tileSize / 2) + (Game1.tileSize * 2));
                 var yPos2 = yPos1 + (Game1.tileSize / 2) + (Game1.tileSize / 4);
 
                 string status = this.getStatusMessage();
@@ -249,7 +213,7 @@
 
                 if (this.hoverText != null && this.hoverText.Length > 0)
                 {
-                    IClickableMenu.drawHoverText(b, this.hoverText, Game1.smallFont, 0, 0, -1, (string)null, -1, (string[])null, (Item)null, 0, -1, -1, -1, -1, 1f, (CraftingRecipe)null);
+                    IClickableMenu.drawHoverText(b, this.hoverText, Game1.smallFont, 0, 0, -1, null, -1, null, null, 0, -1, -1, -1, -1, 1f, null);
                 }
             }
 
@@ -265,7 +229,7 @@
             string waterAnswer = horse.GotWater ? yes : no;
             string foodAnswer = horse.GotFed ? yes : no;
 
-            string friendship = mod.Helper.Translation.Get("Friendship2", new { value = horse.Friendship }) + "\n";
+            string friendship = mod.Helper.Translation.Get("Friendship", new { value = horse.Friendship }) + "\n";
             string petted = mod.Config.Petting ? mod.Helper.Translation.Get("GotPetted", new { value = petAnswer }) + "\n" : string.Empty;
             string water = mod.Config.Water ? mod.Helper.Translation.Get("GotWater", new { value = waterAnswer }) + "\n" : string.Empty;
             string food = mod.Config.Feeding ? mod.Helper.Translation.Get("GotFood", new { value = foodAnswer }) : string.Empty;

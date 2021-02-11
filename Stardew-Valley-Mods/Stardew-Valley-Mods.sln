@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HorseOverhaul", "HorseOverh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DropItHotkey", "DropItHotkey\DropItHotkey.csproj", "{2E127D50-2970-4EEA-9CBC-628439F24585}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermanentCookoutKit", "PermanentCookoutKit\PermanentCookoutKit.csproj", "{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,14 @@ Global
 		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|x86.ActiveCfg = Release|Any CPU
 		{2E127D50-2970-4EEA-9CBC-628439F24585}.Release|x86.Build.0 = Release|Any CPU
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Debug|x86.ActiveCfg = Debug|x86
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Debug|x86.Build.0 = Debug|x86
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Release|x86.ActiveCfg = Release|x86
+		{649A1158-CA60-46BB-BF6B-62A0D98ABCEB}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

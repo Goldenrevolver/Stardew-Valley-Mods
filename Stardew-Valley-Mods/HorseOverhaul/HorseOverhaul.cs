@@ -22,7 +22,7 @@
         Gwen
     }
 
-    public class HorseOverhaul : Mod, IAssetEditor
+    public class HorseOverhaul : Mod
     {
         //// how stable cords look
 
@@ -39,8 +39,6 @@
 
         private SeasonalVersion seasonalVersion = SeasonalVersion.None;
 
-        public Texture2D HorseSpriteWithHead { get; set; }
-
         public HorseConfig Config { get; set; }
 
         public Lazy<Texture2D> CurrentStableTexture => new Lazy<Texture2D>(() => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent));
@@ -52,6 +50,8 @@
         private Lazy<Texture2D> FilledTroughOverlay { get; set; }
 
         private Lazy<Texture2D> EmptyTroughOverlay { get; set; }
+
+        public Lazy<Texture2D> SaddleBagOverlay => new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png"));
 
         //// TODO add food preferences
         //// TODO fix menu for zoom
@@ -84,29 +84,6 @@
             helper.Events.Input.ButtonsChanged += OnButtonsChanged;
 
             Patcher.PatchAll(this);
-        }
-
-        public bool CanEdit<T>(IAssetInfo asset)
-        {
-            return asset.AssetNameEquals("Animals/horse") && Config.ThinHorse;
-        }
-
-        public void Edit<T>(IAssetData asset)
-        {
-            if (Config.ThinHorse)
-            {
-                var editor = asset.AsImage();
-
-                HorseSpriteWithHead = new Texture2D(editor.Data.GraphicsDevice, editor.Data.Width, editor.Data.Height);
-
-                int count = editor.Data.Width * editor.Data.Height;
-                var data = new Color[count];
-                editor.Data.GetData(data);
-                HorseSpriteWithHead.SetData(data);
-
-                Texture2D sourceImage = Helper.Content.Load<Texture2D>("assets/empty.png", ContentSource.ModFolder);
-                editor.PatchImage(sourceImage, targetArea: new Microsoft.Xna.Framework.Rectangle?(new Rectangle(160, 96, 9, 15)));
-            }
         }
 
         public void DebugLog(object o)
@@ -301,12 +278,33 @@
 
         private void LateDayStarted()
         {
-            if (!Context.IsWorldReady || !dayJustStarted || !Config.Water || Config.DisableStableSpriteChanges)
+            if (!Context.IsWorldReady || !dayJustStarted)
             {
                 return;
             }
 
             dayJustStarted = false;
+
+            if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
+            {
+                foreach (Building building in Game1.getFarm().buildings)
+                {
+                    if (building is Stable stable && !IsGarage(stable))
+                    {
+                        Horse horse = stable.getStableHorse();
+
+                        if (horse != null && !IsTractor(horse))
+                        {
+                            horse.Sprite.spriteTexture = MergeTextures(SaddleBagOverlay, new Lazy<Texture2D>(() => horse.Sprite.spriteTexture)).Value;
+                        }
+                    }
+                }
+            }
+
+            if (!Config.Water || Config.DisableStableSpriteChanges)
+            {
+                return;
+            }
 
             if (seasonalVersion == SeasonalVersion.Sonr)
             {
@@ -523,7 +521,12 @@
                 bool wasController = e.Button.TryGetController(out _);
                 Point cursorPosition = Game1.getMousePosition();
 
-                CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
+                bool interacted = CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
+
+                if (!interacted)
+                {
+                    CheckPetInteraction(cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
+                }
             }
         }
 
@@ -534,7 +537,7 @@
                 return;
             }
 
-            // this is done in buttonsChanged instead of buttonPressed as recommend
+            // this is done in buttonsChanged instead of buttonPressed as recommended
             // in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
             if (Config.HorseMenuKey.JustPressed())
             {
@@ -549,7 +552,7 @@
             }
         }
 
-        private void CheckHorseInteraction(GameLocation currentLocation, int x, int y, bool wasController)
+        private bool CheckHorseInteraction(GameLocation currentLocation, int x, int y, bool wasController)
         {
             // Find if click was on Horse
             foreach (Horse horse in currentLocation.characters.OfType<Horse>())
@@ -575,17 +578,16 @@
                     {
                         // Holding food
                         Item currentItem = Game1.player.CurrentItem;
+
                         if (IsEdible(currentItem))
                         {
-                            Item food = Game1.player.CurrentItem;
-
                             if (horseW.GotFed)
                             {
                                 Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = horse.displayName }));
                             }
                             else
                             {
-                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = horse.displayName, foodName = food.DisplayName }));
+                                Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = horse.displayName, foodName = currentItem.DisplayName }));
 
                                 if (Config.ThinHorse)
                                 {
@@ -597,7 +599,7 @@
                                 horseW.JustGotFood(CalculateExpGain(currentItem, horseW.Friendship));
                             }
 
-                            return;
+                            return true;
                         }
                     }
 
@@ -606,51 +608,57 @@
                         if (horseW.SaddleBag != null)
                         {
                             horseW.SaddleBag.ShowMenu();
-                            return;
+
+                            return true;
                         }
                     }
                 }
             }
 
-            if (Config.PetFeeding && Game1.player.hasPet())
+            return false;
+        }
+
+        private bool CheckPetInteraction(int x, int y, bool wasController)
+        {
+            if (!Config.PetFeeding || !Game1.player.hasPet())
             {
-                Pet pet = Game1.player.getPet();
+                return false;
+            }
 
-                if (pet != null)
+            Pet pet = Game1.player.getPet();
+
+            if (pet != null && IsInRange(pet, x, y, wasController))
+            {
+                if (Game1.player.CurrentItem != null)
                 {
-                    if (IsInRange(pet, x, y, wasController))
+                    // Holding food
+                    Item currentItem = Game1.player.CurrentItem;
+
+                    if (IsEdible(currentItem))
                     {
-                        if (Game1.player.CurrentItem != null)
+                        if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
                         {
-                            // Holding food
-                            Item currentItem = Game1.player.CurrentItem;
-                            if (IsEdible(currentItem))
-                            {
-                                Item food = Game1.player.CurrentItem;
-
-                                if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
-                                {
-                                    Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = pet.displayName }));
-                                }
-                                else
-                                {
-                                    pet.modData.Add($"{ModManifest.UniqueID}/gotFed", "fed");
-
-                                    Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = pet.displayName, foodName = food.DisplayName }));
-
-                                    pet.doEmote(Character.happyEmote);
-
-                                    Game1.player.reduceActiveItemByOne();
-
-                                    pet.friendshipTowardFarmer.Set(Math.Min(1000, pet.friendshipTowardFarmer.Value + CalculateExpGain(currentItem, pet.friendshipTowardFarmer.Value)));
-                                }
-
-                                return;
-                            }
+                            Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = pet.displayName }));
                         }
+                        else
+                        {
+                            pet.modData.Add($"{ModManifest.UniqueID}/gotFed", "fed");
+
+                            Game1.drawObjectDialogue(Helper.Translation.Get("AteFood", new { name = pet.displayName, foodName = currentItem.DisplayName }));
+
+                            pet.doEmote(Character.happyEmote);
+
+                            Game1.player.reduceActiveItemByOne();
+
+                            pet.friendshipTowardFarmer.Set(Math.Min(1000, pet.friendshipTowardFarmer.Value + CalculateExpGain(currentItem, pet.friendshipTowardFarmer.Value)));
+                        }
+
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         private bool IsInRange(Character chara, int x, int y, bool wasController)
@@ -691,29 +699,14 @@
 
         private bool IsEdible(Item item)
         {
-            if (item.getCategoryName() == "Cooking")
-            {
-                return true;
-            }
-
-            if (item.healthRecoveredOnConsumption() > 0)
-            {
-                return true;
-            }
-
-            return false;
+            return item.getCategoryName() == "Cooking" || item.healthRecoveredOnConsumption() > 0;
         }
 
         private int CalculateExpGain(Item item, int currentFriendship)
         {
-            if (item.getCategoryName() == "Cooking")
-            {
-                return (int)Math.Floor((10 + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
-            }
-            else
-            {
-                return (int)Math.Floor((5 + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
-            }
+            int baseMult = item.getCategoryName() == "Cooking" ? 10 : 5;
+
+            return (int)Math.Floor((baseMult + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
         }
     }
 }

@@ -6,7 +6,7 @@
     using StardewModdingAPI.Utilities;
     using System;
 
-    public interface GenericModConfigMenuAPI
+    public interface IGenericModConfigMenuAPI
     {
         void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
 
@@ -31,6 +31,13 @@
         void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
     }
 
+    public enum SaddleBagOption
+    {
+        Disabled = 0,
+        Green = 1,
+        Brown = 2
+    }
+
     /// <summary>
     /// Config file for the mod
     /// </summary>
@@ -43,6 +50,8 @@
         public float MaxMovementSpeedBonus { get; set; } = 3f;
 
         public bool SaddleBag { get; set; } = true;
+
+        public string VisibleSaddleBags { get; set; } = SaddleBagOption.Green.ToString();
 
         public bool Petting { get; set; } = true;
 
@@ -68,6 +77,18 @@
                 invalidConfig = true;
             }
 
+            SaddleBagOption res;
+            if (Enum.TryParse(config.VisibleSaddleBags, true, out res))
+            {
+                // reassign to ensure casing is correct
+                config.VisibleSaddleBags = res.ToString();
+            }
+            else
+            {
+                config.VisibleSaddleBags = SaddleBagOption.Disabled.ToString();
+                invalidConfig = true;
+            }
+
             if (invalidConfig)
             {
                 mod.DebugLog("At least one config value was out of range and was reset.");
@@ -77,7 +98,7 @@
 
         public static void SetUpModConfigMenu(HorseConfig config, HorseOverhaul mod)
         {
-            GenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
 
             if (api == null)
             {
@@ -91,7 +112,8 @@
             api.RegisterLabel(manifest, "General", null);
 
             api.RegisterSimpleOption(manifest, "Thin Horse", null, () => config.ThinHorse, (bool val) => config.ThinHorse = val);
-            api.RegisterSimpleOption(manifest, "Saddle Bag", null, () => config.SaddleBag, (bool val) => config.SaddleBag = val);
+            api.RegisterSimpleOption(manifest, "Saddle Bags", null, () => config.SaddleBag, (bool val) => config.SaddleBag = val);
+            api.RegisterChoiceOption(manifest, "Visible Saddle Bags¹", null, () => config.VisibleSaddleBags.ToString(), (string val) => config.VisibleSaddleBags = val, Enum.GetNames(typeof(SaddleBagOption)));
 
             api.RegisterLabel(manifest, "Friendship", null);
 
@@ -103,9 +125,12 @@
 
             api.RegisterLabel(manifest, "Other", null);
 
-            api.RegisterSimpleOption(manifest, "Disable Stable Sprites", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
             api.RegisterSimpleOption(manifest, "Pet Feeding", null, () => config.PetFeeding, (bool val) => config.PetFeeding = val);
+            api.RegisterSimpleOption(manifest, "Disable Stable Sprite Changes", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
 
+            // this is a spacer
+            api.RegisterLabel(manifest, string.Empty, null);
+            api.RegisterLabel(manifest, "1: Disabling Requires Restart To Take Effect", null);
             api.RegisterLabel(manifest, "(Menu Key Rebinding Only Available In Config File)", null);
         }
     }

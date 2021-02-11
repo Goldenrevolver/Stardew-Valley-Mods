@@ -80,7 +80,9 @@
   <ItemGroup>
     <None Include="i18n\de.json" />
     <None Include="i18n\default.json" />
+    <None Include="i18n\ja.json" />
     <None Include="i18n\ko.json" />
+    <None Include="i18n\ru.json" />
     <None Include="i18n\zh.json" />
     <None Include="manifest.json" />
     <None Include="packages.config" />
@@ -93,7 +95,6 @@
     <Content Include="assets\elle\overlay_empty_starblue.png" />
     <Content Include="assets\elle\overlay_empty_vanilla.png" />
     <Content Include="assets\elle\overlay_empty_wittily.png" />
-    <Content Include="assets\empty.png" />
     <Content Include="assets\gwen\overlay_1.png" />
     <Content Include="assets\gwen\overlay_1_snow_peta.png" />
     <Content Include="assets\gwen\overlay_2.png" />
@@ -104,6 +105,8 @@
     <Content Include="assets\overlay_empty_no_bucket.png" />
     <Content Include="assets\overlay_empty_tone.png" />
     <Content Include="assets\overlay_filled_tone.png" />
+    <Content Include="assets\saddlebags_brown.png" />
+    <Content Include="assets\saddlebags_green.png" />
     <Content Include="assets\sonr\overlay_empty_fall.png" />
     <Content Include="assets\sonr\overlay_empty_spring.png" />
     <Content Include="assets\sonr\overlay_empty_summer.png" />
