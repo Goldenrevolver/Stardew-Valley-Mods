@@ -1,0 +1,10 @@
+{
+  "Name": "Permanent Cookout Kit",
+  "Author": "Goldenrevolver",
+  "Version": "1.0",
+  "Description": "Makes cookout kits not disappear overnight. Instead the fire goes out and you need to reignite it.",
+  "UniqueID": "Goldenrevolver.PermanentCookoutKit",
+  "EntryDll": "PermanentCookoutKit.dll",
+  "MinimumApiVersion": "3.9.1",
+  "UpdateKeys": [ "Nexus:8035" ]
+}
