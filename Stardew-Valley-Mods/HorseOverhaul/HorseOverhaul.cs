@@ -72,7 +72,7 @@
 
             HorseConfig.VerifyConfigValues(Config, this);
 
-            Helper.Events.GameLoop.GameLaunched += delegate { HorseConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { CheckForKeybindConflict(); HorseConfig.SetUpModConfigMenu(Config, this); };
 
             Helper.Events.GameLoop.SaveLoaded += delegate { SetStableOverlays(); };
 
@@ -98,6 +98,37 @@
             string errorMessage = e == null ? string.Empty : $"\n{e.Message}\n{e.StackTrace}";
 
             Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
+        }
+
+        private void CheckForKeybindConflict()
+        {
+            try
+            {
+                if (Helper.ModRegistry.IsLoaded("CJBok.CheatsMenu"))
+                {
+                    // whether the pet menu is set to the default
+                    if (Config.PetMenuKey.IsBound && Config.PetMenuKey.Keybinds.Length == 1 && Config.PetMenuKey.Keybinds[0].Buttons.Length == 1 && Config.PetMenuKey.Keybinds[0].Buttons[0] == SButton.P)
+                    {
+                        var data = Helper.ModRegistry.Get("CJBok.CheatsMenu");
+
+                        var path = data.GetType().GetProperty("DirectoryPath");
+
+                        if (path != null && path.GetValue(data) != null)
+                        {
+                            var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "OpenMenuKey" }, data.Manifest.Name);
+
+                            if (list["OpenMenuKey"] == "P")
+                            {
+                                Config.PetMenuKey = KeybindList.Parse("");
+                                DebugLog("Unassigned pet menu key because cjb cheats menu is bound to the same key.");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void SetStableOverlays()
