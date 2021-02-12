@@ -166,7 +166,7 @@
                 {
                     foreach (Building building in Game1.getFarm().buildings)
                     {
-                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable))
+                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable) && stable.getStableHorse() != null)
                         {
                             bool doesXHit = stable.tileX.Value + 1 == tileX || stable.tileX.Value + 2 == tileX;
 

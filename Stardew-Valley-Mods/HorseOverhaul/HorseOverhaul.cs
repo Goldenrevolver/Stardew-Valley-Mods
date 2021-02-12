@@ -76,7 +76,7 @@
 
             Helper.Events.GameLoop.SaveLoaded += delegate { SetStableOverlays(); };
 
-            Helper.Events.GameLoop.Saving += delegate { SaveChest(); };
+            Helper.Events.GameLoop.Saving += delegate { SaveChestsAndReset(); };
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
             helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
 
@@ -355,7 +355,7 @@
 
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !IsGarage(stable))
+                if (building is Stable stable && !IsGarage(stable) && stable.getStableHorse() != null)
                 {
                     Chest saddleBag = null;
 
@@ -436,74 +436,72 @@
             }
         }
 
-        private void SaveChest()
+        private void SaveChestsAndReset()
         {
-            if (!Config.SaddleBag)
-            {
-                return;
-            }
-
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !IsGarage(stable))
+                if (building is Stable stable && !IsGarage(stable) && stable.getStableHorse() != null)
                 {
                     stable.getStableHorse().forceOneTileWide.Value = false;
 
-                    HorseWrapper horse = null;
-
-                    Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => horse = x);
-
-                    if (horse != null && horse.SaddleBag != null)
+                    if (Config.SaddleBag)
                     {
-                        // find the first free position
-                        int stableID = -1;
-                        int i = 0;
+                        HorseWrapper horse = null;
 
-                        while (i < 10)
+                        Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => horse = x);
+
+                        if (horse != null && horse.SaddleBag != null)
                         {
-                            if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
+                            // find the first free position
+                            int stableID = -1;
+                            int i = 0;
+
+                            while (i < 10)
                             {
-                                stableID = i;
-                                break;
-                            }
-
-                            i++;
-                        }
-
-                        if (stableID == -1)
-                        {
-                            ErrorLog("Couldn't find a spot to save the saddle bag chest");
-
-                            if (horse.SaddleBag.items.Count > 0)
-                            {
-                                foreach (var item in horse.SaddleBag.items)
+                                if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
                                 {
-                                    Game1.player.team.returnedDonations.Add(item);
-                                    Game1.player.team.newLostAndFoundItems.Value = true;
+                                    stableID = i;
+                                    break;
                                 }
 
-                                horse.SaddleBag.items.Clear();
+                                i++;
                             }
 
-                            horse.SaddleBag = null;
-                            return;
-                        }
+                            if (stableID == -1)
+                            {
+                                ErrorLog("Couldn't find a spot to save the saddle bag chest");
 
-                        if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
-                        {
-                            stable.modData[$"{ModManifest.UniqueID}/stableID"] = stableID.ToString();
-                        }
-                        else
-                        {
-                            stable.modData.Add($"{ModManifest.UniqueID}/stableID", stableID.ToString());
-                        }
+                                if (horse.SaddleBag.items.Count > 0)
+                                {
+                                    foreach (var item in horse.SaddleBag.items)
+                                    {
+                                        Game1.player.team.returnedDonations.Add(item);
+                                        Game1.player.team.newLostAndFoundItems.Value = true;
+                                    }
 
-                        if (horse.SaddleBag != null)
-                        {
-                            horse.SaddleBag.TileLocation = new Vector2(stableID, 0);
-                        }
+                                    horse.SaddleBag.items.Clear();
+                                }
 
-                        Game1.getFarm().Objects.Add(new Vector2(stableID, 0), horse.SaddleBag);
+                                horse.SaddleBag = null;
+                                return;
+                            }
+
+                            if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                            {
+                                stable.modData[$"{ModManifest.UniqueID}/stableID"] = stableID.ToString();
+                            }
+                            else
+                            {
+                                stable.modData.Add($"{ModManifest.UniqueID}/stableID", stableID.ToString());
+                            }
+
+                            if (horse.SaddleBag != null)
+                            {
+                                horse.SaddleBag.TileLocation = new Vector2(stableID, 0);
+                            }
+
+                            Game1.getFarm().Objects.Add(new Vector2(stableID, 0), horse.SaddleBag);
+                        }
                     }
                 }
             }
