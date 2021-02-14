@@ -39,6 +39,8 @@
 
         private SeasonalVersion seasonalVersion = SeasonalVersion.None;
 
+        public IBetterRanchingApi BetterRanchingApi { get; set; }
+
         public HorseConfig Config { get; set; }
 
         public Lazy<Texture2D> CurrentStableTexture => new Lazy<Texture2D>(() => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent));
@@ -72,13 +74,14 @@
 
             HorseConfig.VerifyConfigValues(Config, this);
 
-            Helper.Events.GameLoop.GameLaunched += delegate { CheckForKeybindConflict(); HorseConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { CheckForKeybindConflict(); HorseConfig.SetUpModConfigMenu(Config, this); BetterRanchingApi = SetupBetterRanching(); };
 
             Helper.Events.GameLoop.SaveLoaded += delegate { SetStableOverlays(); };
 
             Helper.Events.GameLoop.Saving += delegate { SaveChestsAndReset(); };
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
             helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
+            helper.Events.Display.RenderedWorld += OnRenderedWorld;
 
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Input.ButtonsChanged += OnButtonsChanged;
@@ -256,6 +259,16 @@
 
             seasonalVersion = SeasonalVersion.Gwen;
             gwenOption = dict["stableOption"];
+        }
+
+        private IBetterRanchingApi SetupBetterRanching()
+        {
+            if(Helper.ModRegistry.IsLoaded("BetterRanching"))
+            {
+                return Helper.ModRegistry.GetApi<IBetterRanchingApi>("BetterRanching");
+            }
+
+            return null;
         }
 
         private Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName)
@@ -736,6 +749,18 @@
             int baseMult = item.getCategoryName() == "Cooking" ? 10 : 5;
 
             return (int)Math.Floor((baseMult + (item.healthRecoveredOnConsumption() / 10)) * Math.Pow(1.2, -currentFriendship / 200));
+        }
+
+        private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        {
+            if(BetterRanchingApi != null)
+            {
+                foreach (HorseWrapper horseWrapper in Horses)
+                {
+                    BetterRanchingApi.DrawHeartBubble(Game1.spriteBatch, horseWrapper.Horse, () => !horseWrapper.WasPet);
+                }
+            }
+
         }
     }
 }

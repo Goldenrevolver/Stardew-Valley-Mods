@@ -73,6 +73,7 @@
     <Compile Include="HorseMenu.cs" />
     <Compile Include="HorseOverhaul.cs" />
     <Compile Include="HorseWrapper.cs" />
+    <Compile Include="apis\IBetterRanchingApi.cs" />
     <Compile Include="Patcher.cs" />
     <Compile Include="PetMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
