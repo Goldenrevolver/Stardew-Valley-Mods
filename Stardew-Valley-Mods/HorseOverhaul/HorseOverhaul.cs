@@ -753,7 +753,7 @@
 
         private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
         {
-            if(BetterRanchingApi != null)
+            if(BetterRanchingApi != null && !Game1.eventUp)
             {
                 foreach (HorseWrapper horseWrapper in Horses)
                 {
