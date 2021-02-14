@@ -27,7 +27,7 @@
         private readonly HorseOverhaul mod;
 
         public PetMenu(HorseOverhaul mod, Pet pet)
-          : base((Game1.viewport.Width / 2) - (PetMenu.width / 2), (Game1.viewport.Height / 2) - (PetMenu.height / 2), PetMenu.width, PetMenu.height, false)
+          : base((Game1.uiViewport.Width / 2) - (PetMenu.width / 2), (Game1.uiViewport.Height / 2) - (PetMenu.height / 2), PetMenu.width, PetMenu.height, false)
         {
             this.mod = mod;
             this.pet = pet;
@@ -38,7 +38,7 @@
             PetMenu.height = Game1.tileSize * 8;
 
             this.textBox = new TextBox(null, null, Game1.dialogueFont, Game1.textColor);
-            this.textBox.X = (Game1.viewport.Width / 2) - (Game1.tileSize * 2) - 12;
+            this.textBox.X = (Game1.uiViewport.Width / 2) - (Game1.tileSize * 2) - 12;
             this.textBox.Y = this.yPositionOnScreen - 4 + (Game1.tileSize * 2);
             this.textBox.Width = Game1.tileSize * 4;
             this.textBox.Height = Game1.tileSize * 3;
@@ -102,23 +102,23 @@
         public override void update(GameTime time)
         {
             base.update(time);
-            int num1 = Game1.getOldMouseX() + Game1.viewport.X;
-            int num2 = Game1.getOldMouseY() + Game1.viewport.Y;
+            int num1 = Game1.getOldMouseX() + Game1.uiViewport.X;
+            int num2 = Game1.getOldMouseY() + Game1.uiViewport.Y;
 
-            if (num1 - Game1.viewport.X < Game1.tileSize)
+            if (num1 - Game1.uiViewport.X < Game1.tileSize)
             {
                 Game1.panScreen(-8, 0);
             }
-            else if (num1 - (Game1.viewport.X + Game1.viewport.Width) >= -Game1.tileSize)
+            else if (num1 - (Game1.uiViewport.X + Game1.uiViewport.Width) >= -Game1.tileSize)
             {
                 Game1.panScreen(8, 0);
             }
 
-            if (num2 - Game1.viewport.Y < Game1.tileSize)
+            if (num2 - Game1.uiViewport.Y < Game1.tileSize)
             {
                 Game1.panScreen(0, -8);
             }
-            else if (num2 - (Game1.viewport.Y + Game1.viewport.Height) >= -Game1.tileSize)
+            else if (num2 - (Game1.uiViewport.Y + Game1.uiViewport.Height) >= -Game1.tileSize)
             {
                 Game1.panScreen(0, 8);
             }
