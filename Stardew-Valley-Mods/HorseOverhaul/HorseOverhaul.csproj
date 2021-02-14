@@ -109,6 +109,8 @@
     <Content Include="assets\overlay_filled_tone.png" />
     <Content Include="assets\saddlebags_brown.png" />
     <Content Include="assets\saddlebags_green.png" />
+    <Content Include="assets\saddlebags_horsemanship_beige.png" />
+    <Content Include="assets\saddlebags_horsemanship_brown.png" />
     <Content Include="assets\sonr\overlay_empty_fall.png" />
     <Content Include="assets\sonr\overlay_empty_spring.png" />
     <Content Include="assets\sonr\overlay_empty_summer.png" />

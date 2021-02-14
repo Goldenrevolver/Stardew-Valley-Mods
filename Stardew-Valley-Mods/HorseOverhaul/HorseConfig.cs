@@ -35,7 +35,9 @@
     {
         Disabled = 0,
         Green = 1,
-        Brown = 2
+        Brown = 2,
+        Horsemanship_Brown = 3,
+        Horsemanship_Beige = 4
     }
 
     /// <summary>

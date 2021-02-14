@@ -216,6 +216,11 @@
                     }
 
                     horseW.SaddleBag = null;
+
+                    if (__instance.modData.ContainsKey($"{mod.ModManifest.UniqueID}/stableID"))
+                    {
+                        __instance.modData.Remove($"{mod.ModManifest.UniqueID}/stableID");
+                    }
                 }
 
                 return true;
@@ -247,7 +252,7 @@
                     }
                 }
 
-                if (__instance.getOwner() == who && horseW != null && !horseW.WasPet)
+                if (horseW != null && !horseW.WasPet)
                 {
                     horseW.JustGotPetted();
 

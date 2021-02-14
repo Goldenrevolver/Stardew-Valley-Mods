@@ -49,14 +49,16 @@
 
         public Lazy<Texture2D> EmptyTroughTexture => EmptyTroughOverlay == null ? CurrentStableTexture : MergeTextures(EmptyTroughOverlay, CurrentStableTexture);
 
+        public Lazy<Texture2D> SaddleBagOverlay => new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png"));
+
         private Lazy<Texture2D> FilledTroughOverlay { get; set; }
 
         private Lazy<Texture2D> EmptyTroughOverlay { get; set; }
 
-        public Lazy<Texture2D> SaddleBagOverlay => new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png"));
-
         //// TODO add food preferences
-        //// TODO fix menu for zoom
+        //// TODO fix layering of saddle bag
+        //// TODO fix stable painting, make everything an overlay if possible
+        //// TODO refactor menu classes with inheritance
 
         public static bool IsTractor(Horse horse)
         {
@@ -122,7 +124,7 @@
 
                             if (list["OpenMenuKey"] == "P")
                             {
-                                Config.PetMenuKey = KeybindList.Parse("");
+                                Config.PetMenuKey = KeybindList.Parse(string.Empty);
                                 DebugLog("Unassigned pet menu key because cjb cheats menu is bound to the same key.");
                             }
                         }
@@ -263,7 +265,7 @@
 
         private IBetterRanchingApi SetupBetterRanching()
         {
-            if(Helper.ModRegistry.IsLoaded("BetterRanching"))
+            if (Helper.ModRegistry.IsLoaded("BetterRanching") && !Helper.ModRegistry.Get("BetterRanching").Manifest.Version.IsOlderThan("1.8.1"))
             {
                 return Helper.ModRegistry.GetApi<IBetterRanchingApi>("BetterRanching");
             }
@@ -461,12 +463,27 @@
 
                                     chest.items.Clear();
                                 }
+
+                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                                {
+                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
+                                }
                             }
                         }
                         else
                         {
-                            ErrorLog("Stable says there is a saddle bag chest, but I couldn't find it!");
-                            saddleBag = new Chest(true, new Vector2(stableID, 0));
+                            if (Config.SaddleBag)
+                            {
+                                ErrorLog("Stable says there is a saddle bag chest, but I couldn't find it!");
+                                saddleBag = new Chest(true, new Vector2(stableID, 0));
+                            }
+                            else
+                            {
+                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                                {
+                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
+                                }
+                            }
                         }
                     }
 
@@ -527,6 +544,11 @@
                                 }
 
                                 horse.SaddleBag = null;
+
+                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                                {
+                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
+                                }
                                 return;
                             }
 
@@ -599,8 +621,7 @@
             // Find if click was on Horse
             foreach (Horse horse in currentLocation.characters.OfType<Horse>())
             {
-                // Can only feed your own horse
-                if (horse.getOwner() != Game1.player || IsTractor(horse))
+                if (IsTractor(horse))
                 {
                     continue;
                 }
@@ -753,14 +774,16 @@
 
         private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
         {
-            if(BetterRanchingApi != null && !Game1.eventUp)
+            if (Config.Petting && BetterRanchingApi != null && !Game1.eventUp)
             {
+                float yOffset = Game1.tileSize / 3;
+                int mult = Config.ThinHorse ? -1 : 1;
+
                 foreach (HorseWrapper horseWrapper in Horses)
                 {
-                    BetterRanchingApi.DrawHeartBubble(Game1.spriteBatch, horseWrapper.Horse, () => !horseWrapper.WasPet);
+                    BetterRanchingApi.DrawHeartBubble(Game1.spriteBatch, horseWrapper.Horse.Position.X, horseWrapper.Horse.Position.Y - yOffset, mult * horseWrapper.Horse.Sprite.getWidth(), () => !horseWrapper.WasPet);
                 }
             }
-
         }
     }
 }

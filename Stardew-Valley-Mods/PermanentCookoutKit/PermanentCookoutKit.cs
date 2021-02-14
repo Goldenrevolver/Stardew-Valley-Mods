@@ -503,7 +503,6 @@
 
                     if (hasCoal && hasKindling && hasWood)
                     {
-                        mod.DebugLog(coalID + " " + coalCount + " " + kindlingID + " " + actualKindlingCount + " " + chosenWoodID + " " + actualWoodCount);
                         who.removeItemsFromInventory(coalID, coalCount);
                         who.removeItemsFromInventory(kindlingID, actualKindlingCount);
                         who.removeItemsFromInventory(chosenWoodID, actualWoodCount);
