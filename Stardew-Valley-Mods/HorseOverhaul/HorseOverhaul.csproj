@@ -69,6 +69,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseMenu.cs" />
     <Compile Include="HorseConfig.cs" />
     <Compile Include="HorseMenu.cs" />
     <Compile Include="HorseOverhaul.cs" />

@@ -24,7 +24,7 @@
 
     public class HorseOverhaul : Mod
     {
-        //// how stable cords look
+        //// the relative stable coordinates
 
         //// (tile.x, tile.y), (tile.x+1, tile.y), (tile.x+2, tile.y), (tile.x+3, tile.y)
         //// (tile.x, tile.y+1), (tile.x+1, tile.y+1), (tile.x+2, tile.y+1), (tile.x+3, tile.y+1)
@@ -58,7 +58,6 @@
         //// TODO add food preferences
         //// TODO fix layering of saddle bag
         //// TODO fix stable painting, make everything an overlay if possible
-        //// TODO refactor menu classes with inheritance
 
         public static bool IsTractor(Horse horse)
         {
