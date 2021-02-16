@@ -17,10 +17,6 @@
     {
         private static HorseOverhaul mod;
 
-        public static float HeadPosition => mod.Config.ThinHorse ? 16f : 48f;
-
-        public static Vector2 HatVector => mod.Config.ThinHorse ? new Vector2(-8f, 0f) : Vector2.Zero;
-
         public static void PatchAll(HorseOverhaul horseOverhaul)
         {
             mod = horseOverhaul;
@@ -59,6 +55,11 @@
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(IterateOverSaddles))
                 );
 
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Building), "resetTexture"),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture))
+                );
+
                 // thin horse patches
 
                 harmony.Patch(
@@ -78,7 +79,7 @@
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "draw", new Type[] { typeof(SpriteBatch) }),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(DrawEmote))
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(DrawEmoteAndSaddleBags))
                 );
 
                 harmony.Patch(
@@ -99,6 +100,61 @@
             catch (Exception e)
             {
                 mod.ErrorLog("Error while trying to setup required patches:", e);
+            }
+        }
+
+        public static bool ResetStableTexture(Building __instance)
+        {
+            try
+            {
+                if (__instance is Stable && !HorseOverhaul.IsGarage((Stable)__instance) && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
+                {
+                    __instance.texture = new Lazy<Texture2D>(delegate ()
+                    {
+                        Texture2D val = Game1.content.Load<Texture2D>(__instance.textureName());
+
+                        if (__instance?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) == true)
+                        {
+                            if (mod.FilledTroughTexture != null)
+                            {
+                                val = mod.FilledTroughTexture;
+                            }
+                        }
+                        else
+                        {
+                            if (mod.EmptyTroughTexture != null)
+                            {
+                                val = mod.EmptyTroughTexture;
+                            }
+                        }
+
+                        if (__instance.paintedTexture != null)
+                        {
+                            __instance.paintedTexture.Dispose();
+                            __instance.paintedTexture = null;
+                        }
+
+                        __instance.paintedTexture = BuildingPainter.Apply(val, __instance.textureName() + "_PaintMask", __instance.netBuildingPaintColor.Value);
+
+                        if (__instance.paintedTexture != null)
+                        {
+                            val = __instance.paintedTexture;
+                        }
+
+                        return val;
+                    });
+
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
             }
         }
 
@@ -134,7 +190,8 @@
         {
             try
             {
-                if (mod.Config.MovementSpeed)
+                // these conditions might be redundant but I'm using the base game conditions for the horse movement speed just to be sure
+                if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence))
                 {
                     Horse horse = __instance.mount;
 
@@ -142,6 +199,16 @@
                     {
                         float addedMovementSpeed = 0f;
                         mod.Horses.Where(x => x.Horse == horse).Do(x => addedMovementSpeed = x.GetMovementSpeedBonus());
+
+                        if (__instance.movementDirections.Count > 1)
+                        {
+                            addedMovementSpeed *= 0.7f;
+                        }
+
+                        if (Game1.CurrentEvent == null && __instance.hasBuff(19))
+                        {
+                            addedMovementSpeed = 0f;
+                        }
 
                         __result += addedMovementSpeed;
                     }
@@ -174,7 +241,12 @@
                             {
                                 if (!mod.Config.DisableStableSpriteChanges)
                                 {
-                                    stable.texture = mod.FilledTroughTexture;
+                                    if (stable?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) != true)
+                                    {
+                                        stable.modData.Add($"{mod.ModManifest.UniqueID}/gotWater", "water");
+                                    }
+
+                                    stable.resetTexture();
                                 }
 
                                 mod.Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => x.JustGotWater());
@@ -295,18 +367,56 @@
             }
         }
 
-        public static void DrawEmote(ref Horse __instance, ref SpriteBatch b, ref bool __state)
+        public static void DrawEmoteAndSaddleBags(ref Horse __instance, ref SpriteBatch b, ref bool __state)
         {
             try
             {
-                if (!mod.Config.ThinHorse || HorseOverhaul.IsTractor(__instance))
+                if (HorseOverhaul.IsTractor(__instance))
+                {
+                    return;
+                }
+
+                Horse horse = __instance;
+
+                if (mod.Config.SaddleBag && mod.Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
+                {
+                    float yOffset = -80f;
+                    float xOffset = mod.Config.ThinHorse ? -32f : 0f;
+
+                    // all player sprites being off by 1 is really obvious if using horsemanship and facing north
+                    if (horse.FacingDirection == 0 && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
+                    {
+                        xOffset += 1;
+                    }
+
+                    // draw one layer above the usual sprite of the horse so there is no z-fighting
+                    float layer = horse.getStandingY() + 1;
+
+                    // draw on top of the player instead of below them, uses the same value as the head of the horse
+                    if (horse.FacingDirection == 0 && horse.rider != null)
+                    {
+                        layer = horse.Position.Y + 64f;
+                    }
+
+                    bool shouldFlip = horse.Sprite.CurrentAnimation != null && horse.Sprite.CurrentAnimation[horse.Sprite.currentAnimationIndex].flip;
+
+                    if (horse.FacingDirection == 3)
+                    {
+                        shouldFlip = true;
+                    }
+
+                    if (mod.SaddleBagOverlay != null)
+                    {
+                        b.Draw(mod.SaddleBagOverlay, horse.getLocalPosition(Game1.viewport) + new Vector2(xOffset, yOffset), horse.Sprite.SourceRect, Color.White, 0f, Vector2.Zero, 4f, shouldFlip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, layer / 10000f);
+                    }
+                }
+
+                if (!mod.Config.ThinHorse)
                 {
                     return;
                 }
 
                 __instance.IsEmoting = __state;
-
-                Horse horse = __instance;
 
                 if (horse.IsEmoting)
                 {
@@ -547,7 +657,7 @@
                 {
                     if (!foundHead && list[i].opcode == OpCodes.Ldc_R4 && (float)list[i].operand >= 47.9f && (float)list[i].operand <= 48.1f)
                     {
-                        var info = typeof(Patcher).GetProperty(nameof(HeadPosition)).GetGetMethod();
+                        var info = typeof(Patcher).GetMethod(nameof(GetHorseHeadXPosition));
                         list[i] = new CodeInstruction(OpCodes.Call, info);
 
                         foundHead = true;
@@ -557,7 +667,7 @@
                     {
                         if (list[i + 1].opcode == OpCodes.Stloc_1 && list[i + 2].opcode == OpCodes.Ldarg_0)
                         {
-                            var info = typeof(Patcher).GetProperty(nameof(HatVector)).GetGetMethod();
+                            var info = typeof(Patcher).GetMethod(nameof(GetHatVector));
                             list[i] = new CodeInstruction(OpCodes.Call, info);
 
                             foundHat = true;
@@ -572,6 +682,16 @@
                 mod.ErrorLog("There was an exception in a patch", e);
                 return instructions;
             }
+        }
+
+        public static float GetHorseHeadXPosition()
+        {
+            return mod.Config.ThinHorse ? 16f : 48f;
+        }
+
+        public static Vector2 GetHatVector()
+        {
+            return mod.Config.ThinHorse ? new Vector2(-8f, 0f) : Vector2.Zero;
         }
     }
 }

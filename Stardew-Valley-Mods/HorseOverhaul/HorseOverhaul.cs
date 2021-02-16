@@ -43,21 +43,23 @@
 
         public HorseConfig Config { get; set; }
 
-        public Lazy<Texture2D> CurrentStableTexture => new Lazy<Texture2D>(() => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent));
+        public Texture2D CurrentStableTexture => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent);
 
-        public Lazy<Texture2D> FilledTroughTexture => FilledTroughOverlay == null ? CurrentStableTexture : MergeTextures(FilledTroughOverlay, CurrentStableTexture);
+        public Texture2D FilledTroughTexture => FilledTroughOverlay == null ? CurrentStableTexture : MergeTextures(FilledTroughOverlay, CurrentStableTexture);
 
-        public Lazy<Texture2D> EmptyTroughTexture => EmptyTroughOverlay == null ? CurrentStableTexture : MergeTextures(EmptyTroughOverlay, CurrentStableTexture);
+        public Texture2D EmptyTroughTexture => EmptyTroughOverlay == null ? CurrentStableTexture : MergeTextures(EmptyTroughOverlay, CurrentStableTexture);
 
-        public Lazy<Texture2D> SaddleBagOverlay => new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png"));
+        public Texture2D SaddleBagOverlay { get; set; }
 
-        private Lazy<Texture2D> FilledTroughOverlay { get; set; }
+        private Texture2D FilledTroughOverlay { get; set; }
 
-        private Lazy<Texture2D> EmptyTroughOverlay { get; set; }
+        private Texture2D EmptyTroughOverlay { get; set; }
+
+        public bool IsUsingHorsemanship { get; set; } = false;
 
         //// TODO add food preferences
-        //// TODO fix layering of saddle bag
-        //// TODO fix stable painting, make everything an overlay if possible
+        //// TODO horse race festival
+        //// TODO heater for winter somewhere near the stable
 
         public static bool IsTractor(Horse horse)
         {
@@ -77,7 +79,7 @@
 
             Helper.Events.GameLoop.GameLaunched += delegate { CheckForKeybindConflict(); HorseConfig.SetUpModConfigMenu(Config, this); BetterRanchingApi = SetupBetterRanching(); };
 
-            Helper.Events.GameLoop.SaveLoaded += delegate { SetStableOverlays(); };
+            Helper.Events.GameLoop.SaveLoaded += delegate { SetOverlays(); };
 
             Helper.Events.GameLoop.Saving += delegate { SaveChestsAndReset(); };
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
@@ -135,15 +137,23 @@
             }
         }
 
-        private void SetStableOverlays()
+        private void SetOverlays()
         {
-            if (!Config.Water)
+            if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
+            {
+                SaddleBagOverlay = Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png");
+                IsUsingHorsemanship = Helper.ModRegistry.IsLoaded("red.horsemanship");
+            }
+
+            if (!Config.Water || Config.DisableStableSpriteChanges)
             {
                 return;
             }
 
             seasonalVersion = SeasonalVersion.None;
+
             usingMyTextures = false;
+
             FilledTroughOverlay = null;
 
             if (Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
@@ -157,7 +167,7 @@
 
             if (Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))
             {
-                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder));
+                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder);
 
                 return;
             }
@@ -174,7 +184,7 @@
 
                     if (list["stable"] != "false")
                     {
-                        EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/elle/overlay_empty_{list["color palette"]}.png", ContentSource.ModFolder));
+                        EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/elle/overlay_empty_{list["color palette"]}.png", ContentSource.ModFolder);
 
                         return;
                     }
@@ -193,8 +203,8 @@
 
                     if (list["stable"] == "true")
                     {
-                        FilledTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_filled_tone.png", ContentSource.ModFolder));
-                        EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty_tone.png", ContentSource.ModFolder));
+                        FilledTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_filled_tone.png", ContentSource.ModFolder);
+                        EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty_tone.png", ContentSource.ModFolder);
 
                         return;
                     }
@@ -238,7 +248,7 @@
 
             if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings"))
             {
-                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty_no_bucket.png", ContentSource.ModFolder));
+                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty_no_bucket.png", ContentSource.ModFolder);
 
                 return;
             }
@@ -246,17 +256,17 @@
             // no compatible texture mod found so we will use mine
             usingMyTextures = true;
 
-            EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder));
+            EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder);
         }
 
         private void SetupGwenTextures(Dictionary<string, string> dict)
         {
             if (dict["stableOption"] == "4")
             {
-                FilledTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}_full.png", ContentSource.ModFolder));
+                FilledTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}_full.png", ContentSource.ModFolder);
             }
 
-            EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}.png", ContentSource.ModFolder));
+            EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}.png", ContentSource.ModFolder);
 
             seasonalVersion = SeasonalVersion.Gwen;
             gwenOption = dict["stableOption"];
@@ -304,20 +314,30 @@
             return result;
         }
 
-        private Lazy<Texture2D> MergeTextures(Lazy<Texture2D> overlay, Lazy<Texture2D> oldTexture)
+        private Texture2D MergeTextures(Texture2D overlay, Texture2D oldTexture)
         {
-            int count = overlay.Value.Width * overlay.Value.Height;
+            if (overlay == null || oldTexture == null)
+            {
+                return oldTexture;
+            }
+
+            int count = overlay.Width * overlay.Height;
             var newData = new Color[count];
-            overlay.Value.GetData(newData);
+            overlay.GetData(newData);
             var origData = new Color[count];
-            oldTexture.Value.GetData(origData);
+            oldTexture.GetData(origData);
+
+            if (newData == null || origData == null)
+            {
+                return oldTexture;
+            }
 
             for (int i = 0; i < newData.Length; i++)
             {
                 newData[i] = newData[i].A != 0 ? newData[i] : origData[i];
             }
 
-            oldTexture.Value.SetData(newData);
+            oldTexture.SetData(newData);
             return oldTexture;
         }
 
@@ -330,48 +350,34 @@
 
             dayJustStarted = false;
 
-            if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
-            {
-                foreach (Building building in Game1.getFarm().buildings)
-                {
-                    if (building is Stable stable && !IsGarage(stable))
-                    {
-                        Horse horse = stable.getStableHorse();
-
-                        if (horse != null && !IsTractor(horse))
-                        {
-                            horse.Sprite.spriteTexture = MergeTextures(SaddleBagOverlay, new Lazy<Texture2D>(() => horse.Sprite.spriteTexture)).Value;
-                        }
-                    }
-                }
-            }
-
-            if (!Config.Water || Config.DisableStableSpriteChanges)
-            {
-                return;
-            }
-
             if (seasonalVersion == SeasonalVersion.Sonr)
             {
-                EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/sonr/overlay_empty_{Game1.currentSeason}.png", ContentSource.ModFolder));
+                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/sonr/overlay_empty_{Game1.currentSeason}.png", ContentSource.ModFolder);
             }
             else if (seasonalVersion == SeasonalVersion.Gwen)
             {
                 if (Game1.currentSeason == "winter" && Game1.isSnowing)
                 {
-                    EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_1_snow_peta.png", ContentSource.ModFolder));
+                    EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_1_snow_peta.png", ContentSource.ModFolder);
                 }
                 else
                 {
-                    EmptyTroughOverlay = new Lazy<Texture2D>(() => Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{gwenOption}.png", ContentSource.ModFolder));
+                    EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{gwenOption}.png", ContentSource.ModFolder);
                 }
             }
 
+            // call this even if water or sprite changes are disabled to reset the texture
+            // the overridden method makes sure to not change the sprite if the config disallows it
             foreach (Building building in Game1.getFarm().buildings)
             {
                 if (building is Stable stable && !IsGarage(stable))
                 {
-                    stable.texture = EmptyTroughTexture;
+                    if (stable?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotWater", out _) == true)
+                    {
+                        stable.modData.Remove($"{ModManifest.UniqueID}/gotWater");
+                    }
+
+                    stable.resetTexture();
                 }
             }
         }

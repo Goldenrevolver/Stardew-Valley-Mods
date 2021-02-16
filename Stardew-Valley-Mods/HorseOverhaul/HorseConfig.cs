@@ -115,7 +115,7 @@
 
             api.RegisterSimpleOption(manifest, "Thin Horse", null, () => config.ThinHorse, (bool val) => config.ThinHorse = val);
             api.RegisterSimpleOption(manifest, "Saddle Bags", null, () => config.SaddleBag, (bool val) => config.SaddleBag = val);
-            api.RegisterChoiceOption(manifest, "Visible Saddle Bags¹", null, () => config.VisibleSaddleBags.ToString(), (string val) => config.VisibleSaddleBags = val, Enum.GetNames(typeof(SaddleBagOption)));
+            api.RegisterChoiceOption(manifest, "Visible Saddle Bags", null, () => config.VisibleSaddleBags.ToString(), (string val) => config.VisibleSaddleBags = val, Enum.GetNames(typeof(SaddleBagOption)));
 
             api.RegisterLabel(manifest, "Friendship", null);
 
@@ -132,7 +132,6 @@
 
             // this is a spacer
             api.RegisterLabel(manifest, string.Empty, null);
-            api.RegisterLabel(manifest, "1: Disabling Requires Restart To Take Effect", null);
             api.RegisterLabel(manifest, "(Menu Key Rebinding Only Available In Config File)", null);
         }
     }
