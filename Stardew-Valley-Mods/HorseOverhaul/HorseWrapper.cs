@@ -1,5 +1,6 @@
 ﻿namespace HorseOverhaul
 {
+    using StardewValley.Buildings;
     using StardewValley.Characters;
     using StardewValley.Objects;
 
@@ -7,40 +8,70 @@
     {
         private HorseOverhaul mod;
 
-        public HorseWrapper(Horse horse, HorseOverhaul mod, Chest saddleBag)
+        public HorseWrapper(Stable stable, HorseOverhaul mod, Chest saddleBag, int? stableID)
         {
-            Horse = horse;
+            Stable = stable;
+
+            // has to be assigned right now because the horse gets removed from the character list while it has a rider
+            Horse = stable.getStableHorse();
             this.mod = mod;
             SaddleBag = saddleBag;
+            StableID = stableID;
         }
 
-        public Horse Horse { get; set; }
+        public int? StableID { get; set; }
+
+        public Horse Horse { get; private set; }
+
+        public Stable Stable { get; private set; }
+
+        public Chest SaddleBag { get; set; }
 
         public bool WasPet { get; set; }
 
         public bool GotFed { get; set; }
 
-        public bool GotWater { get; set; }
+        public bool GotWater
+        {
+            get
+            {
+                return Stable?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) == true;
+            }
 
-        public Chest SaddleBag { get; set; }
+            set
+            {
+                if (value)
+                {
+                    Stable.modData[$"{mod.ModManifest.UniqueID}/gotWater"] = "water";
+                }
+                else
+                {
+                    Stable.modData.Remove($"{mod.ModManifest.UniqueID}/gotWater");
+                }
 
-        public int Friendship { get => GetFriendship(Horse); set => SetFriendship(Horse, value); }
+                Stable.resetTexture();
+            }
+        }
+
+        public int Friendship { get => GetFriendship(); set => SetFriendship(value); }
 
         public void JustGotWater()
         {
             if (!GotWater)
             {
-                GotWater = true;
                 Friendship += 6;
+                GotWater = true;
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "gotWater", modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 
         public void JustGotFood(int expAmount)
         {
-            if (!GotFed)
+            if (!GotFed || mod.Config.AllowMultipleFeedingsADay)
             {
-                GotFed = true;
                 Friendship += expAmount;
+                GotFed = true;
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "gotFed", modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 
@@ -48,8 +79,9 @@
         {
             if (!WasPet)
             {
-                WasPet = true;
                 Friendship += 12;
+                WasPet = true;
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "wasPet", modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 
@@ -65,10 +97,14 @@
             return maxSpeed / 10 * halfHearts;
         }
 
-        private int GetFriendship(Horse horse)
+        private int GetFriendship()
         {
-            string moddata;
-            horse.modData.TryGetValue($"{mod.ModManifest.UniqueID}/friendship", out moddata);
+            // backwards compatibility
+            string moddata = null;
+            if (Horse != null)
+            {
+                Horse.modData.TryGetValue($"{mod.ModManifest.UniqueID}/friendship", out moddata);
+            }
 
             int friendship = 0;
 
@@ -81,31 +117,49 @@
                     friendship = 1000;
                 }
 
-                horse.modData[$"{mod.ModManifest.UniqueID}/friendship"] = friendship.ToString();
+                // remove old value
+                Horse.modData.Remove($"{mod.ModManifest.UniqueID}/friendship");
+
+                Stable.modData[$"{mod.ModManifest.UniqueID}/friendship"] = friendship.ToString();
             }
             else
             {
-                horse.modData.Add($"{mod.ModManifest.UniqueID}/friendship", friendship.ToString());
+                Stable.modData.TryGetValue($"{mod.ModManifest.UniqueID}/friendship", out moddata);
+
+                if (!string.IsNullOrEmpty(moddata))
+                {
+                    friendship = int.Parse(moddata);
+
+                    if (friendship > 1000)
+                    {
+                        friendship = 1000;
+                    }
+
+                    Stable.modData[$"{mod.ModManifest.UniqueID}/friendship"] = friendship.ToString();
+                }
+                else
+                {
+                    Stable.modData.Add($"{mod.ModManifest.UniqueID}/friendship", friendship.ToString());
+                }
             }
 
             return friendship;
         }
 
-        private int SetFriendship(Horse horse, int friendship)
+        private int SetFriendship(int friendship)
         {
             if (friendship > 1000)
             {
                 friendship = 1000;
             }
 
-            if (horse.modData.ContainsKey($"{mod.ModManifest.UniqueID}/friendship"))
+            // backwards compatibility
+            if (Horse != null && Horse.modData.ContainsKey($"{mod.ModManifest.UniqueID}/friendship"))
             {
-                horse.modData[$"{mod.ModManifest.UniqueID}/friendship"] = friendship.ToString();
+                Horse.modData.Remove($"{mod.ModManifest.UniqueID}/friendship");
             }
-            else
-            {
-                horse.modData.Add($"{mod.ModManifest.UniqueID}/friendship", friendship.ToString());
-            }
+
+            Stable.modData[$"{mod.ModManifest.UniqueID}/friendship"] = friendship.ToString();
 
             return friendship;
         }

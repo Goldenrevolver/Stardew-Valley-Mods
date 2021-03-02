@@ -6,6 +6,15 @@
     using StardewModdingAPI.Utilities;
     using System;
 
+    public enum SaddleBagOption
+    {
+        Disabled = 0,
+        Green = 1,
+        Brown = 2,
+        Horsemanship_Brown = 3,
+        Horsemanship_Beige = 4
+    }
+
     public interface IGenericModConfigMenuAPI
     {
         void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
@@ -31,15 +40,6 @@
         void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
     }
 
-    public enum SaddleBagOption
-    {
-        Disabled = 0,
-        Green = 1,
-        Brown = 2,
-        Horsemanship_Brown = 3,
-        Horsemanship_Beige = 4
-    }
-
     /// <summary>
     /// Config file for the mod
     /// </summary>
@@ -63,9 +63,15 @@
 
         public bool PetFeeding { get; set; } = true;
 
-        public KeybindList HorseMenuKey { get; set; } = KeybindList.Parse("H");
+        public bool AllowMultipleFeedingsADay { get; set; } = false;
 
-        public KeybindList PetMenuKey { get; set; } = KeybindList.Parse("P");
+        public KeybindList HorseMenuKey { get; set; } = KeybindList.Parse("H, LeftStick+DPadUp");
+
+        public KeybindList PetMenuKey { get; set; } = KeybindList.Parse("P, LeftStick+DPadDown");
+
+        public KeybindList AlternateSaddleBagAndFeedKey { get; set; } = KeybindList.Parse("LeftStick");
+
+        public bool DisableMainSaddleBagAndFeedKey { get; set; } = false;
 
         public bool DisableStableSpriteChanges { get; set; } = false;
 
@@ -109,7 +115,14 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new HorseConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
+            api.RegisterModConfig(
+                manifest,
+                () => config = new HorseConfig(),
+                delegate
+                {
+                    mod.Helper.WriteConfig(config);
+                    VerifyConfigValues(config, mod);
+                });
 
             api.RegisterLabel(manifest, "General", null);
 
@@ -128,6 +141,7 @@
             api.RegisterLabel(manifest, "Other", null);
 
             api.RegisterSimpleOption(manifest, "Pet Feeding", null, () => config.PetFeeding, (bool val) => config.PetFeeding = val);
+            api.RegisterSimpleOption(manifest, "Allow Multiple Feedings A Day", null, () => config.AllowMultipleFeedingsADay, (bool val) => config.AllowMultipleFeedingsADay = val);
             api.RegisterSimpleOption(manifest, "Disable Stable Sprite Changes", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
 
             // this is a spacer

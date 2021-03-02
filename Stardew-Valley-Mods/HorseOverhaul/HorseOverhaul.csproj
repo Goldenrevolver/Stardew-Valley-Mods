@@ -78,6 +78,7 @@
     <Compile Include="Patcher.cs" />
     <Compile Include="PetMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StateMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="i18n\de.json" />

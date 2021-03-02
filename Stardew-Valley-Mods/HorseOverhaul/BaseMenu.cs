@@ -189,7 +189,7 @@
 
                 for (int index = 0; index < 5; ++index)
                 {
-                    b.Draw(Game1.mouseCursors, new Vector2((xPositionOnScreen + (Game1.tileSize * 3 / 2) + (8 * Game1.pixelZoom * index)), yPos1), new Microsoft.Xna.Framework.Rectangle?(new Rectangle(211 + (friendshipLevel <= (double)((index + 1) * 195) ? 7 : 0), 428, 7, 6)), Color.White, 0.0f, Vector2.Zero, Game1.pixelZoom, SpriteEffects.None, 0.89f);
+                    b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + (Game1.tileSize * 3 / 2) + (8 * Game1.pixelZoom * index), yPos1), new Microsoft.Xna.Framework.Rectangle?(new Rectangle(211 + (friendshipLevel <= (double)((index + 1) * 195) ? 7 : 0), 428, 7, 6)), Color.White, 0.0f, Vector2.Zero, Game1.pixelZoom, SpriteEffects.None, 0.89f);
                     if (num == index)
                     {
                         b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + (Game1.tileSize * 3 / 2) + (8 * Game1.pixelZoom * index), yPos1), new Microsoft.Xna.Framework.Rectangle?(new Rectangle(211, 428, 4, 6)), Color.White, 0.0f, Vector2.Zero, Game1.pixelZoom, SpriteEffects.None, 0.891f);

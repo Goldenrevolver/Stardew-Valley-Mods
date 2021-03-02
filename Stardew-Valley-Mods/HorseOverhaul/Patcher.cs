@@ -7,6 +7,8 @@
     using StardewValley;
     using StardewValley.Buildings;
     using StardewValley.Characters;
+    using StardewValley.Locations;
+    using StardewValley.Objects;
     using StardewValley.Tools;
     using System;
     using System.Collections.Generic;
@@ -26,80 +28,112 @@
             try
             {
                 harmony.Patch(
+                   original: AccessTools.Method(typeof(Desert), "playerReachedBusDoor", new Type[] { typeof(Character), typeof(GameLocation) }),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(PreventSoftlock)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Chest), "draw", new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(HideChest)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Chest), "draw", new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float), typeof(bool) }),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(HideChest)));
+
+                harmony.Patch(
                    original: AccessTools.Method(typeof(Farm), "performToolAction"),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(CheckForWaterHit))
-                );
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(CheckForWaterHit)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Farmer), "getMovementSpeed"),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(ChangeHorseMovementSpeed))
-                );
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(ChangeHorseMovementSpeed)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "checkAction"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckForPetting))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckForPetting)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Stable), "performActionOnDemolition"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(SaveItemsFromDemolition))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(SaveItemsFromDemolition)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Farmer), "setMount"),
-                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixSetMount))
-                 );
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixSetMount)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Utility), "iterateChestsAndStorage"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(IterateOverSaddles))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(IterateOverSaddles)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Building), "resetTexture"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture)));
 
-                // thin horse patches
+                //// thin horse patches
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Farmer), "showRiding"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(FixRidingPosition))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(FixRidingPosition)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "squeezeForGate"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothing))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothing)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "draw", new Type[] { typeof(SpriteBatch) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(PreventBaseEmoteDraw))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(PreventBaseEmoteDraw)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "draw", new Type[] { typeof(SpriteBatch) }),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(DrawEmoteAndSaddleBags))
-                );
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(DrawEmoteAndSaddleBags)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "draw", new Type[] { typeof(SpriteBatch) }),
-                   transpiler: new HarmonyMethod(typeof(Patcher), nameof(FixHeadAndHatPosition))
-                );
+                   transpiler: new HarmonyMethod(typeof(Patcher), nameof(FixHeadAndHatPosition)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), "update", new Type[] { typeof(GameTime), typeof(GameLocation) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoMountingAnimation))
-                );
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoMountingAnimation)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Farmer), "setMount"),
-                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixSetMount))
-                 );
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixSetMount)));
             }
             catch (Exception e)
             {
                 mod.ErrorLog("Error while trying to setup required patches:", e);
+            }
+        }
+
+        public static bool PreventSoftlock(ref Character c)
+        {
+            try
+            {
+                if (c != null && c is Farmer player && player.isRidingHorse())
+                {
+                    Game1.drawObjectDialogue(mod.Helper.Translation.Get("HorseWarning"));
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
+        public static bool HideChest(Chest __instance)
+        {
+            try
+            {
+                return !__instance?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/isSaddleBag", out _) == true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
             }
         }
 
@@ -109,40 +143,41 @@
             {
                 if (__instance is Stable && !HorseOverhaul.IsGarage((Stable)__instance) && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
                 {
-                    __instance.texture = new Lazy<Texture2D>(delegate ()
-                    {
-                        Texture2D val = Game1.content.Load<Texture2D>(__instance.textureName());
-
-                        if (__instance?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) == true)
+                    __instance.texture = new Lazy<Texture2D>(
+                        delegate
                         {
-                            if (mod.FilledTroughTexture != null)
+                            Texture2D val = Game1.content.Load<Texture2D>(__instance.textureName());
+
+                            if (__instance?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) == true)
                             {
-                                val = mod.FilledTroughTexture;
+                                if (mod.FilledTroughTexture != null)
+                                {
+                                    val = mod.FilledTroughTexture;
+                                }
                             }
-                        }
-                        else
-                        {
-                            if (mod.EmptyTroughTexture != null)
+                            else
                             {
-                                val = mod.EmptyTroughTexture;
+                                if (mod.EmptyTroughTexture != null)
+                                {
+                                    val = mod.EmptyTroughTexture;
+                                }
                             }
-                        }
 
-                        if (__instance.paintedTexture != null)
-                        {
-                            __instance.paintedTexture.Dispose();
-                            __instance.paintedTexture = null;
-                        }
+                            if (__instance.paintedTexture != null)
+                            {
+                                __instance.paintedTexture.Dispose();
+                                __instance.paintedTexture = null;
+                            }
 
-                        __instance.paintedTexture = BuildingPainter.Apply(val, __instance.textureName() + "_PaintMask", __instance.netBuildingPaintColor.Value);
+                            __instance.paintedTexture = BuildingPainter.Apply(val, __instance.textureName() + "_PaintMask", __instance.netBuildingPaintColor.Value);
 
-                        if (__instance.paintedTexture != null)
-                        {
-                            val = __instance.paintedTexture;
-                        }
+                            if (__instance.paintedTexture != null)
+                            {
+                                val = __instance.paintedTexture;
+                            }
 
-                        return val;
-                    });
+                            return val;
+                        });
 
                     return false;
                 }
@@ -190,7 +225,6 @@
         {
             try
             {
-                // these conditions might be redundant but I'm using the base game conditions for the horse movement speed just to be sure
                 if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence))
                 {
                     Horse horse = __instance.mount;
@@ -198,14 +232,14 @@
                     if (horse != null && !HorseOverhaul.IsTractor(horse))
                     {
                         float addedMovementSpeed = 0f;
-                        mod.Horses.Where(x => x.Horse == horse).Do(x => addedMovementSpeed = x.GetMovementSpeedBonus());
+                        mod.Horses.Where(h => h?.Horse.HorseId == horse.HorseId).Do(h => addedMovementSpeed = h.GetMovementSpeedBonus());
 
                         if (__instance.movementDirections.Count > 1)
                         {
                             addedMovementSpeed *= 0.7f;
                         }
 
-                        if (Game1.CurrentEvent == null && __instance.hasBuff(19))
+                        if (__instance.hasBuff(19) && Game1.CurrentEvent == null)
                         {
                             addedMovementSpeed = 0f;
                         }
@@ -233,23 +267,13 @@
                 {
                     foreach (Building building in Game1.getFarm().buildings)
                     {
-                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable) && stable.getStableHorse() != null)
+                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable))
                         {
                             bool doesXHit = stable.tileX.Value + 1 == tileX || stable.tileX.Value + 2 == tileX;
 
                             if (doesXHit && stable.tileY.Value == tileY)
                             {
-                                if (!mod.Config.DisableStableSpriteChanges)
-                                {
-                                    if (stable?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) != true)
-                                    {
-                                        stable.modData.Add($"{mod.ModManifest.UniqueID}/gotWater", "water");
-                                    }
-
-                                    stable.resetTexture();
-                                }
-
-                                mod.Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => x.JustGotWater());
+                                mod.Horses.Where(h => h?.Stable.HorseId == stable.HorseId).Do(h => h.JustGotWater());
                             }
                         }
                     }
@@ -265,14 +289,14 @@
         {
             try
             {
-                if (HorseOverhaul.IsGarage(__instance))
+                if (HorseOverhaul.IsGarage(__instance) && !Context.IsMainPlayer)
                 {
                     return true;
                 }
 
                 HorseWrapper horseW = null;
 
-                mod.Horses.Where(x => x.Horse == __instance.getStableHorse()).Do(x => horseW = x);
+                mod.Horses.Where(h => h?.Stable.HorseId == __instance.HorseId).Do(h => horseW = h);
 
                 if (horseW != null && horseW.SaddleBag != null)
                 {
@@ -287,7 +311,7 @@
                         horseW.SaddleBag.items.Clear();
                     }
 
-                    horseW.SaddleBag = null;
+                    Game1.getFarm().Objects.Remove(horseW.SaddleBag.TileLocation);
 
                     if (__instance.modData.ContainsKey($"{mod.ModManifest.UniqueID}/stableID"))
                     {
@@ -317,7 +341,7 @@
 
                 foreach (var item in mod.Horses)
                 {
-                    if (item.Horse == __instance)
+                    if (item.Horse.HorseId == __instance.HorseId)
                     {
                         horseW = item;
                         break;
@@ -644,6 +668,16 @@
             }
         }
 
+        public static float GetHorseHeadXPosition()
+        {
+            return mod.Config.ThinHorse ? 16f : 48f;
+        }
+
+        public static Vector2 GetHatVector()
+        {
+            return mod.Config.ThinHorse ? new Vector2(-8f, 0f) : Vector2.Zero;
+        }
+
         private static IEnumerable<CodeInstruction> FixHeadAndHatPosition(IEnumerable<CodeInstruction> instructions)
         {
             try
@@ -682,16 +716,6 @@
                 mod.ErrorLog("There was an exception in a patch", e);
                 return instructions;
             }
-        }
-
-        public static float GetHorseHeadXPosition()
-        {
-            return mod.Config.ThinHorse ? 16f : 48f;
-        }
-
-        public static Vector2 GetHatVector()
-        {
-            return mod.Config.ThinHorse ? new Vector2(-8f, 0f) : Vector2.Zero;
         }
     }
 }

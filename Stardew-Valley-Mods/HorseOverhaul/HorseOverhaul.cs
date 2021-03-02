@@ -29,15 +29,19 @@
         //// (tile.x, tile.y), (tile.x+1, tile.y), (tile.x+2, tile.y), (tile.x+3, tile.y)
         //// (tile.x, tile.y+1), (tile.x+1, tile.y+1), (tile.x+2, tile.y+1), (tile.x+3, tile.y+1)
 
-        public readonly List<HorseWrapper> Horses = new List<HorseWrapper>();
+        private readonly List<SButton> mouseButtons = new List<SButton>() { SButton.MouseLeft, SButton.MouseRight, SButton.MouseMiddle, SButton.MouseX1, SButton.MouseX2 };
+
+        private readonly PerScreen<List<HorseWrapper>> horses = new PerScreen<List<HorseWrapper>>(createNewState: () => new List<HorseWrapper>());
+
+        private readonly PerScreen<bool> dayJustStarted = new PerScreen<bool>(createNewState: () => false);
 
         private string gwenOption = "1";
 
         private bool usingMyTextures = false;
 
-        private bool dayJustStarted = false;
-
         private SeasonalVersion seasonalVersion = SeasonalVersion.None;
+
+        public List<HorseWrapper> Horses { get => horses.Value; }
 
         public IBetterRanchingApi BetterRanchingApi { get; set; }
 
@@ -51,11 +55,11 @@
 
         public Texture2D SaddleBagOverlay { get; set; }
 
+        public bool IsUsingHorsemanship { get; set; } = false;
+
         private Texture2D FilledTroughOverlay { get; set; }
 
         private Texture2D EmptyTroughOverlay { get; set; }
-
-        public bool IsUsingHorsemanship { get; set; } = false;
 
         //// TODO add food preferences
         //// TODO horse race festival
@@ -77,14 +81,21 @@
 
             HorseConfig.VerifyConfigValues(Config, this);
 
-            Helper.Events.GameLoop.GameLaunched += delegate { CheckForKeybindConflict(); HorseConfig.SetUpModConfigMenu(Config, this); BetterRanchingApi = SetupBetterRanching(); };
+            Helper.Events.GameLoop.GameLaunched += delegate
+            {
+                CheckForKeybindConflict();
+                HorseConfig.SetUpModConfigMenu(Config, this);
+                BetterRanchingApi = SetupBetterRanching();
+            };
 
             Helper.Events.GameLoop.SaveLoaded += delegate { SetOverlays(); };
 
-            Helper.Events.GameLoop.Saving += delegate { SaveChestsAndReset(); };
+            Helper.Events.GameLoop.Saving += delegate { ResetHorses(); };
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
             helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
             helper.Events.Display.RenderedWorld += OnRenderedWorld;
+
+            helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
 
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Input.ButtonsChanged += OnButtonsChanged;
@@ -104,6 +115,68 @@
             string errorMessage = e == null ? string.Empty : $"\n{e.Message}\n{e.StackTrace}";
 
             Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
+        }
+
+        private void OnModMessageReceived(object sender, ModMessageReceivedEventArgs e)
+        {
+            if (e == null || e.FromModID != ModManifest.UniqueID)
+            {
+                return;
+            }
+
+            var message = e.ReadAs<StateMessage>();
+
+            if (message != null)
+            {
+                if (e.Type == "syncRequest" && Context.IsMainPlayer)
+                {
+                    foreach (var horse in Horses)
+                    {
+                        Helper.Multiplayer.SendMessage(new StateMessage(horse), "sync", modIDs: new[] { ModManifest.UniqueID }, new[] { e.FromPlayerID });
+                    }
+                }
+                else if (message.HorseID != null)
+                {
+                    foreach (var horse in Horses)
+                    {
+                        if (horse?.Stable?.HorseId == message.HorseID)
+                        {
+                            if (e.Type == "gotFed")
+                            {
+                                horse.GotFed = true;
+                                horse.Friendship = message.Friendship;
+                            }
+
+                            if (e.Type == "gotWater")
+                            {
+                                horse.GotWater = true;
+                                horse.Friendship = message.Friendship;
+                            }
+
+                            if (e.Type == "wasPet")
+                            {
+                                horse.WasPet = true;
+                                horse.Friendship = message.Friendship;
+                            }
+
+                            if (e.Type == "sync")
+                            {
+                                horse.WasPet = message.WasPet;
+                                horse.GotFed = message.GotFed;
+                                horse.GotWater = message.GotWater;
+                                horse.Friendship = message.Friendship;
+
+                                if (message.StableID.HasValue)
+                                {
+                                    horse.SaddleBag = GetSaddleBag(() => horse.Stable, message.StableID.Value);
+                                }
+
+                                horse?.Stable?.resetTexture();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void CheckForKeybindConflict()
@@ -139,6 +212,21 @@
 
         private void SetOverlays()
         {
+            List<Guid> horseIDs = new List<Guid>();
+
+            foreach (Building building in Game1.getFarm().buildings)
+            {
+                if (building is Stable stable && !IsGarage(stable))
+                {
+                    horseIDs.Add(stable.HorseId);
+                }
+            }
+
+            if (horseIDs.Count != horseIDs.Distinct().Count())
+            {
+                ErrorLog("There appear to exist multiple stables with the same ID (which is supposed to be unique). Is this an old save? This will cause a lot of issues with this mod. I recommend to destroy and rebuild the stables to get new unique IDs.");
+            }
+
             if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
             {
                 SaddleBagOverlay = Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png");
@@ -343,12 +431,18 @@
 
         private void LateDayStarted()
         {
-            if (!Context.IsWorldReady || !dayJustStarted)
+            if (!Context.IsWorldReady || !dayJustStarted.Value)
             {
                 return;
             }
 
-            dayJustStarted = false;
+            dayJustStarted.Value = false;
+
+            // is local coop farmhand
+            if (Context.IsOnHostComputer && !Context.IsMainPlayer)
+            {
+                return;
+            }
 
             if (seasonalVersion == SeasonalVersion.Sonr)
             {
@@ -372,7 +466,8 @@
             {
                 if (building is Stable stable && !IsGarage(stable))
                 {
-                    if (stable?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotWater", out _) == true)
+                    // empty the water troughs
+                    if (Context.IsMainPlayer && stable?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotWater", out _) == true)
                     {
                         stable.modData.Remove($"{ModManifest.UniqueID}/gotWater");
                     }
@@ -384,217 +479,180 @@
 
         private void OnDayStarted()
         {
-            for (int i = 0; i < Horses.Count; i++)
-            {
-                Horses[i] = null;
-            }
+            // for LateDayStarted, so we can change the textures after content patcher did
+            dayJustStarted.Value = true;
 
             Horses.Clear();
 
-            // for LateDayStarted, so we can change the textures after content patcher did
-            dayJustStarted = true;
-
-            if (Game1.player.hasPet())
-            {
-                Pet pet = Game1.player.getPet();
-
-                if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
-                {
-                    pet.modData.Remove($"{ModManifest.UniqueID}/gotFed");
-                }
-            }
-
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !IsGarage(stable) && stable.getStableHorse() != null)
+                if (building is Stable stable)
                 {
-                    Chest saddleBag = null;
-
-                    stable.modData.TryGetValue($"{ModManifest.UniqueID}/stableID", out string modData);
-
-                    int stableID;
-                    if (string.IsNullOrEmpty(modData))
-                    {
-                        if (Config.SaddleBag)
-                        {
-                            // find position for the new position (will get overridden at the end of the day)
-                            stableID = -1;
-                            int i = 0;
-
-                            while (i < 10)
-                            {
-                                if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
-                                {
-                                    stableID = i;
-                                    break;
-                                }
-
-                                i++;
-                            }
-
-                            if (stableID == -1)
-                            {
-                                ErrorLog("Couldn't find a spot to place the saddle bag chest");
-                                return;
-                            }
-
-                            saddleBag = new Chest(true, new Vector2(stableID, 0));
-                        }
-                    }
-                    else
-                    {
-                        stableID = int.Parse(modData);
-
-                        StardewValley.Object value;
-                        Game1.getFarm().Objects.TryGetValue(new Vector2(stableID, 0), out value);
-
-                        if (value != null && value is Chest chest)
-                        {
-                            Game1.getFarm().Objects.Remove(new Vector2(stableID, 0));
-
-                            if (Config.SaddleBag)
-                            {
-                                saddleBag = chest;
-                            }
-                            else
-                            {
-                                if (chest.items.Count > 0)
-                                {
-                                    foreach (var item in chest.items)
-                                    {
-                                        Game1.player.team.returnedDonations.Add(item);
-                                        Game1.player.team.newLostAndFoundItems.Value = true;
-                                    }
-
-                                    chest.items.Clear();
-                                }
-
-                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
-                                {
-                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (Config.SaddleBag)
-                            {
-                                ErrorLog("Stable says there is a saddle bag chest, but I couldn't find it!");
-                                saddleBag = new Chest(true, new Vector2(stableID, 0));
-                            }
-                            else
-                            {
-                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
-                                {
-                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
-                                }
-                            }
-                        }
-                    }
-
-                    if (Config.ThinHorse)
+                    if (Config.ThinHorse && stable.getStableHorse() != null)
                     {
                         stable.getStableHorse().forceOneTileWide.Value = true;
                     }
 
-                    Horses.Add(new HorseWrapper(stable.getStableHorse(), this, saddleBag));
+                    if (IsGarage(stable))
+                    {
+                        continue;
+                    }
+
+                    Chest saddleBag = null;
+                    int? stableID = null;
+
+                    // non host players get the saddle bag from the sync request
+                    if (Context.IsMainPlayer)
+                    {
+                        stable.modData.TryGetValue($"{ModManifest.UniqueID}/stableID", out string modData);
+
+                        if (!string.IsNullOrEmpty(modData))
+                        {
+                            stableID = int.Parse(modData);
+
+                            saddleBag = GetSaddleBag(() => stable, stableID.Value);
+                        }
+
+                        if (Config.SaddleBag && saddleBag == null)
+                        {
+                            stableID = CreateNewSaddleBag(ref stable, ref saddleBag);
+                        }
+                    }
+
+                    Horses.Add(new HorseWrapper(stable, this, saddleBag, stableID));
                 }
+            }
+
+            if (Context.IsMainPlayer)
+            {
+                if (Game1.player.hasPet())
+                {
+                    Pet pet = Game1.player.getPet();
+
+                    if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
+                    {
+                        pet.modData.Remove($"{ModManifest.UniqueID}/gotFed");
+                    }
+                }
+            }
+            else
+            {
+                Helper.Multiplayer.SendMessage(new StateMessage(), "syncRequest", modIDs: new[] { ModManifest.UniqueID }, new[] { Game1.MasterPlayer.UniqueMultiplayerID });
             }
         }
 
-        private void SaveChestsAndReset()
+        private Chest GetSaddleBag(Func<Stable> stable, int stableID)
+        {
+            StardewValley.Object value;
+            Game1.getFarm().Objects.TryGetValue(new Vector2(stableID, 0), out value);
+
+            if (value != null && value is Chest chest)
+            {
+                chest.modData[$"{ModManifest.UniqueID}/isSaddleBag"] = "true";
+
+                if (Config.SaddleBag)
+                {
+                    return chest;
+                }
+                else if (Context.IsMainPlayer)
+                {
+                    if (stable.Invoke().modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                    {
+                        stable.Invoke().modData.Remove($"{ModManifest.UniqueID}/stableID");
+                    }
+
+                    if (chest.items.Count > 0)
+                    {
+                        foreach (var item in chest.items)
+                        {
+                            Game1.player.team.returnedDonations.Add(item);
+                            Game1.player.team.newLostAndFoundItems.Value = true;
+                        }
+
+                        chest.items.Clear();
+                    }
+
+                    Game1.getFarm().Objects.Remove(new Vector2(stableID, 0));
+                }
+            }
+            else if (Context.IsMainPlayer)
+            {
+                if (Config.SaddleBag)
+                {
+                    ErrorLog("Stable says there is a saddle bag chest, but I couldn't find it!");
+                }
+                else if (stable.Invoke().modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
+                {
+                    stable.Invoke().modData.Remove($"{ModManifest.UniqueID}/stableID");
+                }
+            }
+
+            return null;
+        }
+
+        private int? CreateNewSaddleBag(ref Stable stable, ref Chest saddleBag)
+        {
+            if (!Context.IsMainPlayer)
+            {
+                return null;
+            }
+
+            // find position for the new chest
+            int stableID = -1;
+
+            for (int i = 0; i < 10; i++)
+            {
+                if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
+                {
+                    stableID = i;
+                    break;
+                }
+            }
+
+            if (stableID == -1)
+            {
+                ErrorLog("Couldn't find a spot to place the saddle bag chest");
+                return null;
+            }
+
+            saddleBag = new Chest(true, new Vector2(stableID, 0));
+            stable.modData[$"{ModManifest.UniqueID}/stableID"] = stableID.ToString();
+            saddleBag.modData[$"{ModManifest.UniqueID}/isSaddleBag"] = "true";
+            Game1.getFarm().Objects.Add(new Vector2(stableID, 0), saddleBag);
+
+            return stableID;
+        }
+
+        private void ResetHorses()
         {
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !IsGarage(stable) && stable.getStableHorse() != null)
+                // also do it for tractors
+                if (building is Stable stable && stable.getStableHorse() != null)
                 {
                     stable.getStableHorse().forceOneTileWide.Value = false;
-
-                    if (Config.SaddleBag)
-                    {
-                        HorseWrapper horse = null;
-
-                        Horses.Where(x => x.Horse == stable.getStableHorse()).Do(x => horse = x);
-
-                        if (horse != null && horse.SaddleBag != null)
-                        {
-                            // find the first free position
-                            int stableID = -1;
-                            int i = 0;
-
-                            while (i < 10)
-                            {
-                                if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
-                                {
-                                    stableID = i;
-                                    break;
-                                }
-
-                                i++;
-                            }
-
-                            if (stableID == -1)
-                            {
-                                ErrorLog("Couldn't find a spot to save the saddle bag chest");
-
-                                if (horse.SaddleBag.items.Count > 0)
-                                {
-                                    foreach (var item in horse.SaddleBag.items)
-                                    {
-                                        Game1.player.team.returnedDonations.Add(item);
-                                        Game1.player.team.newLostAndFoundItems.Value = true;
-                                    }
-
-                                    horse.SaddleBag.items.Clear();
-                                }
-
-                                horse.SaddleBag = null;
-
-                                if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
-                                {
-                                    stable.modData.Remove($"{ModManifest.UniqueID}/stableID");
-                                }
-                                return;
-                            }
-
-                            if (stable.modData.ContainsKey($"{ModManifest.UniqueID}/stableID"))
-                            {
-                                stable.modData[$"{ModManifest.UniqueID}/stableID"] = stableID.ToString();
-                            }
-                            else
-                            {
-                                stable.modData.Add($"{ModManifest.UniqueID}/stableID", stableID.ToString());
-                            }
-
-                            if (horse.SaddleBag != null)
-                            {
-                                horse.SaddleBag.TileLocation = new Vector2(stableID, 0);
-                            }
-
-                            Game1.getFarm().Objects.Add(new Vector2(stableID, 0), horse.SaddleBag);
-                        }
-                    }
                 }
             }
         }
 
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
-            if (!Context.IsWorldReady || !Context.IsPlayerFree)
+            if (!Context.IsWorldReady || !Context.IsPlayerFree || Config.DisableMainSaddleBagAndFeedKey)
             {
                 return;
             }
 
             if (e.Button.IsUseToolButton())
             {
-                bool wasController = e.Button.TryGetController(out _);
+                ////bool wasController = e.Button.TryGetController(out _);
+                bool ignoreMousePosition = !mouseButtons.Contains(e.Button);
                 Point cursorPosition = Game1.getMousePosition();
 
-                bool interacted = CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
+                bool interacted = CheckHorseInteraction(Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
 
                 if (!interacted)
                 {
-                    CheckPetInteraction(cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, wasController);
+                    CheckPetInteraction(cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
                 }
             }
         }
@@ -619,37 +677,35 @@
                 OpenPetMenu();
                 return;
             }
+
+            if (Config.AlternateSaddleBagAndFeedKey.JustPressed())
+            {
+                bool interacted = CheckHorseInteraction(Game1.currentLocation, 0, 0, true);
+
+                if (!interacted)
+                {
+                    CheckPetInteraction(0, 0, true);
+                }
+            }
         }
 
-        private bool CheckHorseInteraction(GameLocation currentLocation, int x, int y, bool wasController)
+        private bool CheckHorseInteraction(GameLocation currentLocation, int mouseX, int mouseY, bool ignoreMousePosition)
         {
-            // Find if click was on Horse
             foreach (Horse horse in currentLocation.characters.OfType<Horse>())
             {
-                if (IsTractor(horse))
+                // check if the interaction was a mouse click on a horse or a button click near a horse
+                if (horse != null && !IsTractor(horse) && IsInRange(horse, mouseX, mouseY, ignoreMousePosition))
                 {
-                    continue;
-                }
+                    HorseWrapper horseW = null;
+                    Horses.Where(h => h?.Horse.HorseId == horse.HorseId).Do(h => horseW = h);
 
-                HorseWrapper horseW = null;
-
-                Horses.Where(h => h.Horse == horse).Do(h => horseW = h);
-
-                if (horseW == null)
-                {
-                    continue;
-                }
-
-                if (IsInRange(horse, x, y, wasController))
-                {
                     if (Game1.player.CurrentItem != null && Config.Feeding)
                     {
-                        // Holding food
                         Item currentItem = Game1.player.CurrentItem;
 
                         if (IsEdible(currentItem))
                         {
-                            if (horseW.GotFed)
+                            if (horseW.GotFed && !Config.AllowMultipleFeedingsADay)
                             {
                                 Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = horse.displayName }));
                             }
@@ -686,7 +742,7 @@
             return false;
         }
 
-        private bool CheckPetInteraction(int x, int y, bool wasController)
+        private bool CheckPetInteraction(int mouseX, int mouseY, bool ignoreMousePosition)
         {
             if (!Config.PetFeeding || !Game1.player.hasPet())
             {
@@ -695,16 +751,15 @@
 
             Pet pet = Game1.player.getPet();
 
-            if (pet != null && IsInRange(pet, x, y, wasController))
+            if (pet != null && IsInRange(pet, mouseX, mouseY, ignoreMousePosition))
             {
                 if (Game1.player.CurrentItem != null)
                 {
-                    // Holding food
                     Item currentItem = Game1.player.CurrentItem;
 
                     if (IsEdible(currentItem))
                     {
-                        if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
+                        if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true && !Config.AllowMultipleFeedingsADay)
                         {
                             Game1.drawObjectDialogue(Helper.Translation.Get("AteEnough", new { name = pet.displayName }));
                         }
@@ -729,38 +784,32 @@
             return false;
         }
 
-        private bool IsInRange(Character chara, int x, int y, bool wasController)
+        private bool IsInRange(Character chara, int mouseX, int mouseY, bool ignoreMousePosition)
         {
-            return Utility.withinRadiusOfPlayer((int)chara.Position.X, (int)chara.Position.Y, 1, Game1.player) && (Utility.distance(x, chara.Position.X, y, chara.Position.Y) <= 110 || wasController);
+            return Utility.withinRadiusOfPlayer((int)chara.Position.X, (int)chara.Position.Y, 1, Game1.player) && (Utility.distance(mouseX, chara.Position.X, mouseY, chara.Position.Y) <= 110 || ignoreMousePosition);
         }
 
-        private void OpenHorseMenu(int? x = null, int? y = null)
+        private void OpenHorseMenu()
         {
-            if (x == null && y == null)
+            HorseWrapper horse = null;
+
+            Horses.Where(h => h?.Horse.getOwner() == Game1.player && h?.Horse.getName() == Game1.player.horseName).Do(h => horse = h);
+
+            if (horse != null)
             {
-                HorseWrapper horse = null;
-
-                Horses.Where(h => h.Horse.getOwner() == Game1.player && h.Horse.getName() == Game1.player.horseName).Do(h => horse = h);
-
-                if (horse != null)
-                {
-                    Game1.activeClickableMenu = new HorseMenu(this, horse);
-                }
+                Game1.activeClickableMenu = new HorseMenu(this, horse);
             }
         }
 
-        private void OpenPetMenu(int? x = null, int? y = null)
+        private void OpenPetMenu()
         {
-            if (x == null && y == null)
+            if (Game1.player.hasPet())
             {
-                if (Game1.player.hasPet())
-                {
-                    Pet pet = Game1.player.getPet();
+                Pet pet = Game1.player.getPet();
 
-                    if (pet != null)
-                    {
-                        Game1.activeClickableMenu = new PetMenu(this, pet);
-                    }
+                if (pet != null)
+                {
+                    Game1.activeClickableMenu = new PetMenu(this, pet);
                 }
             }
         }
@@ -784,7 +833,7 @@
                 float yOffset = Game1.tileSize / 3;
                 int mult = Config.ThinHorse ? -1 : 1;
 
-                foreach (HorseWrapper horseWrapper in Horses)
+                foreach (HorseWrapper horseWrapper in Horses.Where(h => h?.Horse?.currentLocation == Game1.currentLocation))
                 {
                     BetterRanchingApi.DrawHeartBubble(Game1.spriteBatch, horseWrapper.Horse.Position.X, horseWrapper.Horse.Position.Y - yOffset, mult * horseWrapper.Horse.Sprite.getWidth(), () => !horseWrapper.WasPet);
                 }
