@@ -786,7 +786,26 @@
 
         private bool IsInRange(Character chara, int mouseX, int mouseY, bool ignoreMousePosition)
         {
-            return Utility.withinRadiusOfPlayer((int)chara.Position.X, (int)chara.Position.Y, 1, Game1.player) && (Utility.distance(mouseX, chara.Position.X, mouseY, chara.Position.Y) <= 110 || ignoreMousePosition);
+            if (Utility.withinRadiusOfPlayer((int)chara.Position.X, (int)chara.Position.Y, 1, Game1.player))
+            {
+                if (ignoreMousePosition)
+                {
+                    switch (Game1.player.FacingDirection)
+                    {
+                        case 0: return Game1.player.getTileY() > chara.getTileY();
+                        case 1: return Game1.player.getTileX() < chara.getTileX();
+                        case 2: return Game1.player.getTileY() < chara.getTileY();
+                        case 3: return Game1.player.getTileX() > chara.getTileX();
+                        default: return false;
+                    }
+                }
+                else
+                {
+                    return Utility.distance(mouseX, chara.Position.X, mouseY, chara.Position.Y) <= 110;
+                }
+            }
+
+            return false;
         }
 
         private void OpenHorseMenu()
