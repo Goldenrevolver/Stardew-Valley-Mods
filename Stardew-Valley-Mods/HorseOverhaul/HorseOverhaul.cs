@@ -792,10 +792,10 @@
                 {
                     switch (Game1.player.FacingDirection)
                     {
-                        case 0: return Game1.player.getTileY() > chara.getTileY();
-                        case 1: return Game1.player.getTileX() < chara.getTileX();
-                        case 2: return Game1.player.getTileY() < chara.getTileY();
-                        case 3: return Game1.player.getTileX() > chara.getTileX();
+                        case 0: return Game1.player.getStandingY() > chara.getStandingY() && Math.Abs(Game1.player.getStandingX() - chara.getStandingX()) < 48;
+                        case 1: return Game1.player.getStandingX() < chara.getStandingX() && Math.Abs(Game1.player.getStandingY() - chara.getStandingY()) < 48;
+                        case 2: return Game1.player.getStandingY() < chara.getStandingY() && Math.Abs(Game1.player.getStandingX() - chara.getStandingX()) < 48;
+                        case 3: return Game1.player.getStandingX() > chara.getStandingX() && Math.Abs(Game1.player.getStandingY() - chara.getStandingY()) < 48;
                         default: return false;
                     }
                 }
