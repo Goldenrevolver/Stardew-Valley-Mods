@@ -801,7 +801,7 @@
                 }
                 else
                 {
-                    return Utility.distance(mouseX, chara.Position.X, mouseY, chara.Position.Y) <= 110;
+                    return Utility.distance(mouseX, chara.Position.X, mouseY, chara.Position.Y) <= 70;
                 }
             }
 
