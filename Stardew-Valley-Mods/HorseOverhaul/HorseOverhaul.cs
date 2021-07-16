@@ -334,7 +334,7 @@
                 }
             }
 
-            if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings"))
+            if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings") || Helper.ModRegistry.IsLoaded("red.HudsonValleyBuildings"))
             {
                 EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty_no_bucket.png", ContentSource.ModFolder);
 
