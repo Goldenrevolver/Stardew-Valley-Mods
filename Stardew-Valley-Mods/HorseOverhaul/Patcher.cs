@@ -33,11 +33,15 @@
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Chest), "draw", new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(HideChest)));
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Chest), "draw", new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float), typeof(bool) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(HideChest)));
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Chest), "performToolAction"),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Farm), "performToolAction"),
@@ -124,7 +128,7 @@
             }
         }
 
-        public static bool HideChest(Chest __instance)
+        public static bool DoNothingIfSaddleBag(Chest __instance)
         {
             try
             {
