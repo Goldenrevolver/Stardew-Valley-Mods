@@ -206,11 +206,12 @@
 
         private void SaveCookingKits()
         {
+            // all locations except repeatedly buildable farm buildings
             foreach (var location in Game1.locations)
             {
                 foreach (var item in location.Objects.Values)
                 {
-                    if (item.ParentSheetIndex == 278)
+                    if (item != null && item.ParentSheetIndex == 278)
                     {
                         // extinguishes the fire, does not truly remove the object
                         item.performRemoveAction(item.tileLocation, location);
@@ -219,6 +220,30 @@
                     }
                 }
             }
+
+            // repeatedly buildable farm buildings
+            if (Game1.getFarm() != null)
+            {
+                foreach (var building in Game1.getFarm().buildings)
+                {
+                    var interior = building.indoors.Value;
+                    if (interior != null)
+                    {
+                        foreach (var item in interior.Objects.Values)
+                        {
+                            if (item != null && item.ParentSheetIndex == 278)
+                            {
+                                // extinguishes the fire, does not truly remove the object
+                                item.performRemoveAction(item.tileLocation, building.indoors.Value);
+
+                                item.destroyOvernight = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // this differentiation is also done a lot in the base game code, e.g. in Game1.getCharacterFromName in Game1.cs
         }
 
         public static void Draw_Post(Torch __instance, SpriteBatch spriteBatch, int x, int y, float alpha = 1f)
