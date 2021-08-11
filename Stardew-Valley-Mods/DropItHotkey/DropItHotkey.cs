@@ -27,6 +27,7 @@ namespace DropItHotkey
         {
             if (config.DropKey.JustPressed())
             {
+                Helper.Input.SuppressActiveKeybinds(config.DropKey);
                 if (Context.IsPlayerFree)
                 {
                     Item item = Game1.player.CurrentItem;
