@@ -7,6 +7,7 @@
     using StardewValley.Menus;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
 
     public abstract class BaseMenu : IClickableMenu
@@ -24,15 +25,17 @@
         {
             Game1.player.Halt();
 
-            textBox = new TextBox(null, null, Game1.dialogueFont, Game1.textColor);
-            textBox.X = (Game1.uiViewport.Width / 2) - (Game1.tileSize * 2) - 12;
-            textBox.Y = yPositionOnScreen - 4 + (Game1.tileSize * 2);
-            textBox.Width = Game1.tileSize * 4;
-            textBox.Height = Game1.tileSize * 3;
+            textBox = new TextBox(null, null, Game1.dialogueFont, Game1.textColor)
+            {
+                X = (Game1.uiViewport.Width / 2) - (Game1.tileSize * 2) - 12,
+                Y = yPositionOnScreen - 4 + (Game1.tileSize * 2),
+                Width = Game1.tileSize * 4,
+                Height = Game1.tileSize * 3,
 
-            textBox.Text = textBoxText;
+                Text = textBoxText,
 
-            textBox.Selected = false;
+                Selected = false
+            };
 
             var yPos = yPositionOnScreen + Height - Game1.tileSize - borderWidth;
 
@@ -50,12 +53,16 @@
             snapToDefaultClickableComponent();
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void snapToDefaultClickableComponent()
         {
             currentlySnappedComponent = getComponentWithID(OkayButtonID);
             snapCursorToCurrentSnappedComponent();
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void receiveKeyPress(Keys key)
         {
             if (Game1.globalFade)
@@ -86,6 +93,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void update(GameTime time)
         {
             base.update(time);
@@ -111,6 +120,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
             if (Game1.globalFade)
@@ -127,6 +138,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override bool readyToClose()
         {
             textBox.Selected = false;
@@ -138,6 +151,8 @@
             return false;
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void receiveRightClick(int x, int y, bool playSound = true)
         {
             if (Game1.globalFade)
@@ -154,6 +169,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void performHoverAction(int x, int y)
         {
             if (okayButton != null)
@@ -169,6 +186,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "This is an override, no choice")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "The above suppress is necessary")]
         public override void draw(SpriteBatch b)
         {
             if (!Game1.globalFade)

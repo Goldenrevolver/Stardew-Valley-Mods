@@ -1,6 +1,6 @@
 ﻿namespace HorseOverhaul
 {
-    using Harmony;
+    using HarmonyLib;
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
@@ -23,7 +23,7 @@
         {
             mod = horseOverhaul;
 
-            var harmony = HarmonyInstance.Create(mod.ModManifest.UniqueID);
+            var harmony = new Harmony(mod.ModManifest.UniqueID);
 
             try
             {
@@ -145,7 +145,7 @@
         {
             try
             {
-                if (__instance is Stable && !HorseOverhaul.IsGarage((Stable)__instance) && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
+                if (__instance is Stable stable && !HorseOverhaul.IsGarage(stable) && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
                 {
                     __instance.texture = new Lazy<Texture2D>(
                         delegate
@@ -233,10 +233,10 @@
                 {
                     Horse horse = __instance.mount;
 
-                    if (horse != null && !HorseOverhaul.IsTractor(horse))
+                    if (horse != null && !HorseOverhaul.IsTractor(horse) && mod?.Horses != null)
                     {
                         float addedMovementSpeed = 0f;
-                        mod.Horses.Where(h => h?.Horse.HorseId == horse.HorseId).Do(h => addedMovementSpeed = h.GetMovementSpeedBonus());
+                        mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => addedMovementSpeed = h.GetMovementSpeedBonus());
 
                         if (__instance.movementDirections.Count > 1)
                         {
@@ -277,7 +277,7 @@
 
                             if (doesXHit && stable.tileY.Value == tileY)
                             {
-                                mod.Horses.Where(h => h?.Stable.HorseId == stable.HorseId).Do(h => h.JustGotWater());
+                                mod.Horses.Where(h => h?.Stable?.HorseId == stable.HorseId).Do(h => h.JustGotWater());
                             }
                         }
                     }
@@ -300,7 +300,7 @@
 
                 HorseWrapper horseW = null;
 
-                mod.Horses.Where(h => h?.Stable.HorseId == __instance.HorseId).Do(h => horseW = h);
+                mod.Horses.Where(h => h?.Stable?.HorseId == __instance.HorseId).Do(h => horseW = h);
 
                 if (horseW != null && horseW.SaddleBag != null)
                 {
@@ -332,7 +332,7 @@
             }
         }
 
-        public static bool CheckForPetting(ref Horse __instance, ref bool __result, ref Farmer who)
+        public static bool CheckForPetting(ref Horse __instance, ref bool __result)
         {
             try
             {
@@ -345,7 +345,7 @@
 
                 foreach (var item in mod.Horses)
                 {
-                    if (item.Horse.HorseId == __instance.HorseId)
+                    if (item?.Horse?.HorseId == __instance.HorseId)
                     {
                         horseW = item;
                         break;
@@ -591,7 +591,7 @@
                 Horse horse = __instance;
 
                 // all the vanilla conditions to get to the case in question
-                if (!mod.Config.ThinHorse || horse.rider == null || horse.rider.mount != null || !horse.rider.IsLocalPlayer || !horse.mounting || (horse.rider != null && horse.rider.hidden))
+                if (!mod.Config.ThinHorse || horse.rider == null || horse.rider.mount != null || !horse.rider.IsLocalPlayer || !horse.mounting.Value || (horse.rider != null && horse.rider.hidden.Value))
                 {
                     return true;
                 }
@@ -649,21 +649,12 @@
                 {
                     var dir = __instance.mount.FacingDirection;
 
-                    switch (dir)
+                    __instance.xOffset = dir switch
                     {
-                        case 1:
-                            // counteracts the +8 from the horse update method to arrive at +4
-                            __instance.xOffset = -4f;
-                            break;
-
-                        case 3:
-                            __instance.xOffset = 0;
-                            break;
-
-                        default:
-                            __instance.xOffset = 4f;
-                            break;
-                    }
+                        1 => -4f,// counteracts the +8 from the horse update method to arrive at +4
+                        3 => 0,
+                        _ => 4f,
+                    };
                 }
             }
             catch (Exception e)

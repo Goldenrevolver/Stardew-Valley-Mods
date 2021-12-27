@@ -6,7 +6,7 @@
 
     public class HorseWrapper
     {
-        private HorseOverhaul mod;
+        private readonly HorseOverhaul mod;
 
         public HorseWrapper(Stable stable, HorseOverhaul mod, Chest saddleBag, int? stableID)
         {

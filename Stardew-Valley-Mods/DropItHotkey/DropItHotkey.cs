@@ -1,16 +1,10 @@
-﻿using StardewModdingAPI;
-using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
-using StardewValley;
-using StardewValley.Menus;
-using System;
-
-namespace DropItHotkey
+﻿namespace DropItHotkey
 {
-    public class Config
-    {
-        public KeybindList DropKey { get; set; } = KeybindList.Parse("LeftStick");
-    }
+    using StardewModdingAPI;
+    using StardewModdingAPI.Events;
+    using StardewValley;
+    using StardewValley.Menus;
+    using System;
 
     public class DropItHotkey : Mod
     {
@@ -20,7 +14,34 @@ namespace DropItHotkey
         {
             config = Helper.ReadConfig<Config>();
 
+            Helper.Events.GameLoop.GameLaunched += delegate { Config.SetUpModConfigMenu(config, this); };
+
             helper.Events.Input.ButtonsChanged += CheckForHotkey;
+        }
+
+        private static void DropItem(Farmer player, Item toDrop)
+        {
+            // typo by the base game (verified for 1.5.6)
+            Game1.playSound("throwDownITem");
+            Game1.createItemDebris(toDrop, player.getStandingPosition(), player.FacingDirection, null, -1).DroppedByPlayerID.Value = player.UniqueMultiplayerID;
+        }
+
+        private static bool CheckHeldItem(Func<Item, bool> f = null)
+        {
+            if (f == null)
+            {
+                return Game1.player.CursorSlotItem != null;
+            }
+
+            return f(Game1.player.CursorSlotItem);
+        }
+
+        private static Item TakeHeldItem()
+        {
+            Item cursorSlotItem = Game1.player.CursorSlotItem;
+            Game1.player.CursorSlotItem = null;
+
+            return cursorSlotItem;
         }
 
         private void CheckForHotkey(object sender, ButtonsChangedEventArgs e)
@@ -48,31 +69,6 @@ namespace DropItHotkey
                     }
                 }
             }
-        }
-
-        private void DropItem(Farmer player, Item toDrop)
-        {
-            // typo by the base game
-            Game1.playSound("throwDownITem");
-            Game1.createItemDebris(toDrop, player.getStandingPosition(), player.FacingDirection, null, -1).DroppedByPlayerID.Value = player.UniqueMultiplayerID;
-        }
-
-        private bool CheckHeldItem(Func<Item, bool> f = null)
-        {
-            if (f == null)
-            {
-                return Game1.player.CursorSlotItem != null;
-            }
-
-            return f(Game1.player.CursorSlotItem);
-        }
-
-        private Item TakeHeldItem()
-        {
-            Item cursorSlotItem = Game1.player.CursorSlotItem;
-            Game1.player.CursorSlotItem = null;
-
-            return cursorSlotItem;
         }
     }
 }

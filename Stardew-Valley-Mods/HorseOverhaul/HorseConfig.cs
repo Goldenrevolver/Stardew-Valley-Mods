@@ -17,6 +17,8 @@
 
     public interface IGenericModConfigMenuAPI
     {
+        void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
+
         void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
 
         void RegisterLabel(IManifest mod, string labelName, string labelDesc);
@@ -38,6 +40,10 @@
         void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
 
         void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+
+        void SetTitleScreenOnlyForNextOptions(IManifest mod, bool titleScreenOnly);
+
+        void AddParagraph(IManifest mod, Func<string> text);
     }
 
     /// <summary>
@@ -45,6 +51,12 @@
     /// </summary>
     public class HorseConfig
     {
+        private static readonly KeybindList HorseMenuKeyDefault = KeybindList.Parse("H, LeftStick+DPadUp");
+
+        private static readonly KeybindList PetMenuKeyDefault = KeybindList.Parse("P, LeftStick+DPadDown");
+
+        private static readonly KeybindList AlternateSaddleBagAndFeedKeyDefault = KeybindList.Parse("LeftStick");
+
         public bool ThinHorse { get; set; } = true;
 
         public bool MovementSpeed { get; set; } = true;
@@ -65,11 +77,11 @@
 
         public bool AllowMultipleFeedingsADay { get; set; } = false;
 
-        public KeybindList HorseMenuKey { get; set; } = KeybindList.Parse("H, LeftStick+DPadUp");
+        public KeybindList HorseMenuKey { get; set; } = HorseMenuKeyDefault;
 
-        public KeybindList PetMenuKey { get; set; } = KeybindList.Parse("P, LeftStick+DPadDown");
+        public KeybindList PetMenuKey { get; set; } = PetMenuKeyDefault;
 
-        public KeybindList AlternateSaddleBagAndFeedKey { get; set; } = KeybindList.Parse("LeftStick");
+        public KeybindList AlternateSaddleBagAndFeedKey { get; set; } = AlternateSaddleBagAndFeedKeyDefault;
 
         public bool DisableMainSaddleBagAndFeedKey { get; set; } = false;
 
@@ -85,8 +97,7 @@
                 invalidConfig = true;
             }
 
-            SaddleBagOption res;
-            if (Enum.TryParse(config.VisibleSaddleBags, true, out res))
+            if (Enum.TryParse(config.VisibleSaddleBags, true, out SaddleBagOption res))
             {
                 // reassign to ensure casing is correct
                 config.VisibleSaddleBags = res.ToString();
@@ -117,12 +128,28 @@
 
             api.RegisterModConfig(
                 manifest,
-                () => config = new HorseConfig(),
+                delegate
+                {
+                    // if the world is ready, then we are not in the main menu, so reset should only reset the keybindings
+                    if (Context.IsWorldReady)
+                    {
+                        config.HorseMenuKey = HorseMenuKeyDefault;
+                        config.PetMenuKey = PetMenuKeyDefault;
+                        config.AlternateSaddleBagAndFeedKey = AlternateSaddleBagAndFeedKeyDefault;
+                        config.DisableMainSaddleBagAndFeedKey = false;
+                    }
+                    else
+                    {
+                        config = new HorseConfig();
+                    }
+                },
                 delegate
                 {
                     mod.Helper.WriteConfig(config);
                     VerifyConfigValues(config, mod);
                 });
+
+            api.SetTitleScreenOnlyForNextOptions(manifest, true);
 
             api.RegisterLabel(manifest, "General", null);
 
@@ -144,9 +171,15 @@
             api.RegisterSimpleOption(manifest, "Allow Multiple Feedings A Day", null, () => config.AllowMultipleFeedingsADay, (bool val) => config.AllowMultipleFeedingsADay = val);
             api.RegisterSimpleOption(manifest, "Disable Stable Sprite Changes", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
 
-            // this is a spacer
-            api.RegisterLabel(manifest, string.Empty, null);
-            api.RegisterLabel(manifest, "(Menu Key Rebinding Only Available In Config File)", null);
+            api.SetTitleScreenOnlyForNextOptions(manifest, false);
+
+            api.RegisterLabel(manifest, "Keybindings", null);
+
+            api.AddKeybindList(manifest, () => config.HorseMenuKey, (KeybindList keybindList) => config.HorseMenuKey = keybindList, () => "Horse Menu Key");
+            api.AddKeybindList(manifest, () => config.PetMenuKey, (KeybindList keybindList) => config.PetMenuKey = keybindList, () => "Pet Menu Key");
+            api.AddKeybindList(manifest, () => config.AlternateSaddleBagAndFeedKey, (KeybindList keybindList) => config.AlternateSaddleBagAndFeedKey = keybindList, () => "Alternate Saddle Bag\nAnd Feed Key");
+            api.RegisterSimpleOption(manifest, "Disable Main Saddle Bag\nAnd Feed Key", null, () => config.DisableMainSaddleBagAndFeedKey, (bool val) => config.DisableMainSaddleBagAndFeedKey = val);
+            api.AddParagraph(manifest, () => "You can disable/ unassign keybindings by changing them to \"\" in the config file.");
         }
     }
 }

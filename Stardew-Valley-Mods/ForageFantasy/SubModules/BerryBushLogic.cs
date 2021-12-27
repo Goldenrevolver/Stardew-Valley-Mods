@@ -8,7 +8,7 @@
     {
         public static bool IsHarvestableBush(Bush bush)
         {
-            return bush != null && !bush.townBush && bush.inBloom(Game1.GetSeasonForLocation(bush.currentLocation), Game1.dayOfMonth) && bush.size.Value != Bush.greenTeaBush && bush.size.Value != Bush.walnutBush;
+            return bush != null && !bush.townBush.Value && bush.inBloom(Game1.GetSeasonForLocation(bush.currentLocation), Game1.dayOfMonth) && bush.size.Value != Bush.greenTeaBush && bush.size.Value != Bush.walnutBush;
         }
 
         public static void RewardBerryXP(ForageFantasy mod)
@@ -25,7 +25,7 @@
         {
             int shakeOff;
 
-            string season = (bush.overrideSeason == -1) ? Game1.GetSeasonForLocation(bush.currentLocation) : Utility.getSeasonNameFromNumber(bush.overrideSeason);
+            string season = (bush.overrideSeason.Value == -1) ? Game1.GetSeasonForLocation(bush.currentLocation) : Utility.getSeasonNameFromNumber(bush.overrideSeason.Value);
 
             if (season == "spring")
             {

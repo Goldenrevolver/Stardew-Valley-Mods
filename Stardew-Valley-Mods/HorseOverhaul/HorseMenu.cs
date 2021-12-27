@@ -9,7 +9,7 @@
         private readonly HorseOverhaul mod;
 
         public HorseMenu(HorseOverhaul mod, HorseWrapper horse)
-          : base(Game1.player.horseName)
+          : base(Game1.player.horseName.Value)
         {
             this.mod = mod;
             this.horse = horse;

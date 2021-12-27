@@ -4,6 +4,7 @@
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
     public interface IGenericModConfigMenuAPI
     {
@@ -126,6 +127,8 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
         public static void SetUpModConfigMenu(CookoutKitConfig config, PermanentCookoutKit mod)
         {
             IGenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");

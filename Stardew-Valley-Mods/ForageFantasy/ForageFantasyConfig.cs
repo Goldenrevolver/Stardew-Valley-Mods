@@ -4,8 +4,9 @@
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
-    public interface GenericModConfigMenuAPI
+    public interface IGenericModConfigMenuApi
     {
         void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
 
@@ -106,9 +107,11 @@
             }
         }
 
+        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
+        [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
         public static void SetUpModConfigMenu(ForageFantasyConfig config, ForageFantasy mod)
         {
-            GenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<GenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
             if (api == null)
             {
