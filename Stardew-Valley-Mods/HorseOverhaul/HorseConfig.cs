@@ -57,6 +57,8 @@
 
         private static readonly KeybindList AlternateSaddleBagAndFeedKeyDefault = KeybindList.Parse("LeftStick");
 
+        public bool HorseHeater { get; set; } = true;
+
         public bool ThinHorse { get; set; } = true;
 
         public bool MovementSpeed { get; set; } = true;
@@ -75,6 +77,8 @@
 
         public bool PetFeeding { get; set; } = true;
 
+        public bool FeedingRestrictions { get; set; } = true;
+
         public bool AllowMultipleFeedingsADay { get; set; } = false;
 
         public KeybindList HorseMenuKey { get; set; } = HorseMenuKeyDefault;
@@ -86,6 +90,8 @@
         public bool DisableMainSaddleBagAndFeedKey { get; set; } = false;
 
         public bool DisableStableSpriteChanges { get; set; } = false;
+
+        public bool DisableHorseSounds { get; set; } = false;
 
         public static void VerifyConfigValues(HorseConfig config, HorseOverhaul mod)
         {
@@ -164,9 +170,12 @@
             api.RegisterSimpleOption(manifest, "Petting", null, () => config.Petting, (bool val) => config.Petting = val);
             api.RegisterSimpleOption(manifest, "Water", null, () => config.Water, (bool val) => config.Water = val);
             api.RegisterSimpleOption(manifest, "Feeding", null, () => config.Feeding, (bool val) => config.Feeding = val);
+            api.RegisterSimpleOption(manifest, "Heater", null, () => config.HorseHeater, (bool val) => config.HorseHeater = val);
 
             api.RegisterLabel(manifest, "Other", null);
 
+            api.RegisterSimpleOption(manifest, "Disable Horse Sounds", null, () => config.DisableHorseSounds, (bool val) => config.DisableHorseSounds = val);
+            api.RegisterSimpleOption(manifest, "Feeding Restrictions", null, () => config.FeedingRestrictions, (bool val) => config.FeedingRestrictions = val);
             api.RegisterSimpleOption(manifest, "Pet Feeding", null, () => config.PetFeeding, (bool val) => config.PetFeeding = val);
             api.RegisterSimpleOption(manifest, "Allow Multiple Feedings A Day", null, () => config.AllowMultipleFeedingsADay, (bool val) => config.AllowMultipleFeedingsADay = val);
             api.RegisterSimpleOption(manifest, "Disable Stable Sprite Changes", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);

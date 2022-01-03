@@ -15,6 +15,15 @@
     using System.Linq;
     using System.Reflection.Emit;
 
+    // ths is pseudo enum, because I don't want to always cast to int
+    public struct FacingDirection
+    {
+        public const int Up = 0,
+        Right = 1,
+        Down = 2,
+        Left = 3;
+    }
+
     public class Patcher
     {
         private static HorseOverhaul mod;
@@ -60,10 +69,6 @@
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(SaveItemsFromDemolition)));
 
                 harmony.Patch(
-                    original: AccessTools.Method(typeof(Farmer), "setMount"),
-                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixSetMount)));
-
-                harmony.Patch(
                    original: AccessTools.Method(typeof(Utility), "iterateChestsAndStorage"),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(IterateOverSaddles)));
 
@@ -72,6 +77,10 @@
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture)));
 
                 //// thin horse patches
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Character), nameof(Character.GetSpriteWidthForPositioning)),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(SetOneTileWide)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Farmer), "showRiding"),
@@ -145,7 +154,7 @@
         {
             try
             {
-                if (__instance is Stable stable && !HorseOverhaul.IsGarage(stable) && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
+                if (__instance is Stable stable && !stable.IsGarage() && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
                 {
                     __instance.texture = new Lazy<Texture2D>(
                         delegate
@@ -229,11 +238,11 @@
         {
             try
             {
-                if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence))
+                if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence) && !(__instance.hasBuff(19) && Game1.CurrentEvent == null))
                 {
                     Horse horse = __instance.mount;
 
-                    if (horse != null && !HorseOverhaul.IsTractor(horse) && mod?.Horses != null)
+                    if (horse != null && !horse.IsTractor() && mod?.Horses != null)
                     {
                         float addedMovementSpeed = 0f;
                         mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => addedMovementSpeed = h.GetMovementSpeedBonus());
@@ -241,11 +250,6 @@
                         if (__instance.movementDirections.Count > 1)
                         {
                             addedMovementSpeed *= 0.7f;
-                        }
-
-                        if (__instance.hasBuff(19) && Game1.CurrentEvent == null)
-                        {
-                            addedMovementSpeed = 0f;
                         }
 
                         __result += addedMovementSpeed;
@@ -271,7 +275,7 @@
                 {
                     foreach (Building building in Game1.getFarm().buildings)
                     {
-                        if (building is Stable stable && !HorseOverhaul.IsGarage(stable))
+                        if (building is Stable stable && !stable.IsGarage())
                         {
                             bool doesXHit = stable.tileX.Value + 1 == tileX || stable.tileX.Value + 2 == tileX;
 
@@ -293,7 +297,7 @@
         {
             try
             {
-                if (HorseOverhaul.IsGarage(__instance) && !Context.IsMainPlayer)
+                if (__instance.IsGarage() || !Context.IsMainPlayer)
                 {
                     return true;
                 }
@@ -336,7 +340,7 @@
         {
             try
             {
-                if (!mod.Config.Petting || HorseOverhaul.IsTractor(__instance))
+                if (!mod.Config.Petting || __instance.IsTractor())
                 {
                     return true;
                 }
@@ -399,7 +403,7 @@
         {
             try
             {
-                if (HorseOverhaul.IsTractor(__instance))
+                if (__instance.IsTractor())
                 {
                     return;
                 }
@@ -412,7 +416,7 @@
                     float xOffset = mod.Config.ThinHorse ? -32f : 0f;
 
                     // all player sprites being off by 1 is really obvious if using horsemanship and facing north
-                    if (horse.FacingDirection == 0 && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
+                    if (horse.FacingDirection == FacingDirection.Up && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
                     {
                         xOffset += 1;
                     }
@@ -421,14 +425,14 @@
                     float layer = horse.getStandingY() + 1;
 
                     // draw on top of the player instead of below them, uses the same value as the head of the horse
-                    if (horse.FacingDirection == 0 && horse.rider != null)
+                    if (horse.FacingDirection == FacingDirection.Up && horse.rider != null)
                     {
                         layer = horse.Position.Y + 64f;
                     }
 
                     bool shouldFlip = horse.Sprite.CurrentAnimation != null && horse.Sprite.CurrentAnimation[horse.Sprite.currentAnimationIndex].flip;
 
-                    if (horse.FacingDirection == 3)
+                    if (horse.FacingDirection == FacingDirection.Left)
                     {
                         shouldFlip = true;
                     }
@@ -454,20 +458,20 @@
 
                     switch (horse.FacingDirection)
                     {
-                        case 0:
+                        case FacingDirection.Up:
                             emotePosition.Y -= 40f;
                             break;
 
-                        case 1:
+                        case FacingDirection.Right:
                             emotePosition.X += 40f;
                             emotePosition.Y -= 30f;
                             break;
 
-                        case 2:
+                        case FacingDirection.Down:
                             emotePosition.Y += 5f;
                             break;
 
-                        case 3:
+                        case FacingDirection.Left:
                             emotePosition.X -= 40f;
                             emotePosition.Y -= 30f;
                             break;
@@ -498,6 +502,27 @@
             }
         }
 
+        public static bool SetOneTileWide(Character __instance, ref int __result)
+        {
+            try
+            {
+                if (mod.Config.ThinHorse && __instance is Horse)
+                {
+                    __result = 16;
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
         public static bool FixRidingPosition(Farmer __instance)
         {
             try
@@ -512,30 +537,24 @@
                     return false;
                 }
 
-                __instance.mount.forceOneTileWide.Value = true;
-
                 switch (__instance.FacingDirection)
                 {
-                    case 0:
-                        // up
+                    case FacingDirection.Up:
                         __instance.FarmerSprite.setCurrentSingleFrame(113, 32000, false, false);
                         __instance.xOffset = 4f; // old: -6f, diff: +10
                         break;
 
-                    case 1:
-                        // right
+                    case FacingDirection.Right:
                         __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, false);
                         __instance.xOffset = 7f; // old: -3f, diff: +10
                         break;
 
-                    case 2:
-                        // down
+                    case FacingDirection.Down:
                         __instance.FarmerSprite.setCurrentSingleFrame(107, 32000, false, false);
                         __instance.xOffset = 4f; // old: -6f, diff: +10
                         break;
 
-                    case 3:
-                        // left
+                    case FacingDirection.Left:
                         __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, true);
                         __instance.xOffset = -2f; // old: -12f, diff: +10
                         break;
@@ -596,28 +615,26 @@
                     return true;
                 }
 
-                var dir = __instance.FacingDirection;
-
-                if (dir == 3)
+                if (horse.FacingDirection == FacingDirection.Left)
                 {
-                    __instance.rider.xOffset = 0f;
+                    horse.rider.xOffset = 0f;
                 }
                 else
                 {
-                    __instance.rider.xOffset = 4f;
+                    horse.rider.xOffset = 4f;
                 }
 
-                var distance = horse.rider.Position.X - horse.Position.X;
+                var positionDifference = horse.rider.Position.X - horse.Position.X;
 
-                if (Math.Abs(distance) < 4)
+                if (Math.Abs(positionDifference) < 4)
                 {
                     horse.rider.position.X = horse.Position.X;
                 }
-                else if (distance < 0)
+                else if (positionDifference < 0)
                 {
                     horse.rider.position.X += 4f;
                 }
-                else if (distance > 0)
+                else if (positionDifference > 0)
                 {
                     horse.rider.position.X -= 4f;
                 }
@@ -647,12 +664,10 @@
             {
                 if (mod.Config.ThinHorse && mount != null)
                 {
-                    var dir = __instance.mount.FacingDirection;
-
-                    __instance.xOffset = dir switch
+                    __instance.xOffset = mount.FacingDirection switch
                     {
-                        1 => -4f,// counteracts the +8 from the horse update method to arrive at +4
-                        3 => 0,
+                        FacingDirection.Right => -4f,// counteracts the +8 from the horse update method to arrive at +4
+                        FacingDirection.Left => 0,
                         _ => 4f,
                     };
                 }

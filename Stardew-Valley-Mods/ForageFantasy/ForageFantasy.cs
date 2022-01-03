@@ -8,6 +8,8 @@
     {
         public ForageFantasyConfig Config { get; set; }
 
+        // TODO replace grapes with wild grapes, replace grapes starter with new item
+
         public static int DetermineForageQuality(Farmer farmer, bool allowBotanist = true)
         {
             if (allowBotanist && farmer.professions.Contains(Farmer.botanist))
@@ -41,7 +43,7 @@
 
             Helper.Events.GameLoop.GameLaunched += delegate { DeluxeGrabberCompatibility.Setup(this); };
 
-            Helper.Events.GameLoop.DayStarted += delegate { TapperAndMushroomQualityLogic.IncreaseTreeAges(this); };
+            Helper.Events.GameLoop.DayStarted += delegate { TapperAndMushroomQualityLogic.IncreaseTreeAgesAndReplaceGrapes(this); };
 
             Helper.Events.GameLoop.SaveLoaded += delegate { FernAndBurgerLogic.ChangeBundle(this); };
 

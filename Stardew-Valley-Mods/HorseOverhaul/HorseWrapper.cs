@@ -1,5 +1,6 @@
 ﻿namespace HorseOverhaul
 {
+    using StardewValley;
     using StardewValley.Buildings;
     using StardewValley.Characters;
     using StardewValley.Objects;
@@ -31,6 +32,8 @@
 
         public bool GotFed { get; set; }
 
+        public bool HasHeater { get; set; }
+
         public bool GotWater
         {
             get
@@ -61,17 +64,29 @@
             {
                 Friendship += 6;
                 GotWater = true;
-                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "gotWater", modIDs: new[] { mod.ModManifest.UniqueID });
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), StateMessage.GotWaterType, modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 
-        public void JustGotFood(int expAmount)
+        public void AddHeaterBonus()
+        {
+            if (!HasHeater && Game1.IsWinter && mod.Config.HorseHeater)
+            {
+                Friendship += 5;
+                HasHeater = true;
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), StateMessage.GotHeaterType, modIDs: new[] { mod.ModManifest.UniqueID });
+            }
+        }
+
+        public void JustGotFood(int friendshipAmount)
         {
             if (!GotFed || mod.Config.AllowMultipleFeedingsADay)
             {
-                Friendship += expAmount;
+                SoundModule.PlayHorseEatSound(this.Horse, mod.Config);
+
+                Friendship += friendshipAmount;
                 GotFed = true;
-                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "gotFed", modIDs: new[] { mod.ModManifest.UniqueID });
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), StateMessage.GotFoodType, modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 
@@ -79,9 +94,11 @@
         {
             if (!WasPet)
             {
+                SoundModule.PlayHorsePettingSound(this.Horse, mod.Config);
+
                 Friendship += 12;
                 WasPet = true;
-                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), "wasPet", modIDs: new[] { mod.ModManifest.UniqueID });
+                mod.Helper.Multiplayer.SendMessage(new StateMessage(this), StateMessage.GotPettedType, modIDs: new[] { mod.ModManifest.UniqueID });
             }
         }
 

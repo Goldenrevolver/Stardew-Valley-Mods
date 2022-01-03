@@ -137,7 +137,7 @@
         {
             try
             {
-                if (TapperAndMushroomQualityLogic.IsMushroomBox(container))
+                if (container.IsMushroomBox())
                 {
                     if (mod.Config.MushroomBoxQuality)
                     {
@@ -160,7 +160,7 @@
             {
                 // I can't reduce the quality of a non successfully harvested box here,
                 // because it doesn't get called if the method throws a inventoryfull exception
-                if (__result && TapperAndMushroomQualityLogic.IsMushroomBox(container))
+                if (__result && container.IsMushroomBox())
                 {
                     if (mod.Config.AutomationHarvestsGrantXP)
                     {
@@ -181,7 +181,7 @@
             {
                 foreach (var item in location.Objects.Values)
                 {
-                    if (TapperAndMushroomQualityLogic.IsMushroomBox(item))
+                    if (item.IsMushroomBox())
                     {
                         if (item.heldObject.Value != null)
                         {
@@ -202,7 +202,7 @@
             {
                 if (!justCheckingForActivity && __instance != null && __instance.MinutesUntilReady <= 0 && __instance.heldObject.Value != null)
                 {
-                    if (TapperAndMushroomQualityLogic.IsTapper(__instance))
+                    if (__instance.IsTapper())
                     {
                         TapperAndMushroomQualityLogic.RewardTapperExp(mod);
 
@@ -226,7 +226,7 @@
                         return true;
                     }
 
-                    if (TapperAndMushroomQualityLogic.IsMushroomBox(__instance))
+                    if (__instance.IsMushroomBox())
                     {
                         TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod);
 

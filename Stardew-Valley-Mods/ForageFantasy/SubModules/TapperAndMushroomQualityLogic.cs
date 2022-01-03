@@ -5,9 +5,23 @@
     using StardewValley.TerrainFeatures;
     using StardewObject = StardewValley.Object;
 
+    public static class ExtensionMethods
+    {
+        public static bool IsMushroomBox(this StardewObject o)
+        {
+            return o != null && o.bigCraftable.Value && o.ParentSheetIndex == 128;
+        }
+
+        public static bool IsTapper(this StardewObject o)
+        {
+            return o != null && o.bigCraftable.Value && (o.ParentSheetIndex == 105 || o.ParentSheetIndex == 264);
+        }
+    }
+
+    // TODO give exp to owner if exists for auto pickup mods instead of host (host as fallback)
     internal class TapperAndMushroomQualityLogic
     {
-        public static void IncreaseTreeAges(ForageFantasy mod)
+        public static void IncreaseTreeAgesAndReplaceGrapes(ForageFantasy mod)
         {
             if (!Context.IsMainPlayer)
             {
@@ -21,6 +35,12 @@
                     if (terrainfeature.Value is Tree tree)
                     {
                         IncreaseTreeAge(mod, tree);
+                    }
+                    else if (terrainfeature.Value is HoeDirt dirt && dirt?.crop?.netSeedIndex?.Value == 301 && dirt?.crop?.indexOfHarvest?.Value == 398)
+                    {
+                        // TODO add new item, rename old item
+                        // TODO replace with better item and move to different method
+                        dirt.crop.indexOfHarvest.Value = 399;
                     }
                 }
             }
@@ -39,16 +59,6 @@
             {
                 tree.modData[$"{mod.ModManifest.UniqueID}/treeAge"] = 1.ToString();
             }
-        }
-
-        public static bool IsMushroomBox(StardewObject o)
-        {
-            return o != null && o.bigCraftable.Value && o.ParentSheetIndex == 128;
-        }
-
-        public static bool IsTapper(StardewObject o)
-        {
-            return o != null && o.bigCraftable.Value && (o.ParentSheetIndex == 105 || o.ParentSheetIndex == 264);
         }
 
         public static void RewardMushroomBoxExp(ForageFantasy mod)
