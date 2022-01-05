@@ -18,10 +18,9 @@
         }
     }
 
-    // TODO give exp to owner if exists for auto pickup mods instead of host (host as fallback)
     internal class TapperAndMushroomQualityLogic
     {
-        public static void IncreaseTreeAgesAndReplaceGrapes(ForageFantasy mod)
+        public static void IncreaseTreeAges(ForageFantasy mod)
         {
             if (!Context.IsMainPlayer)
             {
@@ -35,12 +34,6 @@
                     if (terrainfeature.Value is Tree tree)
                     {
                         IncreaseTreeAge(mod, tree);
-                    }
-                    else if (terrainfeature.Value is HoeDirt dirt && dirt?.crop?.netSeedIndex?.Value == 301 && dirt?.crop?.indexOfHarvest?.Value == 398)
-                    {
-                        // TODO add new item, rename old item
-                        // TODO replace with better item and move to different method
-                        dirt.crop.indexOfHarvest.Value = 399;
                     }
                 }
             }
@@ -61,19 +54,19 @@
             }
         }
 
-        public static void RewardMushroomBoxExp(ForageFantasy mod)
+        public static void RewardMushroomBoxExp(ForageFantasy mod, Farmer player)
         {
             if (mod.Config.MushroomXPAmount > 0)
             {
-                Game1.player.gainExperience(2, mod.Config.MushroomXPAmount);
+                player.gainExperience(2, mod.Config.MushroomXPAmount);
             }
         }
 
-        public static void RewardTapperExp(ForageFantasy mod)
+        public static void RewardTapperExp(ForageFantasy mod, Farmer player)
         {
             if (mod.Config.TapperXPAmount > 0)
             {
-                Game1.player.gainExperience(2, mod.Config.TapperXPAmount);
+                player.gainExperience(2, mod.Config.TapperXPAmount);
             }
         }
 

@@ -12,8 +12,6 @@
     using System.Reflection;
     using StardewObject = StardewValley.Object;
 
-    // TODO harmony exception?
-
     internal class Patcher
     {
         private const int WoodID = 388;
@@ -59,26 +57,8 @@
                 {
                     mod.DebugLog("This mod patches Automate. If you notice issues with Automate, make sure it happens without this mod before reporting it to the Automate page.");
 
-                    // this is so ugly but I can't include a reference
-                    Assembly assembly = null;
-
-                    foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        if (item.GetName().Name.Trim() == "Automate")
-                        {
-                            assembly = item;
-                            break;
-                        }
-                    }
-
-                    if (assembly == null)
-                    {
-                        mod.ErrorLog($"Error while trying to patch Automate. Please report this to the mod page of {mod.ModManifest.Name}, not Automate.");
-                        return;
-                    }
-
                     // I don't see a use in using MachineWrapper because it's also internal I need to check for the type of the machine anyway which would be way too much reflection at runtime
-                    var charcoalKiln = assembly.GetType("Pathoschild.Stardew.Automate.Framework.Machines.Objects.CharcoalKilnMachine");
+                    var charcoalKiln = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.Objects.CharcoalKilnMachine");
 
                     harmony.Patch(
                        original: AccessTools.Method(charcoalKiln, "SetInput"),

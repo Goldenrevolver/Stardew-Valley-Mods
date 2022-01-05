@@ -100,6 +100,19 @@
                 config.MushroomXPAmount = 0;
             }
 
+            if (mod.Helper.ModRegistry.IsLoaded("thelion.AwesomeProfessions"))
+            {
+                if (config.MushroomBoxQuality || config.BerryBushQuality)
+                {
+                    invalidConfig = true;
+
+                    config.MushroomBoxQuality = false;
+                    config.BerryBushQuality = false;
+
+                    mod.DebugLog("Enabled Walk of Life compatibility.");
+                }
+            }
+
             if (invalidConfig)
             {
                 mod.DebugLog("At least one config value was out of range and was reset.");
@@ -124,8 +137,17 @@
 
             api.RegisterLabel(manifest, "Quality Tweaks", null);
 
-            api.RegisterSimpleOption(manifest, "Berry Bush Quality", "Salmonberries and blackberries have quality based\non forage level even without botanist perk.", () => config.BerryBushQuality, (bool val) => config.BerryBushQuality = val);
-            api.RegisterSimpleOption(manifest, "Mushroom Box Quality", "Mushrooms have quality based on forage level and botanist perk.", () => config.MushroomBoxQuality, (bool val) => config.MushroomBoxQuality = val);
+            if (mod.Helper.ModRegistry.IsLoaded("thelion.AwesomeProfessions"))
+            {
+                api.RegisterLabel(manifest, "Berry Bush Quality Disabled (Walk Of Life)", null);
+                api.RegisterLabel(manifest, "Mushroom Box Quality Disabled (Walk Of Life)", null);
+            }
+            else
+            {
+                api.RegisterSimpleOption(manifest, "Berry Bush Quality", "Salmonberries and blackberries have quality based\non forage level even without botanist perk.", () => config.BerryBushQuality, (bool val) => config.BerryBushQuality = val);
+                api.RegisterSimpleOption(manifest, "Mushroom Box Quality", "Mushrooms have quality based on forage level and botanist perk.", () => config.MushroomBoxQuality, (bool val) => config.MushroomBoxQuality = val);
+            }
+
             api.RegisterChoiceOption(manifest, "Tapper Quality Options", null, () => GetElementFromConfig(TQChoices, config.TapperQualityOptions), (string val) => config.TapperQualityOptions = GetIndexFromArrayElement(TQChoices, val), TQChoices);
             api.RegisterSimpleOption(manifest, "Tapper Perk Is Required", null, () => config.TapperQualityRequiresTapperPerk, (bool val) => config.TapperQualityRequiresTapperPerk = val);
 
@@ -141,6 +163,11 @@
 
             api.RegisterSimpleOption(manifest, "Common Fiddlehead Fern¹", "Fiddlehead fern is available outside of the secret forest\nand added to the wild seeds pack and summer foraging bundle.", () => config.CommonFiddleheadFern, (bool val) => config.CommonFiddleheadFern = val);
             api.RegisterSimpleOption(manifest, "Forage Survival Burger¹", "Forage based early game crafting recipes\nand even more efficient cooking recipes.", () => config.ForageSurvivalBurger, (bool val) => config.ForageSurvivalBurger = val);
+
+            if (GrapeLogic.AreGrapeJsonModsInstalled(mod))
+            {
+                api.RegisterLabel(manifest, "Fine Grapes Feature Installed And Enabled", "Remove the Json Assets mod pack to disable this option");
+            }
 
             // this is a spacer
             api.RegisterLabel(manifest, string.Empty, null);

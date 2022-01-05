@@ -4,7 +4,6 @@
     using StardewValley;
     using StardewValley.TerrainFeatures;
     using System;
-    using System.Reflection;
     using StardewObject = StardewValley.Object;
 
     internal class Patcher
@@ -46,28 +45,10 @@
                 {
                     mod.DebugLog("This mod patches Automate. If you notice issues with Automate, make sure it happens without this mod before reporting it to the Automate page.");
 
-                    // this is so ugly but I can't include a reference
-                    Assembly assembly = null;
-
-                    foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        if (item.GetName().Name.Trim() == "Automate")
-                        {
-                            assembly = item;
-                            break;
-                        }
-                    }
-
-                    if (assembly == null)
-                    {
-                        mod.ErrorLog($"Error while trying to patch Automate. Please report this to the mod page of {mod.ModManifest.Name}, not Automate.");
-                        return;
-                    }
-
                     // I don't see a use in using MachineWrapper because it's also internal I need to check for the type of the machine anyway which would be way too much reflection at runtime
-                    var mushroomBox = assembly.GetType("Pathoschild.Stardew.Automate.Framework.Machines.Objects.MushroomBoxMachine");
-                    var tapper = assembly.GetType("Pathoschild.Stardew.Automate.Framework.Machines.Objects.TapperMachine");
-                    var berryBush = assembly.GetType("Pathoschild.Stardew.Automate.Framework.Machines.TerrainFeatures.BushMachine");
+                    var mushroomBox = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.Objects.MushroomBoxMachine");
+                    var tapper = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.Objects.TapperMachine");
+                    var berryBush = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.TerrainFeatures.BushMachine");
 
                     harmony.Patch(
                        original: AccessTools.Method(tapper, "GetOutput"),
@@ -93,26 +74,8 @@
                 {
                     mod.DebugLog("This mod patches OneClickShedReloader. If you notice issues with OneClickShedReloader, make sure it happens without this mod before reporting it to the OneClickShedReloader page.");
 
-                    // this is so ugly but I can't include a reference
-                    Assembly assembly = null;
-
-                    foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        if (item.GetName().Name.Trim() == "BitwiseJonMods.OneClickShedReloader")
-                        {
-                            assembly = item;
-                            break;
-                        }
-                    }
-
-                    if (assembly == null)
-                    {
-                        mod.ErrorLog($"Error while trying to patch OneClickShedReloader. Please report this to the mod page of {mod.ModManifest.Name}, not OneClickShedReloader.");
-                        return;
-                    }
-
-                    var handler = assembly.GetType("BitwiseJonMods.BuildingContentsHandler");
-                    var entry = assembly.GetType("BitwiseJonMods.ModEntry");
+                    var handler = AccessTools.TypeByName("BitwiseJonMods.BuildingContentsHandler");
+                    var entry = AccessTools.TypeByName("BitwiseJonMods.ModEntry");
 
                     harmony.Patch(
                        original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
@@ -164,7 +127,7 @@
                 {
                     if (mod.Config.AutomationHarvestsGrantXP)
                     {
-                        TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod);
+                        TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod, Game1.player);
                     }
                 }
             }
@@ -179,6 +142,11 @@
             // reduce quality of non successfully harvested items and reset in general
             try
             {
+                if (!mod.Config.MushroomBoxQuality)
+                {
+                    return;
+                }
+
                 foreach (var item in location.Objects.Values)
                 {
                     if (item.IsMushroomBox())
@@ -200,27 +168,23 @@
         {
             try
             {
-                if (!justCheckingForActivity && __instance != null && __instance.MinutesUntilReady <= 0 && __instance.heldObject.Value != null)
+                if (!justCheckingForActivity && __instance != null && __instance.readyForHarvest.Value && __instance.heldObject.Value != null)
                 {
                     if (__instance.IsTapper())
                     {
-                        TapperAndMushroomQualityLogic.RewardTapperExp(mod);
+                        TapperAndMushroomQualityLogic.RewardTapperExp(mod, who);
 
+                        // if tapper quality feature is disabled
                         if (mod.Config.TapperQualityOptions <= 0 && mod.Config.TapperQualityOptions > 4)
                         {
-                            __instance.heldObject.Value.Quality = 0;
                             return true;
                         }
 
                         who.currentLocation.terrainFeatures.TryGetValue(__instance.TileLocation, out TerrainFeature terrain);
 
-                        if (terrain != null && terrain is Tree tree)
+                        if (terrain is Tree tree)
                         {
                             __instance.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod, who, tree);
-                        }
-                        else
-                        {
-                            __instance.heldObject.Value.Quality = 0;
                         }
 
                         return true;
@@ -228,13 +192,9 @@
 
                     if (__instance.IsMushroomBox())
                     {
-                        TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod);
+                        TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod, who);
 
-                        if (!mod.Config.MushroomBoxQuality)
-                        {
-                            __instance.heldObject.Value.Quality = 0;
-                        }
-                        else
+                        if (mod.Config.MushroomBoxQuality)
                         {
                             __instance.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
                         }
@@ -274,12 +234,14 @@
             }
         }
 
+        // set to high so it hopefully catches that the tileSheetOffset before some other mod wants to harvest this bush in prepatch
+        // if other mods also define a __state variable of type bool they will have different values (aka harmony does not make us fight over the __state variable)
         [HarmonyPriority(Priority.High)]
         public static bool DetectHarvestableBerryBush(ref Bush __instance, ref bool __state)
         {
             try
             {
-                // if other mods also define a __state variable of type bool they will have different values (aka harmony does not make us fight over the __state variable)
+                // tileSheetOffset == 1 means it currently has berries to harvest
                 __state = BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset.Value == 1;
 
                 return true;
@@ -292,11 +254,12 @@
             }
         }
 
+        // config calls are in ChangeBerryQualityAndGiveExp
         public static void FixBerryQuality(ref Bush __instance, ref bool __state)
         {
             try
             {
-                // config calls are in ChangeBerryQualityAndGiveExp
+                // __state && tileSheetOffset == 0 means the bush was harvested between prepatch and this
                 if (__state && BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset.Value == 0)
                 {
                     var maxShake = mod.Helper.Reflection.GetField<float>(__instance, "maxShake");
@@ -317,20 +280,19 @@
         {
             try
             {
-                if (mod.Config.AutomationHarvestsGrantXP)
-                {
-                    TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod);
-                }
-
                 var mushroomBox = mod.Helper.Reflection.GetProperty<StardewObject>(__instance, "Machine").GetValue();
 
-                if (!mod.Config.MushroomBoxQuality)
+                // intentionally not using getFarmerMaybeOffline because that is a waste
+                var who = Game1.getFarmer(mushroomBox.owner.Value) ?? Game1.MasterPlayer;
+
+                if (mod.Config.AutomationHarvestsGrantXP)
                 {
-                    mushroomBox.heldObject.Value.Quality = 0;
+                    TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod, who);
                 }
-                else
+
+                if (mod.Config.MushroomBoxQuality)
                 {
-                    mushroomBox.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(Game1.player);
+                    mushroomBox.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
                 }
 
                 return true;
@@ -346,22 +308,27 @@
         {
             try
             {
+                var tapper = mod.Helper.Reflection.GetProperty<StardewObject>(__instance, "Machine").GetValue();
+
+                // intentionally not using getFarmerMaybeOffline because that is a waste
+                var who = Game1.getFarmer(tapper.owner.Value) ?? Game1.MasterPlayer;
+
                 if (mod.Config.AutomationHarvestsGrantXP)
                 {
-                    TapperAndMushroomQualityLogic.RewardTapperExp(mod);
+                    TapperAndMushroomQualityLogic.RewardTapperExp(mod, who);
                 }
 
-                var tapper = mod.Helper.Reflection.GetProperty<StardewObject>(__instance, "Machine").GetValue();
+                // if tapper quality feature is disabled
+                if (mod.Config.TapperQualityOptions <= 0 || mod.Config.TapperQualityOptions > 4)
+                {
+                    return true;
+                }
 
                 var tree = mod.Helper.Reflection.GetField<Tree>(__instance, "Tree").GetValue();
 
-                if (mod.Config.TapperQualityOptions > 0 && mod.Config.TapperQualityOptions <= 4 && tree != null && tree is Tree)
+                if (tree != null)
                 {
-                    tapper.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod, Game1.player, tree);
-                }
-                else
-                {
-                    tapper.heldObject.Value.Quality = 0;
+                    tapper.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod, who, tree);
                 }
 
                 return true;

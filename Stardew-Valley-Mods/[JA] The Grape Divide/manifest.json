@@ -1,0 +1,12 @@
+{
+    "Name": "[JA] The Grape Divide",
+    "Author": "Goldenrevolver",
+    "Version": "2.1",
+    "Description": "Adds the actual grape item needed by Forage Fantasy",
+    "UniqueID": "Goldenrevolver.TheGrapeDivide",
+    "UpdateKeys": [ "Nexus:7554" ],
+	"MinimumApiVersion": "3.13.2",
+	"ContentPackFor": {
+		"UniqueID": "spacechase0.JsonAssets"
+	}
+}
