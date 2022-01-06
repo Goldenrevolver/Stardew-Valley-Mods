@@ -331,8 +331,11 @@
                     {
                         Vector2 dropPosition = __instance.TileLocation * 64f;
 
-                        // drop an iron bar
+                        // drop 1 iron bar
                         location.debris.Add(new Debris(new StardewObject(335, 1), dropPosition));
+
+                        // drop 10 stones
+                        location.debris.Add(new Debris(new StardewObject(390, 10), dropPosition));
                     }
                     else if (t is WateringCan can && can.WaterLeft > 0)
                     {
