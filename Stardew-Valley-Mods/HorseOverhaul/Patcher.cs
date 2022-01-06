@@ -271,7 +271,7 @@
                     return;
                 }
 
-                if (t is WateringCan && (t as WateringCan).WaterLeft > 0)
+                if (t is WateringCan can && can.WaterLeft > 0)
                 {
                     foreach (Building building in Game1.getFarm().buildings)
                     {

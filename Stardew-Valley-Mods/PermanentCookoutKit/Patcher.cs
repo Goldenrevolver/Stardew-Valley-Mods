@@ -7,6 +7,7 @@
     using StardewValley.BellsAndWhistles;
     using StardewValley.Network;
     using StardewValley.Objects;
+    using StardewValley.Tools;
     using System;
     using System.Linq;
     using System.Reflection;
@@ -31,19 +32,23 @@
             try
             {
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(Torch), "draw", new[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
+                   original: AccessTools.Method(typeof(Torch), nameof(Torch.draw), new[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(Draw_Post)));
 
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(Torch), "updateWhenCurrentLocation"),
+                   original: AccessTools.Method(typeof(StardewObject), nameof(StardewObject.performToolAction)),
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(PerformToolAction_Post)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Torch), nameof(Torch.updateWhenCurrentLocation)),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(UpdateWhenCurrentLocation_Post)));
 
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(Torch), "checkForAction"),
+                   original: AccessTools.Method(typeof(Torch), nameof(Torch.checkForAction)),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckForAction_Pre)));
 
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(StardewObject), "performObjectDropInAction", new[] { typeof(Item), typeof(bool), typeof(Farmer) }),
+                   original: AccessTools.Method(typeof(StardewObject), nameof(StardewObject.performObjectDropInAction), new[] { typeof(Item), typeof(bool), typeof(Farmer) }),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(UpdateCharcoalKilnInput)));
             }
             catch (Exception e)
@@ -137,7 +142,7 @@
                     float draw_layer = Math.Max(0f, (((y + 1) * 64) - 24) / 10000f) + (x * 1E-05f);
 
                     // draw the upper half of the cookout kit even if isOn == false
-                    if (__instance.ParentSheetIndex == 278 && !__instance.IsOn)
+                    if (__instance.IsCookoutKit() && !__instance.IsOn)
                     {
                         Rectangle r = StardewObject.getSourceRectForBigCraftable(__instance.ParentSheetIndex + 1);
                         r.Height -= 16;
@@ -160,7 +165,7 @@
             try
             {
                 // remove the smoke from cookout kits that are off
-                if (__instance.ParentSheetIndex == 278 && !__instance.IsOn)
+                if (__instance.IsCookoutKit() && !__instance.IsOn)
                 {
                     // the condition for smoke to spawn in the overridden method
                     if (mod.Helper.Reflection.GetField<float>(__instance, "smokePuffTimer").GetValue() == 1000f)
@@ -316,6 +321,32 @@
             }
         }
 
+        public static void PerformToolAction_Post(StardewObject __instance, Tool t, GameLocation location)
+        {
+            try
+            {
+                if (__instance.IsCookoutKit() && location != null)
+                {
+                    if (!location.Objects.ContainsKey(__instance.TileLocation))
+                    {
+                        Vector2 dropPosition = __instance.TileLocation * 64f;
+
+                        // drop an iron bar
+                        location.debris.Add(new Debris(new StardewObject(335, 1), dropPosition));
+                    }
+                    else if (t is WateringCan can && can.WaterLeft > 0)
+                    {
+                        // extinguishes the fire, does not truly remove the object
+                        __instance.performRemoveAction(__instance.TileLocation, location);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+            }
+        }
+
         public static bool CheckForAction_Pre(Torch __instance, Farmer who, bool justCheckingForActivity)
         {
             try
@@ -326,7 +357,7 @@
                 }
 
                 // check for ignition
-                if (__instance.ParentSheetIndex == 278 && !__instance.IsOn && who != null)
+                if (__instance.IsCookoutKit() && !__instance.IsOn && who != null)
                 {
                     int coalCount = mod.Config.CoalNeeded;
                     int baseKindlingCount = mod.Config.FiberNeeded;

@@ -4,6 +4,15 @@
     using StardewValley;
     using System;
     using System.Collections.Generic;
+    using StardewObject = StardewValley.Object;
+
+    public static class ExtensionMethods
+    {
+        public static bool IsCookoutKit(this StardewObject o)
+        {
+            return o != null && o.ParentSheetIndex == 278;
+        }
+    }
 
     public class PermanentCookoutKit : Mod, IAssetEditor
     {
@@ -83,9 +92,9 @@
             }
         }
 
-        private static void SaveSingleKit(StardewValley.Object item, GameLocation location)
+        private static void SaveSingleKit(StardewObject item, GameLocation location)
         {
-            if (item != null && item.ParentSheetIndex == 278)
+            if (item.IsCookoutKit())
             {
                 // extinguishes the fire, does not truly remove the object
                 item.performRemoveAction(item.TileLocation, location);
