@@ -1,7 +1,11 @@
 ﻿namespace ForageFantasy
 {
     using HarmonyLib;
+    using Microsoft.Xna.Framework;
+    using Microsoft.Xna.Framework.Graphics;
+    using Netcode;
     using StardewValley;
+    using StardewValley.Menus;
     using StardewValley.TerrainFeatures;
     using System;
     using StardewObject = StardewValley.Object;
@@ -33,6 +37,22 @@
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Bush), "shake"),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(FixBerryQuality)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Tree), nameof(Tree.UpdateTapperProduct)),
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(UpdateTapperProduct_Post)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Tree), "shake"),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(ShakeTree)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Tree), "performSeedDestroy"),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(PerformSeedDestroy)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(Billboard), nameof(Billboard.draw), new Type[] { typeof(SpriteBatch) }),
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(Draw_Postfix)));
             }
             catch (Exception e)
             {
@@ -93,6 +113,240 @@
                 {
                     mod.ErrorLog($"Error while trying to patch OneClickShedReloader. Please report this to the mod page of {mod.ModManifest.Name}, not OneClickShedReloader:", e);
                 }
+            }
+
+            /* // in case I want this at some point
+            foreach (var method in Harmony.GetAllPatchedMethods())
+            {
+                var patches = Harmony.GetPatchInfo(method);
+
+                foreach (var patch in patches.Prefixes)
+                {
+                    if (patch.owner == mod.ModManifest.UniqueID)
+                    {
+                        mod.TraceLog($"method: {method.Name} prefix: {patch.PatchMethod.Name}");
+                    }
+                }
+
+                foreach (var patch in patches.Postfixes)
+                {
+                    if (patch.owner == mod.ModManifest.UniqueID)
+                    {
+                        mod.TraceLog($"method: {method.Name} postfix: {patch.PatchMethod.Name}");
+                    }
+                }
+
+                foreach (var patch in patches.Transpilers)
+                {
+                    if (patch.owner == mod.ModManifest.UniqueID)
+                    {
+                        mod.TraceLog($"method: {method.Name} transpiler: {patch.PatchMethod.Name}");
+                    }
+                }
+            }
+            */
+        }
+
+        private static readonly Rectangle redMushroom = new(192, 272, 16, 16);
+        private static readonly Rectangle glowingMushroom = new(224, 272, 16, 16);
+        private static readonly Rectangle commonMushroom = new(320, 256, 16, 16);
+
+        public static void Draw_Postfix(Billboard __instance, SpriteBatch b, bool ___dailyQuestBoard)
+        {
+            try
+            {
+                if (!___dailyQuestBoard)
+                {
+                    for (int i = 2; i <= 28; i += 2)
+                    {
+                        if (mod.Config.MushroomTapperCalendar)
+                        {
+                            Rectangle toDraw = Rectangle.Empty;
+
+                            if (Game1.currentSeason is "spring" or "summer" || (Game1.currentSeason is "winter" && mod.TappersDreamAndMushroomTreesGrowInWinter))
+                            {
+                                if ((i % 10) is 2)
+                                {
+                                    toDraw = glowingMushroom;
+                                }
+                                else if ((i % 10) is 4)
+                                {
+                                    toDraw = redMushroom;
+                                }
+                                else
+                                {
+                                    toDraw = commonMushroom;
+                                }
+                            }
+                            else if (Game1.currentSeason is "fall")
+                            {
+                                if ((i % 10) is 2)
+                                {
+                                    toDraw = glowingMushroom;
+                                }
+                                else
+                                {
+                                    toDraw = redMushroom;
+                                }
+                            }
+
+                            if (toDraw != Rectangle.Empty)
+                            {
+                                Utility.drawWithShadow(b, Game1.objectSpriteSheet, new Vector2((float)(__instance.calendarDays[i - 1].bounds.X + 95), (float)(__instance.calendarDays[i - 1].bounds.Y + 5) - Game1.dialogueButtonScale / 2f), toDraw, Color.White, 0f, Vector2.Zero, 2f, false, 1f, -1, -1, 0.35f);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+            }
+        }
+
+        public static void PerformSeedDestroy(Tree __instance, Tool t, Vector2 tileLocation, GameLocation location, NetLong ___lastPlayerToHit)
+        {
+            try
+            {
+                if (!mod.Config.MushroomTreeSeedsDrop)
+                {
+                    return;
+                }
+
+                if (___lastPlayerToHit.Value == 0L && Game1.player.getEffectiveSkillLevel(2) >= 1 && __instance.treeType.Value == Tree.mushroomTree)
+                {
+                    // drop mushroom tree seed
+                    Game1.createMultipleObjectDebris(891, (int)tileLocation.X, (int)tileLocation.Y, 1, (t == null) ? Game1.player.UniqueMultiplayerID : t.getLastFarmerToUse().UniqueMultiplayerID, location);
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+            }
+        }
+
+        public static bool ShakeTree(Tree __instance, Vector2 tileLocation, bool doEvenIfStillShaking, GameLocation location, float ___maxShake)
+        {
+            try
+            {
+                if (!mod.Config.MushroomTreeSeedsDrop || __instance.treeType.Value != Tree.mushroomTree)
+                {
+                    return true;
+                }
+
+                if ((___maxShake == 0f || doEvenIfStillShaking) && __instance.growthStage.Value >= 5 && !__instance.stump.Value)
+                {
+                    if (__instance.hasSeed.Value && (Game1.IsMultiplayer || Game1.player.ForagingLevel >= 1))
+                    {
+                        // drop mushroom tree seed
+                        Game1.createObjectDebris(891, (int)tileLocation.X, (int)tileLocation.Y - 3, ((int)tileLocation.Y + 1) * 64, 0, 1f, location);
+
+                        __instance.hasSeed.Value = false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
+        public static void UpdateTapperProduct_Post(Tree __instance, StardewObject tapper_instance)
+        {
+            try
+            {
+                int minutesUntilTomorrow = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay);
+                int minutesUntil2Days = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay, 2);
+                bool isWinter = Game1.GetSeasonForLocation(__instance.currentLocation).Equals("winter");
+
+                // just some tree menu UI compatibility
+                if (isWinter && mod.TappersDreamAndMushroomTreesGrowInWinter)
+                {
+                    int daysUntilSpring = new WorldDate(Game1.year + 1, "spring", 1).TotalDays - Game1.Date.TotalDays;
+                    int minutesUntilSpring = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay, daysUntilSpring);
+
+                    if (tapper_instance.MinutesUntilReady == minutesUntilSpring)
+                    {
+                        // red mushroom
+                        if (tapper_instance.heldObject.Value.ParentSheetIndex is 420)
+                        {
+                            tapper_instance.MinutesUntilReady = minutesUntilTomorrow;
+                        }
+                        else if (minutesUntilSpring > minutesUntil2Days)
+                        {
+                            tapper_instance.MinutesUntilReady = minutesUntil2Days;
+                        }
+                    }
+                }
+
+                if (!mod.Config.TapperDaysNeededChangesEnabled)
+                {
+                    return;
+                }
+
+                float time_multiplier = 1f;
+
+                bool isHeavyTapper = tapper_instance != null && tapper_instance.ParentSheetIndex == 264;
+                if (isHeavyTapper)
+                {
+                    time_multiplier = 0.5f;
+                }
+
+                switch (__instance.treeType.Value)
+                {
+                    case 1:
+                        tapper_instance.MinutesUntilReady = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay, (int)Math.Max(1.0, Math.Floor(mod.Config.OakDaysNeeded * time_multiplier)));
+                        return;
+
+                    case 2:
+                        tapper_instance.MinutesUntilReady = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay, (int)Math.Max(1.0, Math.Floor(mod.Config.MapleDaysNeeded * time_multiplier)));
+                        return;
+
+                    case 3:
+                        tapper_instance.MinutesUntilReady = Utility.CalculateMinutesUntilMorning(Game1.timeOfDay, (int)Math.Max(1.0, Math.Floor(mod.Config.PineDaysNeeded * time_multiplier)));
+                        return;
+
+                    case Tree.mushroomTree:
+
+                        if (mod.Config.MushroomTreeHeavyTappersFix && isHeavyTapper && tapper_instance.MinutesUntilReady == minutesUntil2Days)
+                        {
+                            tapper_instance.MinutesUntilReady = minutesUntilTomorrow;
+                        }
+
+                        if (mod.Config.MushroomTreeTappersConsistencyChange)
+                        {
+                            if (Game1.dayOfMonth == 28)
+                            {
+                                tapper_instance.heldObject.Value = new StardewObject(422, 1, false, -1, 0);
+                            }
+
+                            bool isFall = Game1.GetSeasonForLocation(__instance.currentLocation).Equals("fall");
+                            // brown mushroom
+                            if (tapper_instance.heldObject.Value.ParentSheetIndex == 404 && isFall)
+                            {
+                                // red mushroom
+                                tapper_instance.heldObject.Value = new StardewObject(420, 1, false, -1, 0);
+                            }
+                        }
+
+                        // recalculate again to nerf moments where it would only take one day
+                        if (mod.Config.MushroomTreeHeavyTappersFix && isHeavyTapper)
+                        {
+                            tapper_instance.MinutesUntilReady = minutesUntilTomorrow;
+                        }
+                        else
+                        {
+                            tapper_instance.MinutesUntilReady = minutesUntil2Days;
+                        }
+                        return;
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
             }
         }
 
@@ -255,16 +509,14 @@
         }
 
         // config calls are in ChangeBerryQualityAndGiveExp
-        public static void FixBerryQuality(ref Bush __instance, ref bool __state)
+        public static void FixBerryQuality(ref Bush __instance, ref bool __state, float ___maxShake)
         {
             try
             {
                 // __state && tileSheetOffset == 0 means the bush was harvested between prepatch and this
                 if (__state && BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset.Value == 0)
                 {
-                    var maxShake = mod.Helper.Reflection.GetField<float>(__instance, "maxShake");
-
-                    if (maxShake.GetValue() == 0.0245436933f)
+                    if (___maxShake == 0.0245436933f)
                     {
                         BerryBushLogic.ChangeBerryQualityAndGiveExp(__instance, mod);
                     }
