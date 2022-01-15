@@ -23,7 +23,7 @@
                     {
                         Item currentItem = Game1.player.CurrentItem;
 
-                        if (mod.Config.FeedingRestrictions)
+                        if (mod.Config.NewFoodSystem)
                         {
                             var potentialhorseFood = HorseFoodData.ClassifyHorseFood(currentItem);
 
@@ -79,7 +79,7 @@
             {
                 string translation = mod.Helper.Translation.Get("AteFood", new { name = horseW.Horse.displayName, foodName = currentItem.DisplayName });
 
-                if (mod.Config.FeedingRestrictions)
+                if (mod.Config.NewFoodSystem)
                 {
                     string translationKey;
                     if (friendship <= 5)
@@ -126,7 +126,7 @@
                 {
                     Item currentItem = Game1.player.CurrentItem;
 
-                    if (mod.Config.FeedingRestrictions)
+                    if (mod.Config.NewFoodSystem)
                     {
                         if (FoodData.IsDairyProduct(currentItem))
                         {
@@ -165,7 +165,7 @@
 
         public static void FeedPet(HorseOverhaul mod, Pet pet, Item currentItem, int friendship)
         {
-            if (pet?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotFed", out _) == true && !mod.Config.AllowMultipleFeedingsADay)
+            if (pet?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/gotFed") == true && !mod.Config.AllowMultipleFeedingsADay)
             {
                 Game1.drawObjectDialogue(mod.Helper.Translation.Get("AteEnough", new { name = pet.displayName }));
             }
@@ -179,7 +179,7 @@
 
                 Game1.player.reduceActiveItemByOne();
 
-                pet.friendshipTowardFarmer.Set(Math.Min(1000, pet.friendshipTowardFarmer.Value + friendship));
+                pet.friendshipTowardFarmer.Value = Math.Min(1000, pet.friendshipTowardFarmer.Value + friendship);
             }
         }
 

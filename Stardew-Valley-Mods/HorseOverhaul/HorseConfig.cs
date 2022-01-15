@@ -17,8 +17,6 @@
 
     public interface IGenericModConfigMenuAPI
     {
-        void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
-
         void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
 
         void RegisterLabel(IManifest mod, string labelName, string labelDesc);
@@ -41,6 +39,8 @@
 
         void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
 
+        void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
+
         void SetTitleScreenOnlyForNextOptions(IManifest mod, bool titleScreenOnly);
 
         void AddParagraph(IManifest mod, Func<string> text);
@@ -57,8 +57,6 @@
 
         private static readonly KeybindList AlternateSaddleBagAndFeedKeyDefault = KeybindList.Parse("LeftStick");
 
-        public bool HorseHeater { get; set; } = true;
-
         public bool ThinHorse { get; set; } = true;
 
         public bool MovementSpeed { get; set; } = true;
@@ -73,11 +71,15 @@
 
         public bool Water { get; set; } = true;
 
+        public bool HorseHeater { get; set; } = true;
+
+        public bool HorseHoofstepEffects { get; set; } = true;
+
         public bool Feeding { get; set; } = true;
 
         public bool PetFeeding { get; set; } = true;
 
-        public bool FeedingRestrictions { get; set; } = true;
+        public bool NewFoodSystem { get; set; } = true;
 
         public bool AllowMultipleFeedingsADay { get; set; } = false;
 
@@ -153,7 +155,8 @@
                 {
                     mod.Helper.WriteConfig(config);
                     VerifyConfigValues(config, mod);
-                });
+                }
+            );
 
             api.SetTitleScreenOnlyForNextOptions(manifest, true);
 
@@ -174,8 +177,9 @@
 
             api.RegisterLabel(manifest, "Other", null);
 
+            api.RegisterSimpleOption(manifest, "Horse Hoofstep Effects", null, () => config.HorseHoofstepEffects, (bool val) => config.HorseHoofstepEffects = val);
             api.RegisterSimpleOption(manifest, "Disable Horse Sounds", null, () => config.DisableHorseSounds, (bool val) => config.DisableHorseSounds = val);
-            api.RegisterSimpleOption(manifest, "Feeding Restrictions", null, () => config.FeedingRestrictions, (bool val) => config.FeedingRestrictions = val);
+            api.RegisterSimpleOption(manifest, "New Food System", null, () => config.NewFoodSystem, (bool val) => config.NewFoodSystem = val);
             api.RegisterSimpleOption(manifest, "Pet Feeding", null, () => config.PetFeeding, (bool val) => config.PetFeeding = val);
             api.RegisterSimpleOption(manifest, "Allow Multiple Feedings A Day", null, () => config.AllowMultipleFeedingsADay, (bool val) => config.AllowMultipleFeedingsADay = val);
             api.RegisterSimpleOption(manifest, "Disable Stable Sprite Changes", null, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val);
@@ -188,7 +192,6 @@
             api.AddKeybindList(manifest, () => config.PetMenuKey, (KeybindList keybindList) => config.PetMenuKey = keybindList, () => "Pet Menu Key");
             api.AddKeybindList(manifest, () => config.AlternateSaddleBagAndFeedKey, (KeybindList keybindList) => config.AlternateSaddleBagAndFeedKey = keybindList, () => "Alternate Saddle Bag\nAnd Feed Key");
             api.RegisterSimpleOption(manifest, "Disable Main Saddle Bag\nAnd Feed Key", null, () => config.DisableMainSaddleBagAndFeedKey, (bool val) => config.DisableMainSaddleBagAndFeedKey = val);
-            api.AddParagraph(manifest, () => "You can disable/ unassign keybindings by changing them to \"\" in the config file.");
         }
     }
 }

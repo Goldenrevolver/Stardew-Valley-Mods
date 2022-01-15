@@ -193,8 +193,25 @@
             }
             else if (itemToFeed.Category == StardewObject.VegetableCategory || itemToFeed.Category == StardewObject.FruitsCategory || itemToFeed.Category == StardewObject.GreensCategory)
             {
-                // benefit of the doubt for modded or new update items from these categories. all items of those categories in 1.5.6 are already in the dictionary
-                return new HorseFoodData(DefaultValue, null);
+                // filter out some modded cabbage, onions and peppers
+                // I can't filter out other potatoes because some crops like "sweet potato" are not actually related to potatoes (or yam, even if they are similar)
+                if (itemToFeed?.Name?.ToLower()?.Contains("cabbage") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("cabbage") == true)
+                {
+                    return new HorseFoodData(0, GetReplyForID(CabbageId));
+                }
+                else if (itemToFeed?.Name?.ToLower()?.Contains("onion") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("onion") == true)
+                {
+                    return new HorseFoodData(0, GetReplyForID(OnionId));
+                }
+                else if (itemToFeed?.Name?.ToLower()?.Contains("pepper") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("pepper") == true)
+                {
+                    return new HorseFoodData(0, GetReplyForID(NightshadeID));
+                }
+                else
+                {
+                    // benefit of the doubt for modded or new update items from these categories. all items of those categories in 1.5.6 are already in the dictionary
+                    return new HorseFoodData(DefaultValue, null);
+                }
             }
             else
             {

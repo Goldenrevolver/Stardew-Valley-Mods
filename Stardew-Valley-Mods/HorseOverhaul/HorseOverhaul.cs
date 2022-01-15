@@ -27,7 +27,7 @@
     {
         public static bool IsTractor(this Horse horse)
         {
-            return horse?.modData.TryGetValue("Pathoschild.TractorMod", out _) == true || horse?.Name.StartsWith("tractor/") == true;
+            return horse?.modData.ContainsKey("Pathoschild.TractorMod") == true || horse?.Name.StartsWith("tractor/") == true;
         }
 
         public static bool IsGarage(this Stable stable)
@@ -240,9 +240,9 @@
 
                     var path = data.GetType().GetProperty("DirectoryPath");
 
-                    if (path != null && path.GetValue(data) != null)
+                    if (path?.GetValue(data) != null)
                     {
-                        var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "OpenMenuKey" }, data.Manifest.Name);
+                        var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "OpenMenuKey" }, data.Manifest.Name, false);
 
                         if (list["OpenMenuKey"].ToLower() == "p")
                         {
@@ -338,7 +338,7 @@
 
                 if (path != null && path.GetValue(data) != null)
                 {
-                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "color palette", "stable" }, data.Manifest.Name);
+                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "color palette", "stable" }, data.Manifest.Name, false);
 
                     if (list["stable"].ToLower() != "false")
                     {
@@ -357,7 +357,7 @@
 
                 if (path != null && path.GetValue(data) != null)
                 {
-                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stable" }, data.Manifest.Name);
+                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stable" }, data.Manifest.Name, false);
 
                     if (list["stable"].ToLower() == "true")
                     {
@@ -377,7 +377,7 @@
 
                 if (path != null && path.GetValue(data) != null)
                 {
-                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stableOption" }, data.Manifest.Name);
+                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stableOption" }, data.Manifest.Name, false);
 
                     SetupGwenTextures(dict);
 
@@ -393,7 +393,7 @@
 
                 if (path != null && path.GetValue(data) != null)
                 {
-                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "buildingsReplaced", "stableOption" }, data.Manifest.Name);
+                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "buildingsReplaced", "stableOption" }, data.Manifest.Name, false);
 
                     if (dict["buildingsReplaced"].Contains("stable"))
                     {
@@ -442,7 +442,7 @@
             return null;
         }
 
-        private Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName)
+        private Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName, bool isNonString)
         {
             string fullPath = Path.Combine(modFolderPath, PathUtilities.NormalizePath(path));
 
@@ -452,14 +452,15 @@
             {
                 string fullText = File.ReadAllText(fullPath).ToLower();
                 var split = fullText.Split('\"');
+                int offset = isNonString ? 1 : 2;
 
                 for (int i = 0; i < split.Length; i++)
                 {
                     foreach (var option in options)
                     {
-                        if (option.ToLower() == split[i].Trim() && i + 2 < split.Length)
+                        if (option.ToLower() == split[i].Trim() && i + offset < split.Length)
                         {
-                            string optionText = split[i + 2].Trim();
+                            string optionText = split[i + offset].Trim();
 
                             result.Add(option, optionText);
                         }
@@ -512,7 +513,7 @@
                 if (building is Stable stable && !stable.IsGarage())
                 {
                     // empty the water troughs
-                    if (Context.IsMainPlayer && stable?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotWater", out _) == true)
+                    if (Context.IsMainPlayer && stable?.modData?.ContainsKey($"{ModManifest.UniqueID}/gotWater") == true)
                     {
                         stable.modData.Remove($"{ModManifest.UniqueID}/gotWater");
                     }
@@ -574,7 +575,7 @@
                 {
                     Pet pet = Game1.player.getPet();
 
-                    if (pet?.modData?.TryGetValue($"{ModManifest.UniqueID}/gotFed", out _) == true)
+                    if (pet?.modData?.ContainsKey($"{ModManifest.UniqueID}/gotFed") == true)
                     {
                         pet.modData.Remove($"{ModManifest.UniqueID}/gotFed");
                     }

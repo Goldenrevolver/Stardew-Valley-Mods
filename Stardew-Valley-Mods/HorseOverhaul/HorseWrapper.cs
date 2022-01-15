@@ -38,7 +38,7 @@
         {
             get
             {
-                return Stable?.modData?.TryGetValue($"{mod.ModManifest.UniqueID}/gotWater", out _) == true;
+                return Stable?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/gotWater") == true;
             }
 
             set
