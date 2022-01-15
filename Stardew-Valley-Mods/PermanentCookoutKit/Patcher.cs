@@ -10,7 +10,6 @@
     using StardewValley.Tools;
     using System;
     using System.Linq;
-    using System.Reflection;
     using StardewObject = StardewValley.Object;
 
     internal class Patcher
@@ -80,7 +79,7 @@
         {
             try
             {
-                var recipesProp = __instance.GetType().GetField("Recipes", BindingFlags.NonPublic | BindingFlags.Instance);
+                var recipesProp = AccessTools.Field(__instance.GetType(), "Recipes");
                 object[] recipes = (object[])recipesProp.GetValue(__instance);
 
                 object oldWoodRecipe = recipes[0];
@@ -160,7 +159,7 @@
             }
         }
 
-        public static void UpdateWhenCurrentLocation_Post(Torch __instance, GameLocation environment)
+        public static void UpdateWhenCurrentLocation_Post(Torch __instance, GameLocation environment, float ___smokePuffTimer)
         {
             try
             {
@@ -168,7 +167,7 @@
                 if (__instance.IsCookoutKit() && !__instance.IsOn)
                 {
                     // the condition for smoke to spawn in the overridden method
-                    if (mod.Helper.Reflection.GetField<float>(__instance, "smokePuffTimer").GetValue() == 1000f)
+                    if (___smokePuffTimer == 1000f)
                     {
                         // make sure it really is the smoke that was just spawned and then remove it
                         if (environment.temporarySprites.Any() && environment.temporarySprites.Last().initialPosition == (__instance.TileLocation * 64f) + new Vector2(32f, -32f))
@@ -196,7 +195,7 @@
                         return false;
                     }
 
-                    if (!(dropInItem is StardewObject))
+                    if (dropInItem is not StardewObject)
                     {
                         __result = false;
                         return false;
@@ -285,7 +284,7 @@
                             DelayedAction.playSoundAfterDelay("fireball", 50, null, -1);
                             __instance.showNextIndex.Value = true;
 
-                            var multiplayer = (Multiplayer)typeof(Game1).GetField("multiplayer", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+                            var multiplayer = (Multiplayer)AccessTools.Field(typeof(Game1), "multiplayer").GetValue(null);
 
                             var tempSprite = new TemporaryAnimatedSprite(27, (__instance.TileLocation * 64f) + new Vector2(-16f, -128f), Color.White, 4, false, 50f, 10, 64, ((__instance.TileLocation.Y + 1f) * 64f / 10000f) + 0.0001f, -1, 0)
                             {

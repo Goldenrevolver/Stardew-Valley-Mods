@@ -37,7 +37,7 @@
             }
         }
 
-        public static bool DetectAnimalAttack(ref SoundInTheNightEvent __instance)
+        public static bool DetectAnimalAttack(NetInt ___behavior, Building ___targetBuilding)
         {
             try
             {
@@ -46,12 +46,9 @@
                     return true;
                 }
 
-                var behavior = mod.Helper.Reflection.GetField<NetInt>(__instance, "behavior");
-                var targetBuilding = mod.Helper.Reflection.GetField<Building>(__instance, "targetBuilding");
-
-                if (behavior.GetValue().Value == SoundInTheNightEvent.dogs && targetBuilding != null && targetBuilding.GetValue() != null)
+                if (___behavior.Value == SoundInTheNightEvent.dogs && ___targetBuilding != null)
                 {
-                    AnimalHouse indoors = targetBuilding.GetValue().indoors.Value as AnimalHouse;
+                    AnimalHouse indoors = ___targetBuilding.indoors.Value as AnimalHouse;
                     long idOfRemove = 0L;
                     foreach (long a in indoors.animalsThatLiveHere)
                     {
@@ -79,13 +76,11 @@
             }
         }
 
-        public static void DetectPregnancy(ref QuestionEvent __instance, ref bool __result)
+        public static void DetectPregnancy(ref QuestionEvent __instance, ref bool __result, int ___whichQuestion)
         {
             try
             {
-                var whichQuestion = mod.Helper.Reflection.GetField<int>(__instance, "whichQuestion");
-
-                if (!__result && whichQuestion.GetValue() == 2 && __instance.animal != null)
+                if (!__result && ___whichQuestion == 2 && __instance.animal != null)
                 {
                     __instance.animal.modData.TryGetValue($"{mod.ModManifest.UniqueID}/illness", out string moddata);
 
