@@ -144,15 +144,9 @@
 
         private static int GetIndexFromArrayElement(string[] options, string element)
         {
-            for (int i = 0; i < options.Length; i++)
-            {
-                if (options[i] == element)
-                {
-                    return i;
-                }
-            }
+            var index = Array.IndexOf(options, element);
 
-            return 0;
+            return index == -1 ? 0 : index;
         }
     }
 }
