@@ -13,13 +13,13 @@
 
         public Texture2D PaladinRingTexture { get; set; }
 
-        private RingConfig config;
+        internal RingConfig Config;
 
         public override void Entry(IModHelper helper)
         {
-            config = Helper.ReadConfig<RingConfig>();
+            Config = Helper.ReadConfig<RingConfig>();
 
-            Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(Config, this); };
 
             ExplorerRingTexture = Helper.Content.Load<Texture2D>($"assets/explorer_ring.png");
             BerserkerRingTexture = Helper.Content.Load<Texture2D>($"assets/berserker_ring.png");
@@ -65,7 +65,7 @@
                 // Iridium Band
                 var entry = data[527];
                 var fields = entry.Split('/');
-                fields[^1] = "Increases every weapon stat by 10%.";
+                fields[^1] = Helper.Translation.Get("IridiumBandTooltip");
                 data[527] = string.Join("/", fields);
             }
 
@@ -75,17 +75,17 @@
 
                 var recipeChanges = new Dictionary<string, Tuple<string, string>>();
 
-                if (!config.OldGlowStoneRingRecipe)
+                if (!Config.OldGlowStoneRingRecipe)
                 {
                     recipeChanges["Iridium Band"] = new Tuple<string, string>("337 2 529 1 530 1 531 1 532 1 533 1 534 1", "Combat 9");
                 }
 
-                if (!config.OldGlowStoneRingRecipe)
+                if (!Config.OldGlowStoneRingRecipe)
                 {
                     recipeChanges["Glowstone Ring"] = new Tuple<string, string>("517 1 519 1", "Mining 4");
                 }
 
-                if (config.MinorRingCraftingChanges)
+                if (Config.MinorRingCraftingChanges)
                 {
                     recipeChanges["Sturdy Ring"] = new Tuple<string, string>("334 2 86 5 338 5", "Combat 1");
                     recipeChanges["Warrior Ring"] = new Tuple<string, string>("335 5 382 25 84 10", "Combat 4");
@@ -100,20 +100,20 @@
                     data[item.Key] = string.Join("/", fields);
                 }
 
-                if (!config.OldGlowStoneRingRecipe)
+                if (!Config.OldGlowStoneRingRecipe)
                 {
                     data.Add("Glow Ring", "516 1 768 5/Home/517/false/Mining 4");
                     data.Add("Magnet Ring", "518 1 769 5/Home/519/false/Mining 4");
                 }
 
-                if (config.CraftableGemRings)
+                if (Config.CraftableGemRings)
                 {
-                    data.Add("Amethyst Ring", "66 1 336 1/Home/529/false/Combat 2");
-                    data.Add("Topaz Ring", "68 1 336 1/Home/530/false/Combat 3");
-                    data.Add("Aquamarine Ring", "62 1 336 1/Home/531/false/Combat 4");
-                    data.Add("Jade Ring", "70 1 336 1/Home/532/false/Combat 6");
-                    data.Add("Emerald Ring", "60 1 336 1/Home/533/false/Combat 7");
-                    data.Add("Ruby Ring", "64 1 336 1/Home/534/false/Combat 8");
+                    data.Add("Amethyst Ring", "66 1 334 1/Home/529/false/Combat 2");
+                    data.Add("Topaz Ring", "68 1 334 1/Home/530/false/Combat 3");
+                    data.Add("Aquamarine Ring", "62 1 334 1/Home/531/false/Combat 4");
+                    data.Add("Jade Ring", "70 1 334 1/Home/532/false/Combat 6");
+                    data.Add("Emerald Ring", "60 1 334 1/Home/533/false/Combat 7");
+                    data.Add("Ruby Ring", "64 1 334 1/Home/534/false/Combat 8");
                 }
             }
         }

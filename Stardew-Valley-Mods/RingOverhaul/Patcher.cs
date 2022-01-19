@@ -218,20 +218,42 @@ namespace RingOverhaul
                 switch (ringClass)
                 {
                     case RingClass.explorer:
-                        __instance.DisplayName = "Explorer Ring";
+                        __instance.DisplayName = mod.Helper.Translation.Get("ExplorerRingName");
                         break;
 
                     case RingClass.berserker:
-                        __instance.DisplayName = "Berserker Ring";
+                        __instance.DisplayName = mod.Helper.Translation.Get("BerserkerRingName");
                         break;
 
                     case RingClass.iridiumBand:
-                        __instance.DisplayName = "Gem Band";
+                        __instance.DisplayName = mod.Helper.Translation.Get("GemBandName");
                         break;
 
                     case RingClass.paladin:
-                        __instance.DisplayName = "Paladin Ring";
+                        __instance.DisplayName = mod.Helper.Translation.Get("PaladinRingName");
                         break;
+                }
+
+                if (mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing || mod.Config.RemoveLuckyTooltipFromCombinedRing)
+                {
+                    __instance.description = "";
+                    foreach (Ring ring in __instance.combinedRings)
+                    {
+                        if ((ring.ParentSheetIndex is 810 or 887) && mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing)
+                        {
+                            continue;
+                        }
+
+                        if ((ring.ParentSheetIndex is 859) && mod.Config.RemoveLuckyTooltipFromCombinedRing)
+                        {
+                            continue;
+                        }
+
+                        ring.getDescription();
+                        __instance.description += ring.description + "\n\n";
+                    }
+
+                    __instance.description = __instance.description.Trim();
                 }
 
                 if (GetCombinedRingTotal(__instance) >= 8)

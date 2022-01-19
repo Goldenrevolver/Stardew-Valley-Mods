@@ -1,7 +1,5 @@
 ﻿namespace RingOverhaul
 {
-    using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Diagnostics.CodeAnalysis;
@@ -12,23 +10,7 @@
 
         void RegisterLabel(IManifest mod, string labelName, string labelDesc);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max);
-
-        void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
-
-        void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+        void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
         void AddParagraph(IManifest mod, Func<string> text);
     }
@@ -42,6 +24,10 @@
 
         public bool MinorRingCraftingChanges { get; set; } = true;
 
+        public bool RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing { get; set; } = true;
+
+        public bool RemoveLuckyTooltipFromCombinedRing { get; set; } = false;
+
         public bool OldGlowStoneRingRecipe { get; set; } = false;
 
         public bool OldIridiumBandRecipe { get; set; } = false;
@@ -50,10 +36,7 @@
         {
             try
             {
-                // CommonFiddleheadFern and ForageSurvivalBurger
                 mod.Helper.Content.InvalidateCache("Data/CraftingRecipes");
-
-                // Tapper days needed changes
                 mod.Helper.Content.InvalidateCache("Data/ObjectInformation");
             }
             catch (Exception e)
@@ -77,14 +60,14 @@
 
             api.RegisterModConfig(manifest, () => config = new RingConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(mod); });
 
-            api.RegisterLabel(manifest, "Crafting", null);
+            api.AddBoolOption(manifest, () => config.CraftableGemRings, (bool val) => config.CraftableGemRings = val, () => mod.Helper.Translation.Get("ConfigCraftableGemRings"));
+            api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val, () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"));
+            api.AddBoolOption(manifest, () => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing, (bool val) => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing = val, () => mod.Helper.Translation.Get("ConfigRemoveCITooltip"));
+            api.AddBoolOption(manifest, () => config.RemoveLuckyTooltipFromCombinedRing, (bool val) => config.RemoveLuckyTooltipFromCombinedRing = val, () => mod.Helper.Translation.Get("ConfigRemoveLTooltip"));
+            api.AddBoolOption(manifest, () => config.OldGlowStoneRingRecipe, (bool val) => config.OldGlowStoneRingRecipe = val, () => mod.Helper.Translation.Get("ConfigOldGlowStoneRingRecipe"));
+            api.AddBoolOption(manifest, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val, () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipe"));
 
-            api.RegisterSimpleOption(manifest, "Craftable Gem Rings", null, () => config.CraftableGemRings, (bool val) => config.CraftableGemRings = val);
-            api.RegisterSimpleOption(manifest, "Minor Ring Crafting Changes", null, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val);
-            api.RegisterSimpleOption(manifest, "Old Glow Stone Ring Recipe", null, () => config.OldGlowStoneRingRecipe, (bool val) => config.OldGlowStoneRingRecipe = val);
-            api.RegisterSimpleOption(manifest, "Old Iridium Band Recipe", null, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val);
-
-            api.AddParagraph(manifest, () => "Everything else about the mod can currently not be configured. Feedback is welcome.");
+            api.AddParagraph(manifest, () => mod.Helper.Translation.Get("ConfigFeedback"));
         }
     }
 }
