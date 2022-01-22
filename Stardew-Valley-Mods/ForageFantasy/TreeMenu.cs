@@ -41,7 +41,7 @@
                 1 => "Oak Tree",
                 2 => "Maple Tree",
                 3 => "Pine Tree",
-                6 or 9 => "Palm Tree",
+                9 or 6 => "Palm Tree",
                 7 => "Mushroom Tree",
                 8 => "Mahogany Tree",
                 _ => "Tree",

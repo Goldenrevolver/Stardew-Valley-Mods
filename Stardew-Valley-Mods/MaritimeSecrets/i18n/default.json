@@ -1,0 +1,14 @@
+﻿{
+  /*
+		The first entry before the : is the translation key, leave that one unchanged. Only change the translation in the "" behind it.
+		Every value that you don't translate (or that is missing when I update) will simply take the english translation I wrote.
+  */
+  "GreenOcean": "Green Ocean",
+  "SummerForageCalendar": "Old Mariner: Do you want to know a secret? In mid summer the ocean turns green and the harvest of the waves will be plentiful.",
+  "WormBinUpgrade": "Old Mariner: Do you want to know a secret? Decomposing driftwood is a paradise for micro organisms. Try adding some to your worm bins.",
+  "MermaidSecretNote": "Old Mariner: Do you want to know a secret? I knew a mermaid once. She kept mumbling the numbers 1-5-4-2-3 in her sleep.",
+  "BeachFarmBoatPainting": "Old Mariner: Do you want to know a secret? You will receive something special if you fish at a place on your farm that is both apparent and secluded.",
+  "WillyLifeSaver": "Old Mariner: Do you want to know a secret? The local fisherman lost a lifesaver once. It fell off the boat and got taggled up when he jumped off. Maybe you can find it.",
+  "BeachSupplyCrate": "Old Mariner: Do you want to know a secret? A crate washed ashore this morning.",
+  "NoSecret": "Old Mariner: I've got no secret for you today."
+}

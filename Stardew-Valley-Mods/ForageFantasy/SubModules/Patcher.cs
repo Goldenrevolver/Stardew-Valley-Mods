@@ -157,7 +157,7 @@
             {
                 if (!___dailyQuestBoard)
                 {
-                    for (int i = 2; i <= 28; i += 2)
+                    for (int day = 2; day <= 28; day += 2)
                     {
                         if (mod.Config.MushroomTapperCalendar)
                         {
@@ -165,11 +165,11 @@
 
                             if (Game1.currentSeason is "spring" or "summer" || (Game1.currentSeason is "winter" && mod.TappersDreamAndMushroomTreesGrowInWinter))
                             {
-                                if ((i % 10) is 2)
+                                if ((day % 10) is 2)
                                 {
                                     toDraw = glowingMushroom;
                                 }
-                                else if ((i % 10) is 4)
+                                else if ((day % 10) is 4)
                                 {
                                     toDraw = redMushroom;
                                 }
@@ -180,7 +180,7 @@
                             }
                             else if (Game1.currentSeason is "fall")
                             {
-                                if ((i % 10) is 2)
+                                if ((day % 10) is 2)
                                 {
                                     toDraw = glowingMushroom;
                                 }
@@ -192,7 +192,7 @@
 
                             if (toDraw != Rectangle.Empty)
                             {
-                                Utility.drawWithShadow(b, Game1.objectSpriteSheet, new Vector2((float)(__instance.calendarDays[i - 1].bounds.X + 95), (float)(__instance.calendarDays[i - 1].bounds.Y + 5) - Game1.dialogueButtonScale / 2f), toDraw, Color.White, 0f, Vector2.Zero, 2f, false, 1f, -1, -1, 0.35f);
+                                Utility.drawWithShadow(b, Game1.objectSpriteSheet, new Vector2((float)(__instance.calendarDays[day - 1].bounds.X + 95), (float)(__instance.calendarDays[day - 1].bounds.Y + 5) - Game1.dialogueButtonScale / 2f), toDraw, Color.White, 0f, Vector2.Zero, 2f, false, 1f, -1, -1, 0.35f);
                             }
                         }
                     }

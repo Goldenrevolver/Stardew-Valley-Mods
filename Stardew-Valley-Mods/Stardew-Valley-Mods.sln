@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RingOverhaul", "RingOverhau
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnchantableScythes", "EnchantableScythes\EnchantableScythes.csproj", "{CCED9A88-03E1-432B-B472-2A299F8C6797}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaritimeSecrets", "MaritimeSecrets\MaritimeSecrets.csproj", "{8EA067AB-FD84-4291-8698-9CA97D7CCA2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,7 +68,6 @@ Global
 		{3D0B1F7F-D2BC-405C-BA2F-DB23629A9B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D0B1F7F-D2BC-405C-BA2F-DB23629A9B73}.Release|Any CPU.Build.0 = Release|Any CPU
 		{49E93447-CF9E-4FC1-A166-BDE2FD7C83BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{49E93447-CF9E-4FC1-A166-BDE2FD7C83BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49E93447-CF9E-4FC1-A166-BDE2FD7C83BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49E93447-CF9E-4FC1-A166-BDE2FD7C83BF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B2A3A197-E632-492F-8701-05F8D5262282}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -81,6 +82,10 @@ Global
 		{CCED9A88-03E1-432B-B472-2A299F8C6797}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCED9A88-03E1-432B-B472-2A299F8C6797}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCED9A88-03E1-432B-B472-2A299F8C6797}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EA067AB-FD84-4291-8698-9CA97D7CCA2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EA067AB-FD84-4291-8698-9CA97D7CCA2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EA067AB-FD84-4291-8698-9CA97D7CCA2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EA067AB-FD84-4291-8698-9CA97D7CCA2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

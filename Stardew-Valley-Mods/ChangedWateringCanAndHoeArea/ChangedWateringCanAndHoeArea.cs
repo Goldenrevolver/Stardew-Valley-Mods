@@ -11,6 +11,7 @@
     public class ChangedWateringCanAndHoeArea : Mod
     {
         private static ChangedWateringCanAndHoeArea mod;
+        private static bool shouldNotPatchReaching = false;
 
         public static void TilesAffectedPatch(Tool __instance, Vector2 tileLocation, int power, Farmer who, ref List<Vector2> __result)
         {
@@ -19,9 +20,13 @@
                 // this should always be the case, but just to make sure
                 if (__instance is WateringCan || __instance is Hoe)
                 {
-                    // TODO maybe I have to set 3 to 6 to avoid bugs in the calculation?
-                    if (power is 3 or 6)
+                    if (power is 2 or 3 or 6)
                     {
+                        if (power is 6 && shouldNotPatchReaching)
+                        {
+                            return;
+                        }
+
                         // set the list of affected tiles ourselves
                         __result = NewTilesAffected(__instance, tileLocation, power, who);
                     }
@@ -42,61 +47,6 @@
                 Vector2.Zero
             };
 
-            if (tool is WateringCan)
-            {
-                if (power >= 2)
-                {
-                    newTileLocations.Add(new Vector2(1f, 0f));
-                    newTileLocations.Add(new Vector2(-1f, 0));
-                }
-
-                if (power >= 3)
-                {
-                    newTileLocations.Add(new Vector2(0f, -1f));
-                    newTileLocations.Add(new Vector2(1f, -1f));
-                    newTileLocations.Add(new Vector2(-1f, -1f));
-                }
-            }
-            else if (tool is Hoe)
-            {
-                if (power >= 2)
-                {
-                    newTileLocations.Add(new Vector2(0f, -1f));
-                    newTileLocations.Add(new Vector2(0f, -2f));
-                }
-
-                if (power >= 3)
-                {
-                    newTileLocations.Add(new Vector2(0f, -3f));
-                    newTileLocations.Add(new Vector2(0f, -4f));
-                    newTileLocations.Add(new Vector2(0f, -5f));
-                }
-            }
-
-            if (power >= 4)
-            {
-                newTileLocations.Clear();
-
-                for (int i = 0; i < 3; i++)
-                {
-                    newTileLocations.Add(new Vector2(0f, -i));
-                    newTileLocations.Add(new Vector2(1f, -i));
-                    newTileLocations.Add(new Vector2(-1f, -i));
-                }
-            }
-
-            if (power >= 5)
-            {
-                // we have to iterate forwards so the animation is the right way around
-                // we have to make a copy of the count so it doesn't loop forever
-                int count = newTileLocations.Count;
-
-                for (int i = 0; i < count; i++)
-                {
-                    newTileLocations.Add(newTileLocations[i] + new Vector2(0f, -3f));
-                }
-            }
-
             if (power >= 6)
             {
                 // again clear to have the right order of the elements, less expensive than sorting
@@ -109,6 +59,65 @@
                     newTileLocations.Add(new Vector2(-1f, -i));
                     newTileLocations.Add(new Vector2(2f, -i));
                     newTileLocations.Add(new Vector2(-2f, -i));
+                }
+            }
+            else
+            {
+                if (tool is WateringCan)
+                {
+                    if (power >= 2)
+                    {
+                        newTileLocations.Add(new Vector2(1f, 0f));
+                        newTileLocations.Add(new Vector2(-1f, 0));
+                    }
+
+                    if (power >= 3)
+                    {
+                        newTileLocations.Add(new Vector2(0f, -1f));
+                        newTileLocations.Add(new Vector2(1f, -1f));
+                        newTileLocations.Add(new Vector2(-1f, -1f));
+                    }
+                }
+                else if (tool is Hoe)
+                {
+                    if (power >= 2)
+                    {
+                        newTileLocations.Add(new Vector2(0f, -1f));
+                        newTileLocations.Add(new Vector2(0f, -2f));
+                    }
+
+                    if (power >= 3)
+                    {
+                        newTileLocations.Add(new Vector2(0f, -3f));
+                        newTileLocations.Add(new Vector2(0f, -4f));
+                        newTileLocations.Add(new Vector2(0f, -5f));
+                    }
+                }
+
+                // power >= 4 cannot happen anymore, but I will leave this here as legacy code
+                if (power >= 4)
+                {
+                    newTileLocations.Clear();
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        newTileLocations.Add(new Vector2(0f, -i));
+                        newTileLocations.Add(new Vector2(1f, -i));
+                        newTileLocations.Add(new Vector2(-1f, -i));
+                    }
+                }
+
+                // power >= 5 cannot happen anymore, but I will leave this here as legacy code
+                if (power >= 5)
+                {
+                    // we have to iterate forwards so the animation is the right way around
+                    // we have to make a copy of the count so it doesn't loop forever
+                    int count = newTileLocations.Count;
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        newTileLocations.Add(newTileLocations[i] + new Vector2(0f, -3f));
+                    }
                 }
             }
 
@@ -144,6 +153,14 @@
         public override void Entry(IModHelper helper)
         {
             mod = this;
+
+            shouldNotPatchReaching = mod.Helper.ModRegistry.IsLoaded("kakashigr.RadioactiveTools");
+
+            if (shouldNotPatchReaching)
+            {
+                ErrorLog("Disabled Reach Buff in favor of Radioactive Tools");
+            }
+
             var harmony = new Harmony(ModManifest.UniqueID);
 
             try

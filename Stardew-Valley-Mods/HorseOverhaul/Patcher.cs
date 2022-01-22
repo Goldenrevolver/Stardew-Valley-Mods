@@ -16,15 +16,6 @@
     using System.Linq;
     using System.Reflection.Emit;
 
-    // ths is pseudo enum, because I don't want to always cast to int
-    public struct FacingDirection
-    {
-        public const int Up = 0,
-        Right = 1,
-        Down = 2,
-        Left = 3;
-    }
-
     public class Patcher
     {
         private static HorseOverhaul mod;
@@ -206,32 +197,32 @@
 
                 switch (__instance.FacingDirection)
                 {
-                    case FacingDirection.Up:
+                    case Game1.up:
                         isLastFrame = __instance?.Sprite.CurrentFrame == 17;
                         snowXOffset = mod.Config.ThinHorse ? 8f : width;
                         dustXOffset = mod.Config.ThinHorse ? -8 : width - 8;
                         break;
 
-                    case FacingDirection.Down:
+                    case Game1.down:
                         isLastFrame = __instance?.Sprite.CurrentFrame == 3;
                         snowXOffset = mod.Config.ThinHorse ? 8f : width;
                         dustXOffset = mod.Config.ThinHorse ? -8 : width - 8;
                         break;
 
-                    case FacingDirection.Left:
+                    case Game1.left:
                         isLastFrame = __instance?.Sprite.CurrentFrame == 10;
                         snowXOffset = mod.Config.ThinHorse ? 16f : width + 8f;
                         dustXOffset = mod.Config.ThinHorse ? 8 : width + 8;
                         break;
 
-                    case FacingDirection.Right:
+                    case Game1.right:
                         isLastFrame = __instance?.Sprite.CurrentFrame == 10;
                         snowXOffset = mod.Config.ThinHorse ? 16f : 2 * width - 8f;
                         dustXOffset = mod.Config.ThinHorse ? -8 : width - 8;
                         break;
                 }
 
-                bool isFacingLeftOrRight = rider.facingDirection.Value is FacingDirection.Right or FacingDirection.Left;
+                bool isFacingLeftOrRight = rider.facingDirection.Value is Game1.right or Game1.left;
 
                 Vector2 position = __instance.Position;
 
@@ -568,7 +559,7 @@
                     float xOffset = mod.Config.ThinHorse ? -32f : 0f;
 
                     // all player sprites being off by 1 is really obvious if using horsemanship and facing north
-                    if (horse.FacingDirection == FacingDirection.Up && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
+                    if (horse.FacingDirection == Game1.up && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
                     {
                         xOffset += 1;
                     }
@@ -577,14 +568,14 @@
                     float layer = horse.getStandingY() + 1;
 
                     // draw on top of the player instead of below them, uses the same value as the head of the horse
-                    if (horse.FacingDirection == FacingDirection.Up && horse.rider != null)
+                    if (horse.FacingDirection == Game1.up && horse.rider != null)
                     {
                         layer = horse.Position.Y + 64f;
                     }
 
                     bool shouldFlip = horse.Sprite.CurrentAnimation != null && horse.Sprite.CurrentAnimation[horse.Sprite.currentAnimationIndex].flip;
 
-                    if (horse.FacingDirection == FacingDirection.Left)
+                    if (horse.FacingDirection == Game1.left)
                     {
                         shouldFlip = true;
                     }
@@ -610,20 +601,20 @@
 
                     switch (horse.FacingDirection)
                     {
-                        case FacingDirection.Up:
+                        case Game1.up:
                             emotePosition.Y -= 40f;
                             break;
 
-                        case FacingDirection.Right:
+                        case Game1.right:
                             emotePosition.X += 40f;
                             emotePosition.Y -= 30f;
                             break;
 
-                        case FacingDirection.Down:
+                        case Game1.down:
                             emotePosition.Y += 5f;
                             break;
 
-                        case FacingDirection.Left:
+                        case Game1.left:
                             emotePosition.X -= 40f;
                             emotePosition.Y -= 30f;
                             break;
@@ -691,22 +682,22 @@
 
                 switch (__instance.FacingDirection)
                 {
-                    case FacingDirection.Up:
+                    case Game1.up:
                         __instance.FarmerSprite.setCurrentSingleFrame(113, 32000, false, false);
                         __instance.xOffset = 4f; // old: -6f, diff: +10
                         break;
 
-                    case FacingDirection.Right:
+                    case Game1.right:
                         __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, false);
                         __instance.xOffset = 7f; // old: -3f, diff: +10
                         break;
 
-                    case FacingDirection.Down:
+                    case Game1.down:
                         __instance.FarmerSprite.setCurrentSingleFrame(107, 32000, false, false);
                         __instance.xOffset = 4f; // old: -6f, diff: +10
                         break;
 
-                    case FacingDirection.Left:
+                    case Game1.left:
                         __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, true);
                         __instance.xOffset = -2f; // old: -12f, diff: +10
                         break;
@@ -767,7 +758,7 @@
                     return true;
                 }
 
-                if (horse.FacingDirection == FacingDirection.Left)
+                if (horse.FacingDirection == Game1.left)
                 {
                     horse.rider.xOffset = 0f;
                 }
@@ -818,8 +809,8 @@
                 {
                     __instance.xOffset = mount.FacingDirection switch
                     {
-                        FacingDirection.Right => -4f, // counteracts the +8 from the horse update method to arrive at +4
-                        FacingDirection.Left => 0,
+                        Game1.right => -4f, // counteracts the +8 from the horse update method to arrive at +4
+                        Game1.left => 0,
                         _ => 4f,
                     };
                 }

@@ -197,10 +197,10 @@
 
                     return Game1.player.FacingDirection switch
                     {
-                        FacingDirection.Up => playerPos.Y > charaPos.Y && xDistance < 48,
-                        FacingDirection.Down => playerPos.Y < charaPos.Y && xDistance < 48,
-                        FacingDirection.Right => playerPos.X < charaPos.X && yDistance < 48,
-                        FacingDirection.Left => playerPos.X > charaPos.X && yDistance < 48,
+                        Game1.up => playerPos.Y > charaPos.Y && xDistance < 48,
+                        Game1.down => playerPos.Y < charaPos.Y && xDistance < 48,
+                        Game1.right => playerPos.X < charaPos.X && yDistance < 48,
+                        Game1.left => playerPos.X > charaPos.X && yDistance < 48,
                         _ => false,
                     };
                 }
