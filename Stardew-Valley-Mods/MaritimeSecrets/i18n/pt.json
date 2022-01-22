@@ -1,0 +1,17 @@
+{
+  /*
+		The first entry before the : is the translation key, leave that one unchanged. Only change the translation in the "" behind it.
+		Every value that you don't translate (or that is missing when I update) will simply take the english translation I wrote.
+		'Secret' intentionally has a space at the end, 'AlsoBeachSupplyCrate' intentionally has a space at the beginning.
+  */
+  "GreenOcean": "Oceano Esmeralda",
+  "Secret": "Velho marinheiro: Ocê qué saber um segredinho? ",
+  "NoSecret": "Velho marinheiro: Hoje eu to sorto e sem segredo. Vorta outro dia pra nois prosiar mais.",
+  "BeachSupplyCrate": "Uma caxa cheia de tranquera apareceu na costa hoje mai cedo.",
+  "AlsoBeachSupplyCrate": " Uma caxa cheia de tranquera apareceu na costa hoje mai cedo.",
+  "SummerForageCalendar": "Lá pos mei du veraum o mar fica verde de tudo e começa a brota tudo quanto é tipo de coisa das onda. É bunito demais de vê.",
+  "WormBinUpgrade": "Madera do mar é um verdadero paraiso pra tudu quanto é tipo de micróbio. Se ocê buta uma na sua compostagem, de certo que as minhoca fica tudo filiz.",
+  "MermaidSecretNote": "Eu cunheci uma sereia uma vez. Inté qui era boa moça, mai ela ficava repetindo us número 1-5-4-2-3 enquanto durmia, vai intendê.",
+  "BeachFarmBoatPainting": "Si ocê pescá nu lugar certo na sua fazenda, ocê vai achar um trem todo especial. É so ocê procura um lugar qui seja mai reservado, mai ainda assim bastante aparente.",
+  "WillyLifeSaver": "Um pescadô aqui das redondeza perdeu uma boia uns tempo atrais. O trem caiu do barco e se inrosco todim quando ele saiu. Das veis ocê incontra."
+}

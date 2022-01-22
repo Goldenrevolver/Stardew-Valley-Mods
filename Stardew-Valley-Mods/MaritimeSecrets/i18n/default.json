@@ -2,13 +2,30 @@
   /*
 		The first entry before the : is the translation key, leave that one unchanged. Only change the translation in the "" behind it.
 		Every value that you don't translate (or that is missing when I update) will simply take the english translation I wrote.
+		'Secret' intentionally has a space at the end, 'AlsoBeachSupplyCrate' intentionally has a space at the beginning.
   */
   "GreenOcean": "Green Ocean",
-  "SummerForageCalendar": "Old Mariner: Do you want to know a secret? In mid summer the ocean turns green and the harvest of the waves will be plentiful.",
-  "WormBinUpgrade": "Old Mariner: Do you want to know a secret? Decomposing driftwood is a paradise for micro organisms. Try adding some to your worm bins.",
-  "MermaidSecretNote": "Old Mariner: Do you want to know a secret? I knew a mermaid once. She kept mumbling the numbers 1-5-4-2-3 in her sleep.",
-  "BeachFarmBoatPainting": "Old Mariner: Do you want to know a secret? You will receive something special if you fish at a place on your farm that is both apparent and secluded.",
-  "WillyLifeSaver": "Old Mariner: Do you want to know a secret? The local fisherman lost a lifesaver once. It fell off the boat and got taggled up when he jumped off. Maybe you can find it.",
-  "BeachSupplyCrate": "Old Mariner: Do you want to know a secret? A crate washed ashore this morning.",
-  "NoSecret": "Old Mariner: I've got no secret for you today."
+  "Secret": "Old Mariner: Do you want to know a secret? ",
+  "NoSecret": "Old Mariner: I've got no secret for you today.",
+  "BeachSupplyCrate": "A crate washed ashore this morning.",
+  "AlsoBeachSupplyCrate": " Also, a crate washed ashore this morning.",
+  "SummerForageCalendar": "In mid summer the ocean turns green and the harvest of the waves will be plentiful.",
+  "WormBinUpgrade": "Decomposing driftwood is a paradise for micro organisms. Try adding some to your worm bins.",
+  "MermaidSecretNote": "I knew a mermaid once. She kept mumbling the numbers 1-5-4-2-3 in her sleep.",
+  "BeachFarmBoatPainting": "Your farm holds a special reward for you if you fish at a place that is both apparent and secluded.",
+  "WillyLifeSaver": "The local fisherman lost a lifesaver once. It fell off the boat and got taggled up when he jumped off.",
+  "TownTrashCanBrokenCommunityCenter": "The sea gulls talk of a run down building in town. Someone tried to get rid of something in a nearby body of water that will never reach the ocean.",
+  "TownTrashCanRestoredCommunityCenter": "The sea gulls talk of a freshly restored building in town. Someone tried to get rid of something in a nearby body of water that will never reach the ocean.",
+  "TownTrashCanJojaWareHouse": "The sea gulls talk of a new blue building in town. Someone tried to get rid of something in a nearby body of water that will never reach the ocean.",
+  "SecretWoodsWallBasket": "The woodskips talk of someone having dropped their basket into their pond.",
+  "DesertPyramidDecal": "The sandfish talk of a hidden pond that has an ancient treasure.",
+  "SpaPaintingAndNecklace": "Some rain drops told me they evaporated outside a local spa and that people lost multiple curious things there.",
+  "SpaPaintingOrNecklace": "Some rain drops told me they met you before evaporating outside a local spa. They want you to know that there is another curious thing there.",
+  "IridiumKrobusReady": "You look like a master of fishing. With this much skill you seem ready to find something special in the river south of the sewers.",
+  "IridiumKrobusNotReady": "You look like a master of fishing. But you need even more skill to find something special in the river south of the sewers.",
+  "IslandGourmandStatue": "I heard about stingrays in a hidden cove on a fareaway island having a beautiful sunken statue at their home.",
+  "VolcanoPainting": "I heard about lava eels at the top of a volcano on a fareaway island being quite the determined artists.",
+  "IslandFrogHat": "There is a legend among the local frogs of a glutton frog on a fareaway island. It is said that their domain also houses a small, slimy friend that wants to see the world.",
+  "IslandPainting": "On the northern part of a fareaway island, I've heard of a secret on the bed of a part of a river only reachable through a secret grove. This one might be a bit tricky to find.",
+  "IslandSquirrel": "On a fareaway island, I've heard of a secret on the bed of a part of a river only reachable by finding a way to walk across lava. This one might be a bit tricky to find."
 }
