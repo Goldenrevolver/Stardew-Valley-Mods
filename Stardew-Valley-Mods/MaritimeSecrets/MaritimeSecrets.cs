@@ -10,7 +10,7 @@ namespace MaritimeSecrets
 
         public override void Entry(IModHelper helper)
         {
-            talkedToMarinerTodayKey = $"{ModManifest?.UniqueID}/TalkedToMarinerToday";
+            talkedToMarinerTodayKey = $"{ModManifest.UniqueID}/TalkedToMarinerToday";
 
             Helper.Events.GameLoop.DayEnding += delegate { ResetMarinerTalk(); };
 
