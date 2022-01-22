@@ -239,7 +239,7 @@ namespace MaritimeSecrets
 
                             if (randomPosition.Y < 10)
                             {
-                                randomPosition.Y += 30;
+                                randomPosition.Y += 15;
                             }
 
                             string prop = __instance.doesTileHaveProperty((int)randomPosition.X, (int)randomPosition.Y, "Type", "Back");
