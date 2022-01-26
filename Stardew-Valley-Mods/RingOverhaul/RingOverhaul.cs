@@ -1,9 +1,11 @@
 ﻿namespace RingOverhaul
 {
+    using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     public class RingOverhaul : Mod, IAssetEditor
     {
@@ -21,9 +23,9 @@
 
             Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(Config, this); };
 
-            ExplorerRingTexture = Helper.Content.Load<Texture2D>($"assets/explorer_ring.png");
-            BerserkerRingTexture = Helper.Content.Load<Texture2D>($"assets/berserker_ring.png");
-            PaladinRingTexture = Helper.Content.Load<Texture2D>($"assets/paladin_ring.png");
+            ExplorerRingTexture = Helper.Content.Load<Texture2D>("assets/explorer_ring.png");
+            BerserkerRingTexture = Helper.Content.Load<Texture2D>("assets/berserker_ring.png");
+            PaladinRingTexture = Helper.Content.Load<Texture2D>("assets/paladin_ring.png");
 
             Patcher.PatchAll(this);
         }
@@ -53,7 +55,7 @@
 
         public bool CanEdit<T>(IAssetInfo asset)
         {
-            return asset.AssetNameEquals("Data/ObjectInformation") || asset.AssetNameEquals("Data/CraftingRecipes");
+            return asset.AssetNameEquals("Data/ObjectInformation") || asset.AssetNameEquals("Data/CraftingRecipes") || (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1);
         }
 
         public void Edit<T>(IAssetData asset)
@@ -67,6 +69,21 @@
                 var fields = entry.Split('/');
                 fields[^1] = Helper.Translation.Get("IridiumBandTooltip");
                 data[527] = string.Join("/", fields);
+            }
+
+            if (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1)
+            {
+                var editor = asset.AsImage();
+
+                string path = Config.CraftableGemRingsMetalBar switch
+                {
+                    2 => "assets/gem_rings_iron.png",
+                    3 => "assets/gem_rings_gold.png",
+                    _ => "assets/gem_rings_progressive.png",
+                };
+
+                Texture2D sourceImage = Helper.Content.Load<Texture2D>(path, ContentSource.ModFolder);
+                editor.PatchImage(sourceImage, targetArea: new Rectangle(16, 352, 96, 16));
             }
 
             if (asset.AssetNameEquals("Data/CraftingRecipes"))
@@ -108,12 +125,32 @@
 
                 if (Config.CraftableGemRings)
                 {
-                    data.Add("Amethyst Ring", "66 1 334 1/Home/529/false/Combat 2");
-                    data.Add("Topaz Ring", "68 1 334 1/Home/530/false/Combat 3");
-                    data.Add("Aquamarine Ring", "62 1 334 1/Home/531/false/Combat 4");
-                    data.Add("Jade Ring", "70 1 334 1/Home/532/false/Combat 6");
-                    data.Add("Emerald Ring", "60 1 334 1/Home/533/false/Combat 7");
-                    data.Add("Ruby Ring", "64 1 334 1/Home/534/false/Combat 8");
+                    var dict = new Dictionary<string, int> { { "Amethyst Ring", 66 }, { "Topaz Ring", 68 }, { "Aquamarine Ring", 62 }, { "Jade Ring", 70 }, { "Emerald Ring", 60 }, { "Ruby Ring", 64 } }.ToList();
+
+                    int itemId = 529;
+                    int combatLevel = 2;
+                    int oreBar = Config.CraftableGemRingsMetalBar == 2 ? 335 : Config.CraftableGemRingsMetalBar == 3 ? 336 : 334;
+
+                    for (int i = 0; i < dict.Count; i++)
+                    {
+                        data.Add(dict[i].Key, $"{dict[i].Value} 1 {oreBar} 1/Home/{itemId}/ false/Combat {combatLevel}");
+
+                        if (Config.CraftableGemRingsMetalBar == 0 && i is 1 or 3)
+                        {
+                            oreBar++;
+                        }
+
+                        if (Config.CraftableGemRingsUnlockLevels != 0)
+                        {
+                            combatLevel += i == 2 ? 2 : 1;
+                        }
+                        else if (i is 1 or 3)
+                        {
+                            combatLevel += 2;
+                        }
+
+                        itemId++;
+                    }
                 }
             }
         }

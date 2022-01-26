@@ -1,16 +1,43 @@
 ﻿using StardewModdingAPI;
 using StardewValley;
 using System;
+using System.Collections.Generic;
 
 namespace MaritimeSecrets
 {
+    internal struct SpeechType
+    {
+        internal const int dynamic = 0;
+        internal const int modern = 1;
+        internal const int sailor = 2;
+    }
+
     public class MaritimeSecrets : Mod
     {
         internal string talkedToMarinerTodayKey;
+        internal bool IsUsingMermaidMod { get; private set; }
+        internal MaritimeSecretsConfig Config { get; private set; }
+
+        private readonly List<string> mermaidMods = new() { "Naya.ContentPatcher.MermaidMariner", "mi.Mermaids", "DragonMaus.MermaidsReplaceOldMarinerRedux" };
 
         public override void Entry(IModHelper helper)
         {
             talkedToMarinerTodayKey = $"{ModManifest.UniqueID}/TalkedToMarinerToday";
+
+            Config = Helper.ReadConfig<MaritimeSecretsConfig>();
+
+            Helper.Events.GameLoop.GameLaunched += delegate { MaritimeSecretsConfig.SetUpModConfigMenu(Config, this); };
+
+            IsUsingMermaidMod = false;
+
+            foreach (var mermaidModId in mermaidMods)
+            {
+                if (Helper.ModRegistry.IsLoaded(mermaidModId))
+                {
+                    IsUsingMermaidMod = true;
+                    break;
+                }
+            }
 
             Helper.Events.GameLoop.DayEnding += delegate { ResetMarinerTalk(); };
 

@@ -11,6 +11,11 @@
   "PaladinRingName": "Paladin Ring",
   "GemBandName": "Gem Band", // this one is used when you combined the gem rings at the forge for some reason, instead of crafting an iridium band, so it's almost never seen
   "ConfigCraftableGemRings": "Craftable Gem Rings",
+  "ConfigCraftableGemRingsMetalBar": "Required Metal Bar",
+  "ConfigCraftableGemRingsProgressive": "Progressive",
+  "ConfigCraftableGemRingsUnlockLevel": "Unlock Level",
+  "ConfigCraftableGemRingsCustomSprites": "Custom Sprites",
+  "ConfigOtherCategory": "Other",
   "ConfigMinorRingCraftingChanges": "Minor Ring Crafting Changes",
   "ConfigRemoveCITooltip": "Remove Crabshell Ring\nAnd Immunity Band Tooltip\nFrom Combined Ring",
   "ConfigRemoveLTooltip": "Remove Lucky Ring Tooltip\nFrom Combined Ring",

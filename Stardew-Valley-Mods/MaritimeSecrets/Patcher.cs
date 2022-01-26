@@ -29,6 +29,8 @@ namespace MaritimeSecrets
 
         private static readonly XnaRectangle summerForage = new(144, 256, 16, 16);
         private const int driftWoodId = 169;
+        private const int pearlId = 797;
+        private const int mermaidPendant = 460;
 
         public static void PatchAll(MaritimeSecrets maritimeSecrets)
         {
@@ -38,6 +40,14 @@ namespace MaritimeSecrets
 
             try
             {
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.answerDialogueAction)),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(GameLocation_AnswerDialogueAction_Prefix)));
+
+                harmony.Patch(
+                   original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.createQuestionDialogue), new Type[] { typeof(string), typeof(Response[]), typeof(string) }),
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(GameLocation_CreateQuestionDialogue_Prefix)));
+
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Beach), nameof(Beach.checkAction)),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(Beach_CheckAction_Prefix)));
@@ -81,6 +91,104 @@ namespace MaritimeSecrets
             catch (Exception e)
             {
                 mod.ErrorLog("Error while trying to setup required patches:", e);
+            }
+        }
+
+        // patch with very high priority so we get called before mods like 'Free Love' who want to change the cost
+        // if people want to use the 'Free Love' feature they can disable my feature, but not the other way around
+        [HarmonyPriority(Priority.High)]
+        public static bool GameLocation_AnswerDialogueAction_Prefix(string questionAndAnswer, ref bool __result)
+        {
+            try
+            {
+                if (!mod.Config.ChangePendantPriceToPearl)
+                {
+                    return true;
+                }
+
+                if (questionAndAnswer == "mariner_Buy")
+                {
+                    if (Game1.player.hasItemInInventory(pearlId, 1))
+                    {
+                        Game1.player.removeItemsFromInventory(pearlId, 1);
+                        Game1.player.addItemByMenuIfNecessary(new StardewObject(mermaidPendant, 1, false, -1, 0)
+                        {
+                            specialItem = true
+                        }, null);
+
+                        if (Game1.activeClickableMenu == null)
+                        {
+                            Game1.player.holdUpItemThenMessage(new StardewObject(mermaidPendant, 1, false, -1, 0), true);
+                        }
+                    }
+                    else
+                    {
+                        // this means 'I need {0}, if it's not too inconvenient.'
+                        var iNeedString = Game1.content.LoadString("Strings\\StringsFromCSFiles:ItemDeliveryQuest.cs.13494", $"1 {new StardewObject(pearlId, 1).DisplayName}");
+                        Game1.drawObjectDialogue(iNeedString);
+                    }
+
+                    __result = true;
+                    return false;
+                }
+                else if (questionAndAnswer == "Mariner_Buy")
+                {
+                    // the capital mariner case is probably no longer used by the game or was used for debugging, but let's change it anyway (the mod 'Free Love' does not change it for example)
+                    if (Game1.player.hasItemInInventory(pearlId, 1))
+                    {
+                        Game1.player.removeItemsFromInventory(pearlId, 1);
+
+                        Game1.player.grabObject(new StardewObject(Vector2.Zero, mermaidPendant, null, false, true, false, false));
+                    }
+                    else
+                    {
+                        // this means 'I need {0}, if it's not too inconvenient.'
+                        var iNeedString = Game1.content.LoadString("Strings\\StringsFromCSFiles:ItemDeliveryQuest.cs.13494", $"1 {new StardewObject(pearlId, 1).DisplayName}");
+                        Game1.drawObjectDialogue(iNeedString);
+                    }
+
+                    __result = true;
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
+        // patch with very high priority so this gets called if and only if GameLocation_AnswerDialogueAction_Prefix didn't get overridden by a mod that patches both with even higher priority
+        [HarmonyPriority(Priority.VeryHigh)]
+        public static bool GameLocation_CreateQuestionDialogue_Prefix(string question, ref Response[] answerChoices, string dialogKey)
+        {
+            try
+            {
+                if (!mod.Config.ChangePendantPriceToPearl)
+                {
+                    return true;
+                }
+
+                if (dialogKey == "mariner")
+                {
+                    foreach (var item in answerChoices)
+                    {
+                        if (item.responseKey == "Buy")
+                        {
+                            var buyString = Game1.content.LoadString("Strings\\StringsFromCSFiles:Event.cs.1654");
+                            item.responseText = $"{buyString} (1 {new StardewObject(pearlId, 1).DisplayName})";
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
             }
         }
 
@@ -248,201 +356,220 @@ namespace MaritimeSecrets
             CheckForFurnitureItem(who, __result, 2332, receivedGourmandStatueKey);
         }
 
+        // patch with very high priority so we get called before mods like 'Free Love' which want to remove the marriage restriction
+        [HarmonyPriority(Priority.VeryHigh)]
         public static bool Beach_CheckAction_Prefix(Beach __instance, Location tileLocation, Farmer who, NPC ___oldMariner, ref bool __result)
         {
             try
             {
-                if (who != null && ___oldMariner != null && ___oldMariner.getTileX() == tileLocation.X && ___oldMariner.getTileY() == tileLocation.Y && mod?.ModManifest?.UniqueID != null)
+                if (who != null && ___oldMariner != null && ___oldMariner.getTileX() == tileLocation.X && ___oldMariner.getTileY() == tileLocation.Y)
                 {
-                    if (!who.modData.ContainsKey(mod.talkedToMarinerTodayKey))
+                    if (mod?.ModManifest?.UniqueID == null || who.modData.ContainsKey(mod.talkedToMarinerTodayKey))
                     {
-                        who.modData[mod.talkedToMarinerTodayKey] = "true";
+                        return true;
+                    }
 
-                        string secret = mod.Helper.Translation.Get("Secret");
+                    who.modData[mod.talkedToMarinerTodayKey] = "true";
 
-                        __result = true;
+                    var marinerName = GetMarinerName();
 
-                        // major secrets
+                    string speechTypeSuffix = "";
 
-                        if (!who.modData.ContainsKey(summerForageCalendarKey))
+                    if ((mod.Config.MarinerSpeechType == SpeechType.dynamic && !mod.IsUsingMermaidMod) || mod.Config.MarinerSpeechType == SpeechType.sailor)
+                    {
+                        speechTypeSuffix = "_Sailor";
+                    }
+
+                    // maybe I should refactor everything to a string builder instead, but it doesn't seem worth it yet for only about 3 string concatenations
+                    string secret = mod.Helper.Translation.Get("Secret" + speechTypeSuffix, new { name = marinerName }) + " ";
+
+                    __result = true;
+
+                    // major secrets
+
+                    if (!who.modData.ContainsKey(summerForageCalendarKey))
+                    {
+                        who.modData[summerForageCalendarKey] = "true";
+                        Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("SummerForageCalendar" + speechTypeSuffix)));
+                        return false;
+                    }
+
+                    // unlike the netfield, the fishing level property also adds buffs and enchantments. the crafting recipe OR check is for mod compatibility
+                    if ((who.fishingLevel.Value >= 8 || who.craftingRecipes.ContainsKey("Worm Bin")) && !who.modData.ContainsKey(wormBinUpgradeKey))
+                    {
+                        who.modData[wormBinUpgradeKey] = "true";
+                        Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("WormBinUpgrade" + speechTypeSuffix)));
+                        return false;
+                    }
+
+                    // removed the 'who.hasMagnifyingGlass' condition so you can do it in year 1
+                    // the 'Vanilla' name check is for compatibility with Nayas mermaid mod for lore consistency
+                    if (!who.secretNotesSeen.Contains(15))
+                    {
+                        who.secretNotesSeen.Add(15);
+
+                        // yes, if people set the speech pattern to sailor and use a mermaid mod, the mermaid will say the mermaid specific line like a sailor
+                        string transl = mod.IsUsingMermaidMod ? marinerName == "Vanilla" ? "MermaidSecretNote_MermaidBlueHair" : "MermaidSecretNote_Mermaid" : "MermaidSecretNote";
+
+                        Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(transl + speechTypeSuffix)));
+                        return false;
+                    }
+
+                    if (Game1.stats.DaysPlayed >= 31 && !Game1.IsWinter && (!who.mailReceived.Contains("gotSpaFishing") || !FoundSpaNecklace(who)))
+                    {
+                        if (!who.secretNotesSeen.Contains(GameLocation.NECKLACE_SECRET_NOTE_INDEX))
                         {
-                            who.modData[summerForageCalendarKey] = "true";
-                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("SummerForageCalendar")));
-                            return false;
+                            who.secretNotesSeen.Add(GameLocation.NECKLACE_SECRET_NOTE_INDEX);
                         }
 
-                        // unlike the netfield, the fishing level property also adds buffs and enchantments. the crafting recipe OR check is for mod compatibility
-                        if ((who.fishingLevel.Value >= 8 || who.craftingRecipes.ContainsKey("Worm Bin")) && !who.modData.ContainsKey(wormBinUpgradeKey))
+                        // xor
+                        bool oneDone = who.mailReceived.Contains("gotSpaFishing") ^ FoundSpaNecklace(who);
+
+                        string transl = oneDone ? "SpaPaintingOrNecklace" : "SpaPaintingAndNecklace";
+
+                        Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(transl + speechTypeSuffix)));
+                        return false;
+                    }
+
+                    // minor secrets
+
+                    string translation = null;
+
+                    bool selectedMinorSecret = false;
+                    while (!selectedMinorSecret)
+                    {
+                        if (Game1.whichFarm == 6 && !who.mailReceived.Contains("gotBoatPainting"))
                         {
-                            who.modData[wormBinUpgradeKey] = "true";
-                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("WormBinUpgrade")));
-                            return false;
-                        }
-
-                        // removed the 'who.hasMagnifyingGlass' condition so you can do it in year 1
-                        if (!who.secretNotesSeen.Contains(15))
-                        {
-                            who.secretNotesSeen.Add(15);
-                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("MermaidSecretNote")));
-                            return false;
-                        }
-
-                        if (Game1.stats.DaysPlayed >= 31 && !Game1.IsWinter && (!who.mailReceived.Contains("gotSpaFishing") || !FoundSpaNecklace(who)))
-                        {
-                            if (!who.secretNotesSeen.Contains(GameLocation.NECKLACE_SECRET_NOTE_INDEX))
-                            {
-                                who.secretNotesSeen.Add(GameLocation.NECKLACE_SECRET_NOTE_INDEX);
-                            }
-
-                            // xor
-                            bool oneDone = who.mailReceived.Contains("gotSpaFishing") ^ FoundSpaNecklace(who);
-
-                            string transl = oneDone ? "SpaPaintingOrNecklace" : "SpaPaintingAndNecklace";
-
-                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(transl)));
-                            return false;
-                        }
-
-                        // minor secrets
-
-                        string translation = null;
-
-                        bool selectedMinorSecret = false;
-                        while (!selectedMinorSecret)
-                        {
-                            if (Game1.whichFarm == 6 && !who.mailReceived.Contains("gotBoatPainting"))
-                            {
-                                translation = "BeachFarmBoatPainting";
-                                selectedMinorSecret = true;
-                                break;
-                            }
-
-                            if (!who.modData.ContainsKey(receivedTrashCanKey))
-                            {
-                                if (CheckJojaMartComplete())
-                                {
-                                    translation = "TownTrashCanJojaWareHouse";
-                                }
-                                else if (CheckCommunityCenterComplete())
-                                {
-                                    translation = "TownTrashCanRestoredCommunityCenter";
-                                }
-                                else
-                                {
-                                    translation = "TownTrashCanBrokenCommunityCenter";
-                                }
-
-                                selectedMinorSecret = true;
-                                break;
-                            }
-
-                            // if caught woodskip as secret woods condition
-                            if (who.fishCaught.ContainsKey(734) && !who.modData.ContainsKey(receivedWallBasketKey))
-                            {
-                                translation = "SecretWoodsWallBasket";
-                                selectedMinorSecret = true;
-                                break;
-                            }
-
-                            if (CheckDesertUnlocked() && !who.modData.ContainsKey(receivedPyramidDecalKey))
-                            {
-                                translation = "DesertPyramidDecal";
-                                selectedMinorSecret = true;
-                                break;
-                            }
-
-                            if (Utility.doesAnyFarmerHaveOrWillReceiveMail("seenBoatJourney"))
-                            {
-                                if (!who.modData.ContainsKey(receivedLifeSaverKey))
-                                {
-                                    translation = "WillyLifeSaver";
-                                    selectedMinorSecret = true;
-                                    break;
-                                }
-
-                                if (who.hasOrWillReceiveMail("talkedToGourmand"))
-                                {
-                                    if (!who.modData.ContainsKey(receivedFrogHatKey))
-                                    {
-                                        translation = "IslandGourmandStatue";
-                                        selectedMinorSecret = true;
-                                        break;
-                                    }
-                                }
-
-                                if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_VolcanoBridge"))
-                                {
-                                    if (!who.mailReceived.Contains("gotSecretIslandNSquirrel"))
-                                    {
-                                        translation = "IslandSquirrel";
-                                        selectedMinorSecret = true;
-                                        break;
-                                    }
-                                }
-
-                                if (Game1.MasterPlayer.hasOrWillReceiveMail("reachedCaldera"))
-                                {
-                                    if (!who.mailReceived.Contains("CalderaPainting"))
-                                    {
-                                        translation = "VolcanoPainting";
-                                        selectedMinorSecret = true;
-                                        break;
-                                    }
-                                }
-
-                                if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_Resort"))
-                                {
-                                    if (!who.modData.ContainsKey(receivedGourmandStatueKey))
-                                    {
-                                        translation = "IslandGourmandStatue";
-                                        selectedMinorSecret = true;
-                                        break;
-                                    }
-                                }
-
-                                if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_Turtle"))
-                                {
-                                    if (!who.mailReceived.Contains("gotSecretIslandNPainting"))
-                                    {
-                                        translation = "IslandPainting";
-                                        selectedMinorSecret = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // unlike the netfield, the fishing level property also adds buffs and enchantments
-                            if (who.fishingLevel.Value >= 10 && !Game1.player.mailReceived.Contains("caughtIridiumKrobus"))
-                            {
-                                // now we want to calculate with boosts
-                                translation = who.FishingLevel < 15 ? "IridiumKrobusNotReady" : "IridiumKrobusReady";
-
-                                selectedMinorSecret = true;
-                                break;
-                            }
-
+                            translation = "BeachFarmBoatPainting";
+                            selectedMinorSecret = true;
                             break;
                         }
 
-                        // if managed to place a crate
-                        if (TryToSpawnSupplyCrate(__instance))
+                        if (!who.modData.ContainsKey(receivedTrashCanKey))
                         {
-                            if (selectedMinorSecret && translation != null)
+                            if (CheckJojaMartComplete())
                             {
-                                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(translation) + mod.Helper.Translation.Get("AlsoBeachSupplyCrate")));
+                                translation = "TownTrashCanJojaWareHouse";
+                            }
+                            else if (CheckCommunityCenterComplete())
+                            {
+                                translation = "TownTrashCanRestoredCommunityCenter";
                             }
                             else
                             {
-                                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("BeachSupplyCrate")));
+                                translation = "TownTrashCanBrokenCommunityCenter";
                             }
 
-                            return false;
+                            selectedMinorSecret = true;
+                            break;
                         }
 
-                        // if somehow failed to place a crate
-                        Game1.drawObjectDialogue(Game1.parseText(mod.Helper.Translation.Get("NoSecret")));
+                        // if caught woodskip as secret woods condition
+                        if (who.fishCaught.ContainsKey(734) && !who.modData.ContainsKey(receivedWallBasketKey))
+                        {
+                            translation = "SecretWoodsWallBasket";
+                            selectedMinorSecret = true;
+                            break;
+                        }
+
+                        if (CheckDesertUnlocked() && !who.modData.ContainsKey(receivedPyramidDecalKey))
+                        {
+                            translation = "DesertPyramidDecal";
+                            selectedMinorSecret = true;
+                            break;
+                        }
+
+                        if (Utility.doesAnyFarmerHaveOrWillReceiveMail("seenBoatJourney"))
+                        {
+                            if (!who.modData.ContainsKey(receivedLifeSaverKey))
+                            {
+                                translation = "WillyLifeSaver";
+                                selectedMinorSecret = true;
+                                break;
+                            }
+
+                            if (who.hasOrWillReceiveMail("talkedToGourmand"))
+                            {
+                                if (!who.modData.ContainsKey(receivedFrogHatKey))
+                                {
+                                    translation = "IslandGourmandStatue";
+                                    selectedMinorSecret = true;
+                                    break;
+                                }
+                            }
+
+                            if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_VolcanoBridge"))
+                            {
+                                if (!who.mailReceived.Contains("gotSecretIslandNSquirrel"))
+                                {
+                                    translation = "IslandSquirrel";
+                                    selectedMinorSecret = true;
+                                    break;
+                                }
+                            }
+
+                            if (Game1.MasterPlayer.hasOrWillReceiveMail("reachedCaldera"))
+                            {
+                                if (!who.mailReceived.Contains("CalderaPainting"))
+                                {
+                                    translation = "VolcanoPainting";
+                                    selectedMinorSecret = true;
+                                    break;
+                                }
+                            }
+
+                            if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_Resort"))
+                            {
+                                if (!who.modData.ContainsKey(receivedGourmandStatueKey))
+                                {
+                                    translation = "IslandGourmandStatue";
+                                    selectedMinorSecret = true;
+                                    break;
+                                }
+                            }
+
+                            if (Game1.MasterPlayer.hasOrWillReceiveMail("Island_Turtle"))
+                            {
+                                if (!who.mailReceived.Contains("gotSecretIslandNPainting"))
+                                {
+                                    translation = "IslandPainting";
+                                    selectedMinorSecret = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // unlike the netfield, the fishing level property also adds buffs and enchantments
+                        if (who.fishingLevel.Value >= 10 && !Game1.player.mailReceived.Contains("caughtIridiumKrobus"))
+                        {
+                            // now we want to calculate with boosts
+                            translation = who.FishingLevel < 15 ? "IridiumKrobusNotReady" : "IridiumKrobusReady";
+
+                            selectedMinorSecret = true;
+                            break;
+                        }
+
+                        break;
+                    }
+
+                    // if managed to place a crate
+                    if (TryToSpawnSupplyCrate(__instance))
+                    {
+                        if (selectedMinorSecret && translation != null)
+                        {
+                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(translation) + " " + mod.Helper.Translation.Get("AlsoBeachSupplyCrate" + speechTypeSuffix)));
+                        }
+                        else
+                        {
+                            Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("BeachSupplyCrate" + speechTypeSuffix)));
+                        }
+
                         return false;
                     }
+
+                    // if somehow failed to place a crate
+                    Game1.drawObjectDialogue(Game1.parseText(mod.Helper.Translation.Get("NoSecret" + speechTypeSuffix, new { name = marinerName })));
+                    return false;
                 }
 
                 return true;
@@ -451,6 +578,30 @@ namespace MaritimeSecrets
             {
                 mod.ErrorLog("There was an exception in a patch", e);
                 return true;
+            }
+        }
+
+        private static string GetMarinerName()
+        {
+            var sampleMarinerSentence = Game1.content.LoadString("Strings\\Locations:Beach_Mariner_PlayerMarried");
+
+            // some asian languages use a different unicode colon character, the fullwidth colon.
+            // for some edge cases, this is checked before the normal unicode colon
+            var index = sampleMarinerSentence.IndexOf('：');
+
+            if (index < 0)
+            {
+                index = sampleMarinerSentence.IndexOf(':');
+            }
+
+            if (index > 0)
+            {
+                return sampleMarinerSentence[..index];
+            }
+            else
+            {
+                // if we couldn't find a name, use fallback
+                return mod.Helper.Translation.Get("OldMarinerName");
             }
         }
 
