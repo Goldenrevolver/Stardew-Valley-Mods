@@ -41,7 +41,7 @@
         {
             if (Config.JukeboxRingEnabled)
             {
-                if (Game1.player.craftingRecipes.ContainsKey("Mini-Jukebox"))
+                if (Game1.player.craftingRecipes.ContainsKey("Mini-Jukebox") && !Game1.player.craftingRecipes.ContainsKey("Jukebox Ring"))
                 {
                     Game1.player.craftingRecipes.Add("Jukebox Ring", 0);
                 }
