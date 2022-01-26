@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Menus;
 using StardewValley.Network;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -40,10 +41,10 @@ namespace RingOverhaul
     {
         private static RingOverhaul mod;
 
-        public const int CoalID = 382;
-        public const int IridiumBandID = 527;
+        public static readonly string JukeBoxRingTrackKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingTrackKey";
+        public static readonly string JukeBoxRingHasAddedKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingHasAddedKey";
 
-        private static readonly List<int> explorerIds = new() { 520, 859, 888 }; // 516, 517, 518, 519,
+        private static readonly List<int> explorerIds = new() { 520, 859, 888, 528 }; // 516, 517, 518, 519,
         private static readonly List<int> berserkerIds = new() { 521, 522, 523, 526, 811, 860, 862 };
         private static readonly List<int> iridiumBandIds = new() { 529, 530, 531, 532, 533, 534 }; // 527
         private static readonly List<int> paladinIds = new() { 524, 525, 810, 839, 861, 863, 887 };
@@ -87,6 +88,14 @@ namespace RingOverhaul
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.onNewLocation)),
                     prefix: new HarmonyMethod(typeof(Patcher), nameof(OnNewLocation_Pre)));
+
+                harmony.Patch(
+                    original: AccessTools.Method(typeof(Ring), nameof(Ring.onLeaveLocation)),
+                    prefix: new HarmonyMethod(typeof(Patcher), nameof(OnLeaveLocation_Pre)));
+
+                harmony.Patch(
+                    original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsMiniJukeboxPlaying)),
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(IsMiniJukeboxPlaying)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(StardewObject), nameof(StardewObject.performObjectDropInAction), new[] { typeof(Item), typeof(bool), typeof(Farmer) }),
@@ -184,7 +193,7 @@ namespace RingOverhaul
             else
             {
                 // so they can't get combined with their own ingredients/ results
-                if (ring.ParentSheetIndex is IridiumBandID or 516 or 517 or 518 or 519)
+                if (ring.ParentSheetIndex is RingOverhaul.IridiumBandID or 516 or 517 or 518 or 519)
                 {
                     return RingClass.different;
                 }
@@ -234,27 +243,32 @@ namespace RingOverhaul
                         break;
                 }
 
-                if (mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing || mod.Config.RemoveLuckyTooltipFromCombinedRing)
+                __instance.description = "";
+                foreach (Ring ring in __instance.combinedRings)
                 {
-                    __instance.description = "";
-                    foreach (Ring ring in __instance.combinedRings)
+                    if ((ring.ParentSheetIndex is 810 or 887) && mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing)
                     {
-                        if ((ring.ParentSheetIndex is 810 or 887) && mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing)
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        if ((ring.ParentSheetIndex is 859) && mod.Config.RemoveLuckyTooltipFromCombinedRing)
-                        {
-                            continue;
-                        }
+                    if ((ring.ParentSheetIndex is 859) && mod.Config.RemoveLuckyTooltipFromCombinedRing)
+                    {
+                        continue;
+                    }
 
+                    if (ring.ParentSheetIndex is RingOverhaul.JukeBoxRingID && mod.Config.JukeboxRingEnabled)
+                    {
+                        // Mini-Jukebox
+                        __instance.description += new StardewObject(Vector2.Zero, 209).getDescription() + "\n\n";
+                    }
+                    else
+                    {
                         ring.getDescription();
                         __instance.description += ring.description + "\n\n";
                     }
-
-                    __instance.description = __instance.description.Trim();
                 }
+
+                __instance.description = __instance.description.Trim();
 
                 if (GetCombinedRingTotal(__instance) >= 8)
                 {
@@ -408,7 +422,14 @@ namespace RingOverhaul
         {
             try
             {
-                if (__instance.indexInTileSheet.Value == IridiumBandID)
+                if (mod.Config.JukeboxRingEnabled && __instance.indexInTileSheet.Value == RingOverhaul.JukeBoxRingID)
+                {
+                    TryAddJukeBoxRing(__instance, location);
+
+                    OnEquipJukeBoxRing(who, __instance);
+                    return false;
+                }
+                else if (__instance.indexInTileSheet.Value == RingOverhaul.IridiumBandID)
                 {
                     var fieldInfo = AccessTools.Field(typeof(Ring), "_lightSourceID");
 
@@ -440,11 +461,17 @@ namespace RingOverhaul
             }
         }
 
-        public static bool OnUnequip_Pre(Ring __instance, Farmer who)
+        public static bool OnUnequip_Pre(Ring __instance, Farmer who, GameLocation location)
         {
             try
             {
-                if (__instance.indexInTileSheet.Value == IridiumBandID)
+                if (mod.Config.JukeboxRingEnabled && __instance.indexInTileSheet.Value == RingOverhaul.JukeBoxRingID)
+                {
+                    TryRemoveJukeBoxRing(__instance, location);
+
+                    return false;
+                }
+                else if (__instance.indexInTileSheet.Value == RingOverhaul.IridiumBandID)
                 {
                     who.attackIncreaseModifier -= 0.1f;
                     who.knockbackModifier -= 0.1f;
@@ -471,7 +498,27 @@ namespace RingOverhaul
         {
             try
             {
-                if (__instance.indexInTileSheet.Value == IridiumBandID)
+                if (mod.Config.JukeboxRingEnabled && __instance.indexInTileSheet.Value == RingOverhaul.JukeBoxRingID)
+                {
+                    TryAddJukeBoxRing(__instance, environment);
+
+                    // != true because it can be a null compare
+                    if (environment?.currentEvent?.isFestival != true)
+                    {
+                        if (__instance.modData.ContainsKey(JukeBoxRingTrackKey))
+                        {
+                            environment.miniJukeboxTrack.Value = __instance.modData[JukeBoxRingTrackKey];
+
+                            if (__instance.modData[JukeBoxRingTrackKey] == "random")
+                            {
+                                environment.SelectRandomMiniJukeboxTrack();
+                            }
+                        }
+                    }
+
+                    return false;
+                }
+                else if (__instance.indexInTileSheet.Value == RingOverhaul.IridiumBandID)
                 {
                     var fieldInfo = AccessTools.Field(typeof(Ring), "_lightSourceID");
 
@@ -496,13 +543,103 @@ namespace RingOverhaul
             }
         }
 
+        public static bool OnLeaveLocation_Pre(Ring __instance, GameLocation environment)
+        {
+            try
+            {
+                if (mod.Config.JukeboxRingEnabled && __instance.indexInTileSheet.Value == RingOverhaul.JukeBoxRingID)
+                {
+                    TryRemoveJukeBoxRing(__instance, environment);
+
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+                return true;
+            }
+        }
+
+        public static void IsMiniJukeboxPlaying(GameLocation __instance, ref bool __result)
+        {
+            try
+            {
+                // anti rain check
+                if (mod.Config.JukeboxRingWorksInRain && !__result && __instance.miniJukeboxCount.Value > 0 && __instance.miniJukeboxTrack.Value != "")
+                {
+                    foreach (var player in Game1.getOnlineFarmers())
+                    {
+                        if (player.currentLocation == __instance && player.isWearingRing(RingOverhaul.JukeBoxRingID))
+                        {
+                            __result = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a patch", e);
+            }
+        }
+
+        public static void TryAddJukeBoxRing(Ring ring, GameLocation location)
+        {
+            if (!ring.modData.ContainsKey(JukeBoxRingHasAddedKey))
+            {
+                location.OnMiniJukeboxAdded();
+                ring.modData[JukeBoxRingHasAddedKey] = "true";
+            }
+        }
+
+        public static void TryRemoveJukeBoxRing(Ring ring, GameLocation location)
+        {
+            if (ring.modData.ContainsKey(JukeBoxRingHasAddedKey))
+            {
+                location.OnMiniJukeboxRemoved();
+                ring.modData.Remove(JukeBoxRingHasAddedKey);
+            }
+        }
+
+        public static void OnEquipJukeBoxRing(Farmer who, Ring ring)
+        {
+            List<string> list = Game1.player.songsHeard.Distinct().ToList();
+            list.Insert(0, "turn_off");
+            list.Add("random");
+            Game1.activeClickableMenu = new ChooseFromListMenu(list, new ChooseFromListMenu.actionOnChoosingListOption((s) => OnSongChosen(s, ring)), true, who.currentLocation.miniJukeboxTrack.Value);
+        }
+
+        public static void OnSongChosen(string selection, Ring ring)
+        {
+            if (Game1.player.currentLocation != null)
+            {
+                if (selection == "turn_off")
+                {
+                    Game1.player.currentLocation.miniJukeboxTrack.Value = "";
+                    return;
+                }
+
+                Game1.player.currentLocation.miniJukeboxTrack.Value = selection;
+
+                if (selection == "random")
+                {
+                    Game1.player.currentLocation.SelectRandomMiniJukeboxTrack();
+                }
+
+                ring.modData[JukeBoxRingTrackKey] = selection;
+            }
+        }
+
         public static bool UpdateFurnaceInput(ref StardewObject __instance, ref bool __result, ref Item dropInItem, ref bool probe, ref Farmer who)
         {
             try
             {
                 if (!probe && __instance.name.Equals("Furnace") && __instance.heldObject.Value == null)
                 {
-                    if (dropInItem is StardewObject o && o.ParentSheetIndex == CoalID && who.IsLocalPlayer)
+                    if (dropInItem is StardewObject o && o.ParentSheetIndex == RingOverhaul.CoalID && who.IsLocalPlayer)
                     {
                         var inventory = who.Items;
                         SimpleFurnaceRecipe[] recipes = new SimpleFurnaceRecipe[]
@@ -510,7 +647,7 @@ namespace RingOverhaul
                             new SimpleFurnaceRecipe(new List<int>{ 516 }, 517, "Glow Ring"), // + 5x 768
                             new SimpleFurnaceRecipe(new List<int>{ 518 }, 519, "Magnet Ring"), // + 5x 769
                             new SimpleFurnaceRecipe(new List<int>{ 517, 519 }, 888, "Glowstone Ring"),
-                            new SimpleFurnaceRecipe(new List<int>{ 529, 530, 531, 532, 533, 534 }, IridiumBandID, "Iridium Band"), // + 2x 337
+                            new SimpleFurnaceRecipe(new List<int>{ 529, 530, 531, 532, 533, 534 }, RingOverhaul.IridiumBandID, "Iridium Band"), // + 2x 337
                         };
 
                         var foundIds = new List<int>();
@@ -557,7 +694,7 @@ namespace RingOverhaul
                                     }
                                 }
 
-                                if (recipe.outputId == IridiumBandID)
+                                if (recipe.outputId == RingOverhaul.IridiumBandID)
                                 {
                                     if (who.getTallyOfObject(337, false) >= 2)
                                     {
@@ -578,7 +715,7 @@ namespace RingOverhaul
                                     }
                                 }
 
-                                __instance.ConsumeInventoryItem(who, CoalID, 1);
+                                __instance.ConsumeInventoryItem(who, RingOverhaul.CoalID, 1);
 
                                 who.currentLocation.debris.Add(new Debris(new Ring(recipe.outputId), __instance.TileLocation * 64f));
                                 who.currentLocation.playSound("furnace", NetAudio.SoundContext.Default);

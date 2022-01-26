@@ -16,6 +16,8 @@
   "ConfigCraftableGemRingsUnlockLevel": "Unlock Level",
   "ConfigCraftableGemRingsCustomSprites": "Custom Sprites",
   "ConfigOtherCategory": "Other",
+  "ConfigJukeboxRing": "Jukebox Ring",
+  "ConfigJukeboxRingWorksInRain": "Jukebox Ring Works In Rain",
   "ConfigMinorRingCraftingChanges": "Minor Ring Crafting Changes",
   "ConfigRemoveCITooltip": "Remove Crabshell Ring\nAnd Immunity Band Tooltip\nFrom Combined Ring",
   "ConfigRemoveLTooltip": "Remove Lucky Ring Tooltip\nFrom Combined Ring",

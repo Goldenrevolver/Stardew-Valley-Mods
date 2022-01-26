@@ -3,6 +3,8 @@
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
+    using StardewValley;
+    using StardewValley.Objects;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -15,6 +17,10 @@
 
         public Texture2D PaladinRingTexture { get; set; }
 
+        public const int CoalID = 382;
+        public const int IridiumBandID = 527;
+        public const int JukeBoxRingID = 528;
+
         internal RingConfig Config;
 
         public override void Entry(IModHelper helper)
@@ -22,12 +28,33 @@
             Config = Helper.ReadConfig<RingConfig>();
 
             Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
 
             ExplorerRingTexture = Helper.Content.Load<Texture2D>("assets/explorer_ring.png");
             BerserkerRingTexture = Helper.Content.Load<Texture2D>("assets/berserker_ring.png");
             PaladinRingTexture = Helper.Content.Load<Texture2D>("assets/paladin_ring.png");
 
             Patcher.PatchAll(this);
+        }
+
+        private void GameLoop_DayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
+        {
+            if (Config.JukeboxRingEnabled)
+            {
+                if (Game1.player.craftingRecipes.ContainsKey("Mini-Jukebox"))
+                {
+                    Game1.player.craftingRecipes.Add("Jukebox Ring", 0);
+                }
+
+                Utility.iterateAllItems(delegate (Item item)
+                {
+                    if (item is Ring ring && ring.ParentSheetIndex == JukeBoxRingID)
+                    {
+                        // Mini-Jukebox
+                        ring.description = new StardewValley.Object(Vector2.Zero, 209).getDescription();
+                    }
+                });
+            }
         }
 
         /// <summary>
@@ -55,7 +82,9 @@
 
         public bool CanEdit<T>(IAssetInfo asset)
         {
-            return asset.AssetNameEquals("Data/ObjectInformation") || asset.AssetNameEquals("Data/CraftingRecipes") || (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1);
+            return asset.AssetNameEquals("Data/ObjectInformation")
+                || asset.AssetNameEquals("Data/CraftingRecipes")
+                || (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRings && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1);
         }
 
         public void Edit<T>(IAssetData asset)
@@ -64,14 +93,13 @@
             {
                 IDictionary<int, string> data = asset.AsDictionary<int, string>().Data;
 
-                // Iridium Band
-                var entry = data[527];
+                var entry = data[IridiumBandID];
                 var fields = entry.Split('/');
                 fields[^1] = Helper.Translation.Get("IridiumBandTooltip");
-                data[527] = string.Join("/", fields);
+                data[IridiumBandID] = string.Join("/", fields);
             }
 
-            if (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1)
+            if (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRings && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1)
             {
                 var editor = asset.AsImage();
 
@@ -91,6 +119,11 @@
                 IDictionary<string, string> data = asset.AsDictionary<string, string>().Data;
 
                 var recipeChanges = new Dictionary<string, Tuple<string, string>>();
+
+                if (Config.JukeboxRingEnabled)
+                {
+                    data.Add("Jukebox Ring", "336 1 787 1 464 1/Home/528/false/null");
+                }
 
                 if (!Config.OldGlowStoneRingRecipe)
                 {

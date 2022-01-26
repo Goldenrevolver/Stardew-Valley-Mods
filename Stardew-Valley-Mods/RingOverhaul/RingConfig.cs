@@ -44,6 +44,10 @@
 
         public bool OldIridiumBandRecipe { get; set; } = false;
 
+        public bool JukeboxRingEnabled { get; set; } = true;
+
+        public bool JukeboxRingWorksInRain { get; set; } = false;
+
         public static void VerifyConfigValues(RingOverhaul mod, RingConfig config)
         {
             bool invalidConfig = false;
@@ -70,6 +74,7 @@
             {
                 mod.Helper.Content.InvalidateCache("Data/CraftingRecipes");
                 mod.Helper.Content.InvalidateCache("Data/ObjectInformation");
+                mod.Helper.Content.InvalidateCache("Maps/springobjects");
             }
             catch (Exception e)
             {
@@ -101,6 +106,9 @@
             api.AddBoolOption(manifest, () => config.CraftableGemRingsCustomSprites, (bool val) => config.CraftableGemRingsCustomSprites = val, () => mod.Helper.Translation.Get("ConfigCraftableGemRingsCustomSprites"));
 
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCategory"));
+
+            api.AddBoolOption(manifest, () => config.JukeboxRingEnabled, (bool val) => config.JukeboxRingEnabled = val, () => mod.Helper.Translation.Get("ConfigJukeboxRing"));
+            api.AddBoolOption(manifest, () => config.JukeboxRingWorksInRain, (bool val) => config.JukeboxRingWorksInRain = val, () => mod.Helper.Translation.Get("ConfigJukeboxRingWorksInRain"));
 
             api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val, () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"));
             api.AddBoolOption(manifest, () => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing, (bool val) => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing = val, () => mod.Helper.Translation.Get("ConfigRemoveCITooltip"));
