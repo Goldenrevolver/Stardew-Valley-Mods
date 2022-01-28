@@ -103,7 +103,15 @@
 
             api.AddTextOption(manifest, () => GetElementFromConfig(ProgressionChoices, config.CraftableGemRingsMetalBar), (string val) => config.CraftableGemRingsMetalBar = GetIndexFromArrayElement(ProgressionChoices, val), () => mod.Helper.Translation.Get("ConfigCraftableGemRingsMetalBar"), null, ProgressionChoices, (s) => TranslateProgressionChoice(s, mod));
             api.AddTextOption(manifest, () => GetElementFromConfig(UnlockLevelChoices, config.CraftableGemRingsUnlockLevels), (string val) => config.CraftableGemRingsUnlockLevels = GetIndexFromArrayElement(UnlockLevelChoices, val), () => mod.Helper.Translation.Get("ConfigCraftableGemRingsUnlockLevel"), null, UnlockLevelChoices);
-            api.AddBoolOption(manifest, () => config.CraftableGemRingsCustomSprites, (bool val) => config.CraftableGemRingsCustomSprites = val, () => mod.Helper.Translation.Get("ConfigCraftableGemRingsCustomSprites"));
+
+            if (mod.Helper.ModRegistry.IsLoaded("BBR.BetterRings"))
+            {
+                api.AddParagraph(manifest, () => mod.Helper.Translation.Get("ConfigCraftableGemRingsCustomSpritesBetterRings"));
+            }
+            else
+            {
+                api.AddBoolOption(manifest, () => config.CraftableGemRingsCustomSprites, (bool val) => config.CraftableGemRingsCustomSprites = val, () => mod.Helper.Translation.Get("ConfigCraftableGemRingsCustomSprites"));
+            }
 
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCategory"));
 

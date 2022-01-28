@@ -243,32 +243,27 @@ namespace RingOverhaul
                         break;
                 }
 
-                __instance.description = "";
-                foreach (Ring ring in __instance.combinedRings)
+                if (mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing || mod.Config.RemoveLuckyTooltipFromCombinedRing)
                 {
-                    if ((ring.ParentSheetIndex is 810 or 887) && mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing)
+                    __instance.description = "";
+                    foreach (Ring ring in __instance.combinedRings)
                     {
-                        continue;
-                    }
+                        if ((ring.ParentSheetIndex is 810 or 887) && mod.Config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing)
+                        {
+                            continue;
+                        }
 
-                    if ((ring.ParentSheetIndex is 859) && mod.Config.RemoveLuckyTooltipFromCombinedRing)
-                    {
-                        continue;
-                    }
+                        if ((ring.ParentSheetIndex is 859) && mod.Config.RemoveLuckyTooltipFromCombinedRing)
+                        {
+                            continue;
+                        }
 
-                    if (ring.ParentSheetIndex is RingOverhaul.JukeBoxRingID && mod.Config.JukeboxRingEnabled)
-                    {
-                        // Mini-Jukebox
-                        __instance.description += new StardewObject(Vector2.Zero, 209).getDescription() + "\n\n";
-                    }
-                    else
-                    {
                         ring.getDescription();
                         __instance.description += ring.description + "\n\n";
                     }
-                }
 
-                __instance.description = __instance.description.Trim();
+                    __instance.description = __instance.description.Trim();
+                }
 
                 if (GetCombinedRingTotal(__instance) >= 8)
                 {
@@ -362,11 +357,6 @@ namespace RingOverhaul
                     spriteBatch.Draw(texture, location + new Vector2(32f, 32f) * scaleSize, null, color * transparency, 0f, new Vector2(8f, 8f) * scaleSize, scaleSize * 4f, SpriteEffects.None, layerDepth);
                     return false; // don't run original logic
                 }
-
-                ////if (mod.Helper.ModRegistry.IsLoaded("ring framework"))
-                ////{
-                ////    return true; // run original logic
-                ////}
 
                 if (__instance.combinedRings.Count >= 2)
                 {
@@ -715,6 +705,8 @@ namespace RingOverhaul
                                     }
                                 }
 
+                                who.craftingRecipes[recipe.requiredRecipe]++;
+
                                 __instance.ConsumeInventoryItem(who, RingOverhaul.CoalID, 1);
 
                                 who.currentLocation.debris.Add(new Debris(new Ring(recipe.outputId), __instance.TileLocation * 64f));
@@ -724,10 +716,10 @@ namespace RingOverhaul
 
                                 multiplayer.broadcastSprites(who.currentLocation, new TemporaryAnimatedSprite[]
                                 {
-                                new TemporaryAnimatedSprite(30, __instance.TileLocation * 64f + new Vector2(0f, -16f), Color.White, 4, false, 50f, 10, 64, (__instance.TileLocation.Y + 1f) * 64f / 10000f + 0.0001f, -1, 0)
-                                {
-                                    alphaFade = 0.005f
-                                }
+                                    new TemporaryAnimatedSprite(30, __instance.TileLocation * 64f + new Vector2(0f, -16f), Color.White, 4, false, 50f, 10, 64, (__instance.TileLocation.Y + 1f) * 64f / 10000f + 0.0001f, -1, 0)
+                                    {
+                                        alphaFade = 0.005f
+                                    }
                                 });
 
                                 __result = false;

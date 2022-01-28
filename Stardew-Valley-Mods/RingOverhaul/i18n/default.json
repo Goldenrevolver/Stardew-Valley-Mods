@@ -15,6 +15,7 @@
   "ConfigCraftableGemRingsProgressive": "Progressive",
   "ConfigCraftableGemRingsUnlockLevel": "Unlock Level",
   "ConfigCraftableGemRingsCustomSprites": "Custom Sprites",
+  "ConfigCraftableGemRingsCustomSpritesBetterRings": "Custom Sprites disabled in favor of 'Better Rings' mod",
   "ConfigOtherCategory": "Other",
   "ConfigJukeboxRing": "Jukebox Ring",
   "ConfigJukeboxRingWorksInRain": "Jukebox Ring Works In Rain",

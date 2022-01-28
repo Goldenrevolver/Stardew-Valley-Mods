@@ -4,7 +4,6 @@
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using StardewValley;
-    using StardewValley.Objects;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -17,24 +16,45 @@
 
         public Texture2D PaladinRingTexture { get; set; }
 
+        private bool ShouldApplyCustomSprites => Config.CraftableGemRings && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1 && !Helper.ModRegistry.IsLoaded("BBR.BetterRings");
+
         public const int CoalID = 382;
         public const int IridiumBandID = 527;
         public const int JukeBoxRingID = 528;
 
         internal RingConfig Config;
 
+        // TODO add API
+        // TODO make fake assets to make this CP changeable
+
         public override void Entry(IModHelper helper)
         {
             Config = Helper.ReadConfig<RingConfig>();
 
-            Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             Helper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
 
-            ExplorerRingTexture = Helper.Content.Load<Texture2D>("assets/explorer_ring.png");
-            BerserkerRingTexture = Helper.Content.Load<Texture2D>("assets/berserker_ring.png");
-            PaladinRingTexture = Helper.Content.Load<Texture2D>("assets/paladin_ring.png");
+            string path = Helper.ModRegistry.IsLoaded("BBR.BetterRings") ? "assets/betterRings" : "assets";
+
+            ExplorerRingTexture = Helper.Content.Load<Texture2D>($"{path}/explorer_ring.png");
+            BerserkerRingTexture = Helper.Content.Load<Texture2D>($"{path}/berserker_ring.png");
+            PaladinRingTexture = Helper.Content.Load<Texture2D>($"{path}/paladin_ring.png");
 
             Patcher.PatchAll(this);
+        }
+
+        private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
+        {
+            RingConfig.SetUpModConfigMenu(Config, this);
+
+            try
+            {
+                Helper.Content.InvalidateCache("Data/CraftingRecipes");
+                Helper.Content.InvalidateCache("Data/ObjectInformation");
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void GameLoop_DayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
@@ -45,15 +65,6 @@
                 {
                     Game1.player.craftingRecipes.Add("Jukebox Ring", 0);
                 }
-
-                Utility.iterateAllItems(delegate (Item item)
-                {
-                    if (item is Ring ring && ring.ParentSheetIndex == JukeBoxRingID)
-                    {
-                        // Mini-Jukebox
-                        ring.description = new StardewValley.Object(Vector2.Zero, 209).getDescription();
-                    }
-                });
             }
         }
 
@@ -80,11 +91,28 @@
             Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
         }
 
+        public static string TryGetDisplayFieldEarly(int id, bool bigCraftable = false)
+        {
+            var dict = bigCraftable ? Game1.bigCraftablesInformation : Game1.objectInformation;
+
+            if (dict?.TryGetValue(id, out string value) == true)
+            {
+                var split = value?.Split('/');
+
+                if (split?.Length > 4)
+                {
+                    return split[4];
+                }
+            }
+
+            return null;
+        }
+
         public bool CanEdit<T>(IAssetInfo asset)
         {
             return asset.AssetNameEquals("Data/ObjectInformation")
                 || asset.AssetNameEquals("Data/CraftingRecipes")
-                || (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRings && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1);
+                || (asset.AssetNameEquals("Maps/springobjects") && ShouldApplyCustomSprites);
         }
 
         public void Edit<T>(IAssetData asset)
@@ -95,11 +123,20 @@
 
                 var entry = data[IridiumBandID];
                 var fields = entry.Split('/');
-                fields[^1] = Helper.Translation.Get("IridiumBandTooltip");
+                fields[5] = Helper.Translation.Get("IridiumBandTooltip");
                 data[IridiumBandID] = string.Join("/", fields);
+
+                entry = data[JukeBoxRingID];
+                fields = entry.Split('/');
+                fields[5] = TryGetDisplayFieldEarly(209, true);
+
+                if (fields[5] != null)
+                {
+                    data[JukeBoxRingID] = string.Join("/", fields);
+                }
             }
 
-            if (asset.AssetNameEquals("Maps/springobjects") && Config.CraftableGemRings && Config.CraftableGemRingsCustomSprites && Config.CraftableGemRingsMetalBar != 1)
+            if (asset.AssetNameEquals("Maps/springobjects") && ShouldApplyCustomSprites)
             {
                 var editor = asset.AsImage();
 
@@ -122,7 +159,9 @@
 
                 if (Config.JukeboxRingEnabled)
                 {
-                    data.Add("Jukebox Ring", "336 1 787 1 464 1/Home/528/false/null");
+                    string name = TryGetDisplayFieldEarly(JukeBoxRingID) ?? "Jukebox Ring";
+
+                    data.Add("Jukebox Ring", $"336 1 787 1 464 1/Home/528/false/null/{name}");
                 }
 
                 if (!Config.OldGlowStoneRingRecipe)
@@ -146,14 +185,19 @@
                     var entry = data[item.Key];
                     var fields = entry.Split('/');
                     fields[0] = item.Value.Item1;
-                    fields[^1] = item.Value.Item2;
+                    fields[4] = item.Value.Item2;
                     data[item.Key] = string.Join("/", fields);
                 }
 
                 if (!Config.OldGlowStoneRingRecipe)
                 {
-                    data.Add("Glow Ring", "516 1 768 5/Home/517/false/Mining 4");
-                    data.Add("Magnet Ring", "518 1 769 5/Home/519/false/Mining 4");
+                    string name = TryGetDisplayFieldEarly(517) ?? "Glow Ring";
+
+                    data.Add("Glow Ring", $"516 1 768 5/Home/517/false/Mining 4/{name}");
+
+                    name = TryGetDisplayFieldEarly(519) ?? "Magnet Ring";
+
+                    data.Add("Magnet Ring", $"518 1 769 5/Home/519/false/Mining 4/{name}");
                 }
 
                 if (Config.CraftableGemRings)
@@ -166,7 +210,9 @@
 
                     for (int i = 0; i < dict.Count; i++)
                     {
-                        data.Add(dict[i].Key, $"{dict[i].Value} 1 {oreBar} 1/Home/{itemId}/ false/Combat {combatLevel}");
+                        string name = TryGetDisplayFieldEarly(itemId) ?? dict[i].Key;
+
+                        data.Add(dict[i].Key, $"{dict[i].Value} 1 {oreBar} 1/Home/{itemId}/ false/Combat {combatLevel}/{name}");
 
                         if (Config.CraftableGemRingsMetalBar == 0 && i is 1 or 3)
                         {
