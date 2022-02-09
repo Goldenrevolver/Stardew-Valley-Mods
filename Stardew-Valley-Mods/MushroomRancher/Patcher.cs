@@ -63,17 +63,6 @@ namespace MushroomRancher
         {
             try
             {
-                int waters = 0;
-                int startIndex = Game1.random.Next(__instance.waterSpots.Length);
-
-                for (int i = 0; i < __instance.waterSpots.Length; i++)
-                {
-                    if (__instance.waterSpots[(i + startIndex) % __instance.waterSpots.Length] && waters * 5 < __instance.characters.Count)
-                    {
-                        waters++;
-                    }
-                }
-
                 var spritesCount = 0;
                 var fakeCapsCount = 0;
 
@@ -96,10 +85,25 @@ namespace MushroomRancher
                     }
                 }
 
-                // I fully trust that the player has either watered none or all of the water spots, so no need to subtract used up ones
+                int waters = 0;
+                int startIndex = Game1.random.Next(__instance.waterSpots.Length);
+
+                for (int i = 0; i < __instance.waterSpots.Length; i++)
+                {
+                    if (__instance.waterSpots[(i + startIndex) % __instance.waterSpots.Length] && waters * 5 < spritesCount + fakeCapsCount)
+                    {
+                        waters++;
+                        __instance.waterSpots[(i + startIndex) % __instance.waterSpots.Length] = false;
+                    }
+                }
 
                 for (int numMushrooms = Math.Min((int)Math.Round(spritesCount / 2.5f, MidpointRounding.AwayFromZero), waters * 2); numMushrooms > 0; numMushrooms--)
                 {
+                    if (numMushrooms % 2 == 0)
+                    {
+                        waters--;
+                    }
+
                     int tries = 50;
                     Vector2 tile = __instance.getRandomTile();
                     while ((!__instance.isTileLocationTotallyClearAndPlaceable(tile) || __instance.doesTileHaveProperty((int)tile.X, (int)tile.Y, "NPCBarrier", "Back") != null || tile.Y >= 12f) && tries > 0)
@@ -107,6 +111,7 @@ namespace MushroomRancher
                         tile = __instance.getRandomTile();
                         tries--;
                     }
+
                     if (tries > 0)
                     {
                         __instance.Objects.Add(tile, new StardewObject(MushroomRancher.purpleMushroomId, 1, false, -1, 0)
@@ -118,6 +123,11 @@ namespace MushroomRancher
 
                 for (int numMushrooms = Math.Min((int)Math.Round(fakeCapsCount / 2.5f, MidpointRounding.AwayFromZero), waters * 2); numMushrooms > 0; numMushrooms--)
                 {
+                    if (numMushrooms % 2 == 0)
+                    {
+                        waters--;
+                    }
+
                     int tries = 50;
                     Vector2 tile = __instance.getRandomTile();
                     while ((!__instance.isTileLocationTotallyClearAndPlaceable(tile) || __instance.doesTileHaveProperty((int)tile.X, (int)tile.Y, "NPCBarrier", "Back") != null || tile.Y >= 12f) && tries > 0)
@@ -125,6 +135,7 @@ namespace MushroomRancher
                         tile = __instance.getRandomTile();
                         tries--;
                     }
+
                     if (tries > 0)
                     {
                         __instance.Objects.Add(tile, new StardewObject(MushroomRancher.magmaCapId, 1, false, -1, 0)

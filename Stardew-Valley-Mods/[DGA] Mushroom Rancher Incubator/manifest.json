@@ -1,7 +1,7 @@
 {
     "Name": "DGA Mushroom Rancher Incubator",
     "Author": "Goldenrevolver",
-    "Version": "1.0.0",
+    "Version": "1.1.0",
     "Description": "The incubator item for Mushroom Rancher",
     "UniqueID": "Goldenrevolver.MushroomRancherIncubator",
     "ContentPackFor": { "UniqueID": "spacechase0.DynamicGameAssets" },
