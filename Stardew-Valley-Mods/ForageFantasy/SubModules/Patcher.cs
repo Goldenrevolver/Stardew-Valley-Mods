@@ -148,7 +148,7 @@
         }
 
         private static readonly Rectangle redMushroom = new(192, 272, 16, 16);
-        private static readonly Rectangle glowingMushroom = new(224, 272, 16, 16);
+        private static readonly Rectangle purpleMushroom = new(224, 272, 16, 16);
         private static readonly Rectangle commonMushroom = new(320, 256, 16, 16);
 
         public static void Draw_Postfix(Billboard __instance, SpriteBatch b, bool ___dailyQuestBoard)
@@ -167,7 +167,7 @@
                             {
                                 if ((day % 10) is 2)
                                 {
-                                    toDraw = glowingMushroom;
+                                    toDraw = purpleMushroom;
                                 }
                                 else if ((day % 10) is 4)
                                 {
@@ -182,7 +182,7 @@
                             {
                                 if ((day % 10) is 2)
                                 {
-                                    toDraw = glowingMushroom;
+                                    toDraw = purpleMushroom;
                                 }
                                 else
                                 {

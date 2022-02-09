@@ -13,6 +13,9 @@
     {
         public ForageFantasyConfig Config { get; set; }
 
+        // TODO translate config and tree menu and crafting recipes
+        // TODO seasonal mushroom tappers, magma cap on ginger island for mushroom tree and box
+
         internal bool TappersDreamAndMushroomTreesGrowInWinter { get; set; }
 
         public static int DetermineForageQuality(Farmer farmer, bool allowBotanist = true)
@@ -71,7 +74,7 @@
 
         public void Edit<T>(IAssetData asset)
         {
-            FernAndBurgerLogic.Edit<T>(asset, Config);
+            FernAndBurgerLogic.Edit<T>(asset, this);
         }
 
         /// <summary>

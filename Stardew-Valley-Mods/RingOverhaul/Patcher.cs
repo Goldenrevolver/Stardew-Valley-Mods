@@ -664,7 +664,8 @@ namespace RingOverhaul
                                 {
                                     if (who.getTallyOfObject(768, false) >= 5)
                                     {
-                                        __instance.ConsumeInventoryItem(who, 768, 5);
+                                        who.consumeObject(768, 5);
+                                        // __instance.ConsumeInventoryItem(who, 768, 5);
                                     }
                                     else
                                     {
@@ -676,7 +677,8 @@ namespace RingOverhaul
                                 {
                                     if (who.getTallyOfObject(769, false) >= 5)
                                     {
-                                        __instance.ConsumeInventoryItem(who, 769, 5);
+                                        who.consumeObject(769, 5);
+                                        // __instance.ConsumeInventoryItem(who, 769, 5);
                                     }
                                     else
                                     {
@@ -688,7 +690,8 @@ namespace RingOverhaul
                                 {
                                     if (who.getTallyOfObject(337, false) >= 2)
                                     {
-                                        __instance.ConsumeInventoryItem(who, 337, 2);
+                                        who.consumeObject(337, 2);
+                                        // __instance.ConsumeInventoryItem(who, 337, 2);
                                     }
                                     else
                                     {
@@ -707,7 +710,8 @@ namespace RingOverhaul
 
                                 who.craftingRecipes[recipe.requiredRecipe]++;
 
-                                __instance.ConsumeInventoryItem(who, RingOverhaul.CoalID, 1);
+                                who.consumeObject(RingOverhaul.CoalID, 1);
+                                // __instance.ConsumeInventoryItem(who, RingOverhaul.CoalID, 1);
 
                                 who.currentLocation.debris.Add(new Debris(new Ring(recipe.outputId), __instance.TileLocation * 64f));
                                 who.currentLocation.playSound("furnace", NetAudio.SoundContext.Default);
