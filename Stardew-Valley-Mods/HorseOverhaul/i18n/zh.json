@@ -22,8 +22,8 @@
   "HorseEatHay": "你的马在马厩里有足够的干草。",
   "HorseEatFiber": "你的马有足够的草，可以到处吃。",
   "HorseEatCoffee": "马不应该饮用咖啡或任何种类的咖啡因饮料。",
-  "HorseEatCabbage": "马不应该吃卷心菜或卷心菜家族的亲属。",
-  "HorseEatOnion": "马不应该吃洋葱或洋葱家族的亲属。",
+  "HorseEatCabbage": "马不应该吃卷心菜或卷心菜科植物。",
+  "HorseEatOnion": "马不应该吃洋葱或洋葱科植物。",
   "HorseEatNightshade": "马不应该吃茄属的成员，包括土豆、西红柿、辣椒或茄子。",
   "HorseEatHorseRadish": "尽管名字是这样，但马用萝卜对马来说是危险的，而普通萝卜则不会这样。",
   "HorseEatDislike": "你的马不想吃这个。"
