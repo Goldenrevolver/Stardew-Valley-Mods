@@ -11,6 +11,7 @@
     using StardewValley.Characters;
     using StardewValley.Objects;
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -61,7 +62,10 @@
 
         public HorseConfig Config { get; set; }
 
-        public Texture2D CurrentStableTexture => usingMyTextures ? Helper.Content.Load<Texture2D>("assets/stable.png") : Helper.Content.Load<Texture2D>("Buildings/Stable", ContentSource.GameContent);
+        public Texture2D CurrentStableTexture
+            => usingMyTextures
+            ? Helper.ModContent.Load<Texture2D>("assets/stable.png")
+            : Helper.GameContent.Load<Texture2D>("Buildings/Stable");
 
         public Texture2D FilledTroughTexture => FilledTroughOverlay == null ? CurrentStableTexture : MergeTextures(FilledTroughOverlay, CurrentStableTexture);
 
@@ -71,9 +75,9 @@
 
         public bool IsUsingHorsemanship { get; set; } = false;
 
-        private Texture2D FilledTroughOverlay { get; set; }
+        private IRawTextureData FilledTroughOverlay { get; set; }
 
-        private Texture2D EmptyTroughOverlay { get; set; }
+        private IRawTextureData EmptyTroughOverlay { get; set; }
 
         //// TODO horse race festival
 
@@ -92,10 +96,10 @@
 
             SoundModule.SetupSounds(this);
 
-            Helper.Events.GameLoop.SaveLoaded += delegate { SetOverlays(); };
+            helper.Events.GameLoop.SaveLoaded += delegate { SetOverlays(); };
 
-            Helper.Events.GameLoop.Saving += delegate { ResetHorses(); };
-            Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
+            helper.Events.GameLoop.Saving += delegate { ResetHorses(); };
+            helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
             helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
             helper.Events.Display.RenderedWorld += OnRenderedWorld;
 
@@ -121,30 +125,37 @@
             Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
         }
 
-        private static Texture2D MergeTextures(Texture2D overlay, Texture2D oldTexture)
+        private static Texture2D MergeTextures(IRawTextureData overlay, Texture2D oldTexture)
         {
             if (overlay == null || oldTexture == null)
             {
                 return oldTexture;
             }
 
-            int count = overlay.Width * overlay.Height;
-            var newData = new Color[count];
-            overlay.GetData(newData);
-            var origData = new Color[count];
-            oldTexture.GetData(origData);
+            int count = oldTexture.Width * oldTexture.Height;
+            var newData = overlay.Data;
+
+            var origData = ArrayPool<Color>.Shared.Rent(count);
+            oldTexture.GetData(origData, 0, count);
 
             if (newData == null || origData == null)
             {
+                ArrayPool<Color>.Shared.Return(origData);
                 return oldTexture;
             }
 
-            for (int i = 0; i < newData.Length; i++)
+            for (int i = 0; i < count; i++)
             {
-                newData[i] = newData[i].A != 0 ? newData[i] : origData[i];
+                ref Color newValue = ref newData[i];
+                if (newValue.A != 0)
+                {
+                    origData[i] = newValue;
+                }
             }
 
-            oldTexture.SetData(newData);
+            oldTexture.SetData(origData, 0, count);
+
+            ArrayPool<Color>.Shared.Return(origData);
             return oldTexture;
         }
 
@@ -299,7 +310,7 @@
 
             if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
             {
-                SaddleBagOverlay = Helper.Content.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png");
+                SaddleBagOverlay = Helper.ModContent.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png");
                 IsUsingHorsemanship = Helper.ModRegistry.IsLoaded("red.horsemanship");
             }
 
@@ -325,7 +336,7 @@
 
             if (Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))
             {
-                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder);
+                EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty.png");
 
                 return;
             }
@@ -342,7 +353,7 @@
 
                     if (list["stable"].ToLower() != "false")
                     {
-                        EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/elle/overlay_empty_{list["color palette"]}.png", ContentSource.ModFolder);
+                        EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/elle/overlay_empty_{list["color palette"]}.png");
 
                         return;
                     }
@@ -361,8 +372,8 @@
 
                     if (list["stable"].ToLower() == "true")
                     {
-                        FilledTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_filled_tone.png", ContentSource.ModFolder);
-                        EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty_tone.png", ContentSource.ModFolder);
+                        FilledTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_filled_tone.png");
+                        EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty_tone.png");
 
                         return;
                     }
@@ -406,7 +417,7 @@
 
             if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings") || Helper.ModRegistry.IsLoaded("red.HudsonValleyBuildings"))
             {
-                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty_no_bucket.png", ContentSource.ModFolder);
+                EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty_no_bucket.png");
 
                 seasonalVersion = SeasonalVersion.Magimatica;
 
@@ -416,17 +427,17 @@
             // no compatible texture mod found so we will use mine
             usingMyTextures = true;
 
-            EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/overlay_empty.png", ContentSource.ModFolder);
+            EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty.png");
         }
 
         private void SetupGwenTextures(Dictionary<string, string> dict)
         {
             if (dict["stableOption"] == "4")
             {
-                FilledTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}_full.png", ContentSource.ModFolder);
+                FilledTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{dict["stableOption"]}_full.png");
             }
 
-            EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{dict["stableOption"]}.png", ContentSource.ModFolder);
+            EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{dict["stableOption"]}.png");
 
             seasonalVersion = SeasonalVersion.Gwen;
             gwenOption = dict["stableOption"];
@@ -492,17 +503,17 @@
 
             if (seasonalVersion == SeasonalVersion.Sonr)
             {
-                EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/sonr/overlay_empty_{Game1.currentSeason.ToLower()}.png", ContentSource.ModFolder);
+                EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/sonr/overlay_empty_{Game1.currentSeason.ToLower()}.png");
             }
             else if (seasonalVersion == SeasonalVersion.Gwen)
             {
                 if (Game1.IsWinter && Game1.isSnowing)
                 {
-                    EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_1_snow_peta.png", ContentSource.ModFolder);
+                    EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_1_snow_peta.png");
                 }
                 else
                 {
-                    EmptyTroughOverlay = Helper.Content.Load<Texture2D>($"assets/gwen/overlay_{gwenOption}.png", ContentSource.ModFolder);
+                    EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{gwenOption}.png");
                 }
             }
 
