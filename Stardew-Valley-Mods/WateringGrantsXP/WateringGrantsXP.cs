@@ -16,6 +16,10 @@
 
         private string key;
 
+        private const int fiberId = 771;
+
+        private const int qiFruitId = 889;
+
         public override void Entry(IModHelper helper)
         {
             mod = this;
@@ -27,7 +31,7 @@
 
             Helper.Events.GameLoop.GameLaunched += delegate { WateringGrantsXPConfig.SetUpModConfigMenu(config, this); };
 
-            Helper.Events.GameLoop.DayEnding += delegate { CheckForUnwateredCrops(); };
+            Helper.Events.GameLoop.DayEnding += CheckForUnwateredCrops;
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
 
@@ -107,7 +111,7 @@
             }
         }
 
-        private void CheckForUnwateredCrops()
+        private void CheckForUnwateredCrops(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
             if (!Context.IsMainPlayer || !config.CropsCanDieWithoutWater)
             {
@@ -127,7 +131,7 @@
                                 dirt.modData.Remove(key);
                             }
                         }
-                        else if (dirt.needsWatering() && !dirt.crop.dead.Value && dirt.state.Value != HoeDirt.watered)
+                        else if (dirt.needsWatering() && !dirt.crop.dead.Value && dirt.state.Value == HoeDirt.dry && !(dirt.crop.indexOfHarvest.Value is fiberId or qiFruitId))
                         {
                             CheckForCropDeath(dirt);
                         }
