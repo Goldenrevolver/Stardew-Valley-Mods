@@ -1,5 +1,8 @@
 {
-  "_comment1": "Don't change the names inside {{placeHolder}}, they will get replaced with values. You can change the position of the {{placeHolder}} where they need to be in the sentence.",
+  /*
+		Don't change the names inside {{placeHolder}}, they will get replaced with values.
+    You can change the position of the {{placeHolder}} where they need to be in the sentence.
+  */
   "Yes": "是",
   "No": "否",
   "GotPetted": "得到爱抚：{{value}}",
@@ -9,9 +12,9 @@
   "HorseWarning": "你不能在骑马时这样做！",
   "AteEnough": "{{name}}今天吃得够多了。",
   "AteFood": "{{name}}吃了你喂的{{foodName}}.",
-  "AteFoodLove": "它们最爱吃这个。", "_comment2": "// this is added after the translation of AteFood, the 'they' refers to the horse",
-  "AteFoodLike": "它们喜欢吃这个。", "_comment3": "// this is added after the translation of AteFood, the 'they' refers to the horse",
-  "AteFoodDislike": "这对它们来说是一种太普通的零食，它们并不喜欢。", "_comment4":"// this is added after the translation of AteFood, the 'they' refers to the horse (this is used for things like salmon berries and black berries for balancing)",
+  "AteFoodLove": "它们最爱吃这个。", // this is added after the translation of AteFood, the "they" refers to the horse
+  "AteFoodLike": "它们喜欢吃这个。", // this is added after the translation of AteFood, the "they" refers to the horse
+  "AteFoodDislike": "这对它们来说是一种太普通的零食，它们并不喜欢。", // this is added after the translation of AteFood, the "they" refers to the horse (this is used for things like salmon berries and black berries for balancing)
   "HasHeater": "拥有加热器：{{value}}",
   "DontFeedChocolate": "巧克力？你不会是认真的吧！",
   "LactoseIntolerantPets": "大多数猫和狗对乳糖不耐受。",

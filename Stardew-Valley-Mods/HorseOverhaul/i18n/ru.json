@@ -1,6 +1,6 @@
 ﻿{
   /*
-Don't change the names inside {{placeHolder}}, they will get replaced with values.
+		Don't change the names inside {{placeHolder}}, they will get replaced with values.
     You can change the position of the {{placeHolder}} where they need to be in the sentence.
   */
   "Yes": "Да",
