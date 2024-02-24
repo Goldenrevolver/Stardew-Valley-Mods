@@ -1,4 +1,4 @@
-﻿namespace MermaidShowClamMover
+﻿namespace StarfishMoverRecolor
 {
     using HarmonyLib;
     using Microsoft.Xna.Framework;
@@ -12,24 +12,24 @@
     using System.Diagnostics;
     using xTile.Dimensions;
 
-    public class MermaidShowClamMover : Mod, IAssetEditor
+    public class StarfishMoverRecolor : Mod, IAssetEditor
     {
         private bool checkedThisFrame = false;
 
         private Texture2D clamTexture;
 
-        private MermaidShowConfig config;
+        private StarfishMoverRecolorConfig config;
 
-        private static MermaidShowClamMover mod;
+        private static StarfishMoverRecolor mod;
 
         public override void Entry(IModHelper helper)
         {
-            config = Helper.ReadConfig<MermaidShowConfig>();
+            config = Helper.ReadConfig<StarfishMoverRecolorConfig>();
 
             Helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             Helper.Events.Player.Warped += Player_Warped;
 
-            clamTexture = Helper.Content.Load<Texture2D>($"assets/clam_texture.png");
+            clamTexture = Helper.Content.Load<Texture2D>($"assets/starfish_texture.png");
 
             mod = this;
 
@@ -39,13 +39,13 @@
             {
                 harmony.Patch(
                     original: AccessTools.Method(typeof(MermaidHouse), nameof(MermaidHouse.checkAction)),
-                    prefix: new HarmonyMethod(typeof(MermaidShowClamMover), nameof(CheckAction)));
+                    prefix: new HarmonyMethod(typeof(StarfishMoverRecolor), nameof(CheckAction)));
                 harmony.Patch(
                     original: AccessTools.Method(typeof(MermaidHouse), nameof(MermaidHouse.playClamTone), new[] { typeof(int), typeof(Farmer) }),
-                    prefix: new HarmonyMethod(typeof(MermaidShowClamMover), nameof(PlayClamTone)));
+                    prefix: new HarmonyMethod(typeof(StarfishMoverRecolor), nameof(PlayClamTone)));
                 harmony.Patch(
                     original: AccessTools.Method(typeof(MermaidHouse), nameof(MermaidHouse.drawAboveAlwaysFrontLayer)),
-                    prefix: new HarmonyMethod(typeof(MermaidShowClamMover), nameof(DrawAboveAlwaysFrontLayer)));
+                    prefix: new HarmonyMethod(typeof(StarfishMoverRecolor), nameof(DrawAboveAlwaysFrontLayer)));
             }
             catch (Exception e)
             {

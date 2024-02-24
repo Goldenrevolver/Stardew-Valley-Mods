@@ -1,31 +1,31 @@
-﻿namespace MermaidShowClamMover
+﻿namespace StarfishMoverRecolor
 {
     using Microsoft.Xna.Framework;
 
-    internal class MermaidShowConfig
+    internal class StarfishMoverRecolorConfig
     {
         public bool DebugAllowClamClickDuringSong = false;
         public bool ExactClamClickLocationCheck = true;
-        public bool HideLastBigMermaid = false;
-        public Vector2 Clam1Position = new Vector2(1, 8);
-        public Vector2 Clam2Position = new Vector2(2, 9);
-        public Vector2 Clam3Position = new Vector2(5, 7);
-        public Vector2 Clam4Position = new Vector2(6, 9);
-        public Vector2 Clam5Position = new Vector2(7, 8);
+        public bool HideLastBigMermaid = true;
+        public Vector2 Clam1Position = new(1, 8);
+        public Vector2 Clam2Position = new(2, 9);
+        public Vector2 Clam3Position = new(5, 7);
+        public Vector2 Clam4Position = new(6, 9);
+        public Vector2 Clam5Position = new(7, 8);
         public int Clam1Pitch = 300;
         public int Clam2Pitch = 600;
         public int Clam3Pitch = 800;
         public int Clam4Pitch = 1000;
         public int Clam5Pitch = 1200;
-        public Color Clam1Color = Color.Aquamarine;
-        public Color Clam2Color = Color.LightPink;
-        public Color Clam3Color = Color.Lavender;
-        public Color Clam4Color = Color.CornflowerBlue;
-        public Color Clam5Color = Color.LightCoral;
-        public Color BackgroundSwirl1Color = Color.PaleTurquoise;
-        public Color BackgroundSwirl2Color = Color.LightPink;
-        public Color BackgroundSwirl3Color = Color.Lavender;
-        public Color BackgroundSwirl4Color = Color.CornflowerBlue;
+        public Color Clam1Color = new(244, 177, 245);
+        public Color Clam2Color = new(215, 177, 245);
+        public Color Clam3Color = new(245, 177, 207);
+        public Color Clam4Color = new(177, 180, 245);
+        public Color Clam5Color = new(245, 177, 240);
+        public Color BackgroundSwirl1Color = new(244, 177, 245);
+        public Color BackgroundSwirl2Color = new(215, 177, 245);
+        public Color BackgroundSwirl3Color = new(245, 177, 207);
+        public Color BackgroundSwirl4Color = new(177, 180, 245);
 
         internal Vector2[] ClamPositions => new Vector2[]
         {

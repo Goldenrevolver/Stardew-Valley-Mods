@@ -1,9 +1,0 @@
-{
-  "Name": "Mermaid Show Clam Mover",
-  "Author": "Goldenrevolver",
-  "Version": "1.0",
-  "Description": "Made for 'Mermaid Show Retexture' by 'Naya'.",
-  "UniqueID": "Goldenrevolver.MermaidShowClamMover",
-  "EntryDll": "MermaidShowClamMover.dll",
-  "MinimumApiVersion": "3.13.2"
-}
