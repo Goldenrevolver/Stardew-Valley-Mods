@@ -31,7 +31,7 @@
             return horse?.modData.ContainsKey("Pathoschild.TractorMod") == true || horse?.Name.StartsWith("tractor/") == true;
         }
 
-        public static bool IsGarage(this Stable stable)
+        public static bool IsTractorGarage(this Stable stable)
         {
             return stable != null && (stable.buildingType.Value == "TractorGarage" || stable.maxOccupants.Value == -794739);
         }
@@ -78,8 +78,6 @@
         private IRawTextureData FilledTroughOverlay { get; set; }
 
         private IRawTextureData EmptyTroughOverlay { get; set; }
-
-        //// TODO horse race festival
 
         public override void Entry(IModHelper helper)
         {
@@ -297,7 +295,7 @@
 
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !stable.IsGarage())
+                if (building is Stable stable && !stable.IsTractorGarage())
                 {
                     horseIDs.Add(stable.HorseId);
                 }
@@ -521,7 +519,7 @@
             // the overridden method makes sure to not change the sprite if the config disallows it
             foreach (Building building in Game1.getFarm().buildings)
             {
-                if (building is Stable stable && !stable.IsGarage())
+                if (building is Stable stable && !stable.IsTractorGarage())
                 {
                     // empty the water troughs
                     if (Context.IsMainPlayer && stable?.modData?.ContainsKey($"{ModManifest.UniqueID}/gotWater") == true)
@@ -545,7 +543,7 @@
             {
                 if (building is Stable stable)
                 {
-                    if (stable.IsGarage())
+                    if (stable.IsTractorGarage())
                     {
                         continue;
                     }
@@ -664,15 +662,15 @@
                         stable.Invoke().modData.Remove($"{ModManifest.UniqueID}/stableID");
                     }
 
-                    if (chest.items.Count > 0)
+                    if (chest.Items.Count > 0)
                     {
-                        foreach (var item in chest.items)
+                        foreach (var item in chest.Items)
                         {
                             Game1.player.team.returnedDonations.Add(item);
                             Game1.player.team.newLostAndFoundItems.Value = true;
                         }
 
-                        chest.items.Clear();
+                        chest.Items.Clear();
                     }
 
                     Game1.getFarm().Objects.Remove(new Vector2(stableID, 0));

@@ -5,6 +5,9 @@
 
     internal class PetFoodData : FoodData
     {
+        protected const string SeaCucumberID = "(O)154";
+        protected const string SuperCucumberID = "(O)155";
+
         // meat or fish
         public static bool IsPetFood(Item item)
         {
@@ -33,7 +36,7 @@
                 }
             }
 
-            if (item.ParentSheetIndex == BugMeatID)
+            if (item.QualifiedItemId == BugMeatID)
             {
                 return 8;
             }
@@ -48,7 +51,10 @@
         // not toxic, not crab pot fish, not sea or super cucumber
         public static bool IsEdibleFish(Item item)
         {
-            return item.healthRecoveredOnConsumption() > 0 && item.Category == StardewObject.FishCategory && !item.HasContextTag("fish_crab_pot") && item.ParentSheetIndex != 154 && item.ParentSheetIndex != 155;
+            return item.healthRecoveredOnConsumption() > 0
+                && item.Category == StardewObject.FishCategory
+                && !item.HasContextTag("fish_crab_pot")
+                && item.QualifiedItemId != SeaCucumberID && item.QualifiedItemId != SuperCucumberID;
         }
     }
 }
