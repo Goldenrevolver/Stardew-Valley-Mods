@@ -1,34 +1,16 @@
 ﻿namespace ScytheFixes
 {
-    using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Diagnostics.CodeAnalysis;
 
-    public interface IGenericModConfigMenuAPI
+    public interface IGenericModConfigMenuApi
     {
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
-        void RegisterLabel(IManifest mod, string labelName, string labelDesc);
+        void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max);
-
-        void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
-
-        void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+        void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
     }
 
     /// <summary>
@@ -48,7 +30,7 @@
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
         public static void SetUpModConfigMenu(ScytheConfig config, EnchantableScythes mod)
         {
-            IGenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
             if (api == null)
             {
@@ -57,17 +39,21 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new ScytheConfig(), delegate { mod.Helper.WriteConfig(config); });
+            api.Register(
+                mod: manifest,
+                reset: () => config = new ScytheConfig(),
+                save: () => mod.Helper.WriteConfig(config)
+            );
 
-            api.RegisterLabel(manifest, "Enchanting", null);
+            api.AddSectionTitle(manifest, () => "Enchanting", null);
 
-            api.RegisterSimpleOption(manifest, "Enchantable Scythes", null, () => config.EnchantableScythes, (bool val) => config.EnchantableScythes = val);
-            api.RegisterSimpleOption(manifest, "Scythes Can Only Get Haymaker", null, () => config.ScythesCanOnlyGetHaymaker, (bool val) => config.ScythesCanOnlyGetHaymaker = val);
-            api.RegisterSimpleOption(manifest, "Other Weapons Cannot\nGet Haymaker Anymore", null, () => config.OtherWeaponsCannotGetHaymakerAnymore, (bool val) => config.OtherWeaponsCannotGetHaymakerAnymore = val);
+            api.AddBoolOption(manifest, () => config.EnchantableScythes, (bool val) => config.EnchantableScythes = val, () => "Enchantable Scythes", null);
+            api.AddBoolOption(manifest, () => config.ScythesCanOnlyGetHaymaker, (bool val) => config.ScythesCanOnlyGetHaymaker = val, () => "Scythes Can Only Get Haymaker", null);
+            api.AddBoolOption(manifest, () => config.OtherWeaponsCannotGetHaymakerAnymore, (bool val) => config.OtherWeaponsCannotGetHaymakerAnymore = val, () => "Other Weapons Cannot\nGet Haymaker Anymore", null);
 
-            api.RegisterLabel(manifest, "Fixes", null);
+            api.AddSectionTitle(manifest, () => "Fixes", null);
 
-            api.RegisterSimpleOption(manifest, "Golden Scythe Respawns", null, () => config.GoldenScytheRespawns, (bool val) => config.GoldenScytheRespawns = val);
+            api.AddBoolOption(manifest, () => config.GoldenScytheRespawns, (bool val) => config.GoldenScytheRespawns = val, () => "Golden Scythe Respawns", null);
         }
     }
 }

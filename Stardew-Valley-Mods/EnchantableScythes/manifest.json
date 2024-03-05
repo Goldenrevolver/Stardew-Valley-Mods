@@ -1,7 +1,7 @@
 {
   "Name": "Enchantable Scythes And Tweaks",
   "Author": "Goldenrevolver",
-  "Version": "1.0",
+  "Version": "1.1",
   "Description": "Scythes are enchantable, the golden scythe respawns if lost",
   "UniqueID": "Goldenrevolver.EnchantableScythes",
   "EntryDll": "EnchantableScythes.dll",
