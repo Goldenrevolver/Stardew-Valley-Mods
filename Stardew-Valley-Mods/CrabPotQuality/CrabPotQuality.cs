@@ -5,34 +5,6 @@
     using StardewValley.Objects;
     using StardewObject = StardewValley.Object;
 
-    public static class CrabPotExtension
-    {
-        public static bool UsesMagnetBait(this CrabPot pot)
-        {
-            return pot?.bait.Value is not null && pot.bait.Value.ParentSheetIndex == 703;
-        }
-
-        public static bool UsesWildBait(this CrabPot pot)
-        {
-            return pot?.bait.Value is not null && pot.bait.Value.ParentSheetIndex == 774;
-        }
-
-        public static bool UsesMagicBait(this CrabPot pot)
-        {
-            return pot?.bait.Value is not null && pot.bait.Value.ParentSheetIndex == 908;
-        }
-
-        public static bool IsMariner(this Farmer farmer)
-        {
-            return farmer.professions.Contains(10);
-        }
-
-        public static bool IsLuremaster(this Farmer farmer)
-        {
-            return farmer.professions.Contains(11);
-        }
-    }
-
     public class CrabPotQuality : Mod
     {
         public override void Entry(IModHelper helper)
@@ -42,7 +14,7 @@
 
         private static void OnDayStarted()
         {
-            foreach (var location in Game1.locations)
+            Utility.ForEachLocation(delegate (GameLocation location)
             {
                 foreach (var item in location.Objects.Values)
                 {
@@ -50,13 +22,14 @@
                     {
                         if (pot != null && pot.heldObject.Value != null && pot.readyForHarvest.Value)
                         {
-                            // doing it in two steps in case the object gets replaced with a rainbow shell
+                            // do quality calculation and assignment in two steps in case the object gets replaced with a rainbow shell
                             int quality = DeterminePotQuality(pot);
                             pot.heldObject.Value.Quality = quality;
                         }
                     }
                 }
-            }
+                return true;
+            });
         }
 
         private static int DeterminePotQuality(CrabPot pot)
@@ -65,13 +38,19 @@
             if (pot.bait.Value != null && pot.UsesMagicBait())
             {
                 // give the crab pot a rainbow shell
-                pot.heldObject.Value = new StardewObject(394, 1, false, -1, 0);
+                pot.heldObject.Value = ItemRegistry.Create("(O)394") as StardewObject;
             }
 
             // item is trash
-            if (pot.heldObject.Value.ParentSheetIndex >= 168 && pot.heldObject.Value.ParentSheetIndex < 173)
+            //if (pot.heldObject.Value.ParentSheetIndex >= 168 && pot.heldObject.Value.ParentSheetIndex < 173)
+            switch (pot.heldObject.Value.QualifiedItemId)
             {
-                return 0;
+                case "(O)168":
+                case "(O)169":
+                case "(O)170":
+                case "(O)171":
+                case "(O)172":
+                    return 0;
             }
 
             Farmer farmer = Game1.getFarmer(pot.owner.Value) ?? Game1.MasterPlayer; // set to host if owner somehow doesn't exist

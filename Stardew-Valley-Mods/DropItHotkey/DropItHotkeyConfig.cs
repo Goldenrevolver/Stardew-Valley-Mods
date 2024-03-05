@@ -4,11 +4,11 @@
     using StardewModdingAPI.Utilities;
     using System;
 
-    public interface IGenericModConfigMenuAPI
+    public interface IGenericModConfigMenuApi
     {
         void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
         void SetTitleScreenOnlyForNextOptions(IManifest mod, bool titleScreenOnly);
     }
@@ -19,7 +19,7 @@
 
         public static void SetUpModConfigMenu(Config config, DropItHotkey mod)
         {
-            IGenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
             if (api == null)
             {
@@ -28,13 +28,11 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(
-                manifest,
-                () => config = new Config(),
-                delegate
-                {
-                    mod.Helper.WriteConfig(config);
-                });
+            api.Register(
+                mod: manifest,
+                reset: () => config = new Config(),
+                save: () => mod.Helper.WriteConfig(config)
+            );
 
             api.SetTitleScreenOnlyForNextOptions(manifest, false);
 
