@@ -1,34 +1,22 @@
 ﻿namespace PermanentCookoutKit
 {
-    using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Diagnostics.CodeAnalysis;
 
     public interface IGenericModConfigMenuAPI
     {
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
-        void RegisterLabel(IManifest mod, string labelName, string labelDesc);
+        void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet);
+        void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet);
+        void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet);
+        void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name, Func<string> tooltip = null, float? min = null, float? max = null, float? interval = null, Func<float, string> formatValue = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max);
-
-        void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
-
-        void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+        void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
     }
 
     /// <summary>
@@ -48,9 +36,9 @@
 
         public float NewspaperMultiplier { get; set; } = 2;
 
-        public float WoolMultiplier { get; set; } = 5;
+        public float WoolMultiplier { get; set; } = 0;
 
-        public float ClothMultiplier { get; set; } = 10;
+        public float ClothMultiplier { get; set; } = 0;
 
         public int CharcoalKilnWoodNeeded { get; set; } = 10;
 
@@ -140,33 +128,46 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new CookoutKitConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
+            api.Register(
+                mod: manifest,
+                reset: () =>
+                {
+                    config = new CookoutKitConfig();
+                    mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
+                },
+                save: () =>
+                {
+                    mod.Helper.WriteConfig(config);
+                    VerifyConfigValues(config, mod);
+                    mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
+                }
+            );
 
-            api.RegisterLabel(manifest, "Cookout Kit Reignition Cost", null);
+            api.AddSectionTitle(manifest, () => "Cookout Kit Reignition Cost", null);
 
-            api.RegisterSimpleOption(manifest, "Wood Needed", null, () => config.WoodNeeded, (int val) => config.WoodNeeded = val);
-            api.RegisterSimpleOption(manifest, "Coal Needed", null, () => config.CoalNeeded, (int val) => config.CoalNeeded = val);
-            api.RegisterSimpleOption(manifest, "Fiber/ Kindling Needed", null, () => config.FiberNeeded, (int val) => config.FiberNeeded = val);
+            api.AddNumberOption(manifest, () => config.WoodNeeded, (int val) => config.WoodNeeded = val, () => "Wood Needed", null);
+            api.AddNumberOption(manifest, () => config.CoalNeeded, (int val) => config.CoalNeeded = val, () => "Coal Needed", null);
+            api.AddNumberOption(manifest, () => config.FiberNeeded, (int val) => config.FiberNeeded = val, () => "Fiber/ Kindling Needed", null);
 
-            api.RegisterLabel(manifest, "Charcoal Kiln", null);
+            api.AddSectionTitle(manifest, () => "Charcoal Kiln", null);
 
-            api.RegisterSimpleOption(manifest, "Wood Needed", "Also works with driftwood and hardwood", () => config.CharcoalKilnWoodNeeded, (int val) => config.CharcoalKilnWoodNeeded = val);
-            api.RegisterSimpleOption(manifest, "Time Needed", "The game only checks every 10 minutes", () => config.CharcoalKilnTimeNeeded, (int val) => config.CharcoalKilnTimeNeeded = val);
+            api.AddNumberOption(manifest, () => config.CharcoalKilnWoodNeeded, (int val) => config.CharcoalKilnWoodNeeded = val, () => "Wood Needed", () => "Also works with driftwood and hardwood");
+            api.AddNumberOption(manifest, () => config.CharcoalKilnTimeNeeded, (int val) => config.CharcoalKilnTimeNeeded = val, () => "Time Needed", () => "The game only checks every 10 minutes");
 
-            api.RegisterLabel(manifest, "Wood Multipliers", null);
+            api.AddSectionTitle(manifest, () => "Wood Multipliers", null);
 
-            api.RegisterSimpleOption(manifest, "Driftwood Multiplier¹", null, () => config.DriftwoodMultiplier, (float val) => config.DriftwoodMultiplier = val);
-            api.RegisterSimpleOption(manifest, "Hardwood Multiplier¹", null, () => config.HardwoodMultiplier, (float val) => config.HardwoodMultiplier = val);
+            api.AddNumberOption(manifest, () => config.DriftwoodMultiplier, (float val) => config.DriftwoodMultiplier = val, () => "Driftwood Multiplier¹", null);
+            api.AddNumberOption(manifest, () => config.HardwoodMultiplier, (float val) => config.HardwoodMultiplier = val, () => "Hardwood Multiplier¹", null);
 
-            api.RegisterLabel(manifest, "Kindling Multipliers", null);
+            api.AddSectionTitle(manifest, () => "Kindling Multipliers", null);
 
-            api.RegisterSimpleOption(manifest, "Newspaper Multiplier¹", null, () => config.NewspaperMultiplier, (float val) => config.NewspaperMultiplier = val);
-            api.RegisterSimpleOption(manifest, "Wool Multiplier¹", null, () => config.WoolMultiplier, (float val) => config.WoolMultiplier = val);
-            api.RegisterSimpleOption(manifest, "Cloth Multiplier¹", null, () => config.ClothMultiplier, (float val) => config.ClothMultiplier = val);
+            api.AddNumberOption(manifest, () => config.NewspaperMultiplier, (float val) => config.NewspaperMultiplier = val, () => "Newspaper Multiplier¹", null);
+            api.AddNumberOption(manifest, () => config.WoolMultiplier, (float val) => config.WoolMultiplier = val, () => "Wool Multiplier¹", null);
+            api.AddNumberOption(manifest, () => config.ClothMultiplier, (float val) => config.ClothMultiplier = val, () => "Cloth Multiplier¹", null);
 
             // this is a spacer
-            api.RegisterLabel(manifest, string.Empty, null);
-            api.RegisterLabel(manifest, "1: Set To 0 To Disallow Using It", null);
+            api.AddSectionTitle(manifest, () => string.Empty, null);
+            api.AddSectionTitle(manifest, () => "1: Set To 0 To Disallow Using It", null);
         }
     }
 }
