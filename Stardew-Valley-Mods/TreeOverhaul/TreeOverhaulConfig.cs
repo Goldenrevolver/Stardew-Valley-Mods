@@ -1,34 +1,22 @@
 ﻿namespace TreeOverhaul
 {
-    using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Diagnostics.CodeAnalysis;
 
     public interface IGenericModConfigMenuApi
     {
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
-        void RegisterLabel(IManifest mod, string labelName, string labelDesc);
+        void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet);
+        void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet);
+        void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet);
+        void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name, Func<string> tooltip = null, float? min = null, float? max = null, float? interval = null, Func<float, string> formatValue = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max);
-
-        void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
-
-        void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+        void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
     }
 
     /// <summary>
@@ -38,27 +26,27 @@
     {
         public bool StopShadeSaplingGrowth { get; set; } = true;
 
-        public bool GrowthIgnoresStumps { get; set; } = false;
+        public bool GrowthIgnoresStumps { get; set; } = true;
 
-        public int SaveSprouts { get; set; } = 0;
+        public bool GrowthRespectsFruitTrees { get; set; } = true;
 
         public bool NormalTreesGrowInWinter { get; set; } = true;
 
         public bool MushroomTreesGrowInWinter { get; set; } = false;
 
-        public bool FruitTreesDontGrowInWinter { get; set; } = false;
-
         public bool BuffMahoganyTrees { get; set; } = false;
 
-        public int ShakingSeedChance { get; set; } = 5;
+        public bool UseCustomShakingSeedChance { get; set; } = false;
 
-        public bool FasterNormalTreeGrowth { get; set; } = false;
+        public bool UseCustomTreeGrowthChance { get; set; } = false;
 
-        public int FruitTreeGrowth { get; set; } = 0;
+        public int CustomTreeGrowthChance { get; set; } = 20;
+
+        public int CustomShakingSeedChance { get; set; } = 5;
+
+        public int SaveSprouts { get; set; } = 0;
 
         private static string[] SSChoices { get; set; } = new string[] { "Disabled", "Hoe And Pickaxe", "Hoe, Pickaxe And Scythe", "Hoe, Pickaxe And All Melee Weapons" };
-
-        private static string[] FTChoices { get; set; } = new string[] { "Default", "Twice As Fast", "Half As Fast" };
 
         public static void VerifyConfigValues(TreeOverhaulConfig config, TreeOverhaul mod)
         {
@@ -70,22 +58,28 @@
                 config.SaveSprouts = 0;
             }
 
-            if (config.FruitTreeGrowth < 0 || config.FruitTreeGrowth > 2)
+            if (config.CustomTreeGrowthChance < 0)
             {
                 invalidConfig = true;
-                config.FruitTreeGrowth = 0;
+                config.CustomTreeGrowthChance = 0;
             }
 
-            if (config.ShakingSeedChance < 0)
+            if (config.CustomTreeGrowthChance > 100)
             {
                 invalidConfig = true;
-                config.ShakingSeedChance = 0;
+                config.CustomTreeGrowthChance = 100;
             }
 
-            if (config.ShakingSeedChance > 100)
+            if (config.CustomShakingSeedChance < 0)
             {
                 invalidConfig = true;
-                config.ShakingSeedChance = 100;
+                config.CustomShakingSeedChance = 0;
+            }
+
+            if (config.CustomShakingSeedChance > 100)
+            {
+                invalidConfig = true;
+                config.CustomShakingSeedChance = 100;
             }
 
             if (invalidConfig)
@@ -108,26 +102,41 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new TreeOverhaulConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
+            api.Register(
+                mod: manifest,
+                reset: () =>
+                {
+                    config = new TreeOverhaulConfig();
+                    mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/WildTrees");
+                },
+                save: () =>
+                {
+                    mod.Helper.WriteConfig(config);
+                    VerifyConfigValues(config, mod);
+                    mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/WildTrees");
+                }
+            );
 
-            api.RegisterLabel(manifest, "General Tweaks", null);
+            api.AddSectionTitle(manifest, () => "General Tweaks", null);
 
-            api.RegisterSimpleOption(manifest, "Stop Seed Growth In Shade", "Seeds don't sprout in the 8 surrounding tiles of a tree", () => config.StopShadeSaplingGrowth, (bool val) => config.StopShadeSaplingGrowth = val);
-            api.RegisterSimpleOption(manifest, "Growth Ignores Stumps", "Trees can grow even if a small stump is next to them", () => config.GrowthIgnoresStumps, (bool val) => config.GrowthIgnoresStumps = val);
-            api.RegisterChoiceOption(manifest, "Save Sprouts From Tools", "Normal and fruit trees can't be killed by the selected tools", () => GetElementFromConfig(SSChoices, config.SaveSprouts), (string val) => config.SaveSprouts = GetIndexFromArrayElement(SSChoices, val), SSChoices);
+            api.AddBoolOption(manifest, () => config.StopShadeSaplingGrowth, (bool val) => config.StopShadeSaplingGrowth = val, () => "Stop Seed Growth In Shade", () => "Seeds don't sprout in the 8 surrounding tiles of a tree");
+            api.AddBoolOption(manifest, () => config.GrowthIgnoresStumps, (bool val) => config.GrowthIgnoresStumps = val, () => "Growth Ignores Stumps", () => "Trees can fully grow even if a small stump is next to them");
+            api.AddBoolOption(manifest, () => config.GrowthRespectsFruitTrees, (bool val) => config.GrowthRespectsFruitTrees = val, () => "Growth Respects Fruit Trees", () => "Trees can't fully grow if a mature fruit tree is next to them");
 
-            api.RegisterLabel(manifest, "Winter Tweaks", null);
+            api.AddTextOption(manifest, () => GetElementFromConfig(SSChoices, config.SaveSprouts), (string val) => config.SaveSprouts = GetIndexFromArrayElement(SSChoices, val), () => "Save Sprouts From Tools", () => "Normal and fruit trees can't be killed by the selected tools", SSChoices);
 
-            api.RegisterSimpleOption(manifest, "Normal Trees Grow In Winter", null, () => config.NormalTreesGrowInWinter, (bool val) => config.NormalTreesGrowInWinter = val);
-            api.RegisterSimpleOption(manifest, "Mushroom Trees Grow In Winter", null, () => config.MushroomTreesGrowInWinter, (bool val) => config.MushroomTreesGrowInWinter = val);
-            api.RegisterSimpleOption(manifest, "Fruit Trees Don't Grow In Winter", null, () => config.FruitTreesDontGrowInWinter, (bool val) => config.FruitTreesDontGrowInWinter = val);
+            api.AddSectionTitle(manifest, () => "Winter Tweaks", null);
 
-            api.RegisterLabel(manifest, "Buffs And Nerfs", null);
+            api.AddBoolOption(manifest, () => config.NormalTreesGrowInWinter, (bool val) => config.NormalTreesGrowInWinter = val, () => "Normal Trees Grow In Winter", null);
+            api.AddBoolOption(manifest, () => config.MushroomTreesGrowInWinter, (bool val) => config.MushroomTreesGrowInWinter = val, () => "Mushroom Trees Grow In Winter", null);
 
-            api.RegisterSimpleOption(manifest, "Buff Mahogany Tree Growth", "20% unfertilized and 100% fertilized (from 15% and 60%)", () => config.BuffMahoganyTrees, (bool val) => config.BuffMahoganyTrees = val);
-            api.RegisterClampedOption(manifest, "Seed Chance From Shaking", "Chance that a seed drops from shaking a tree (default: 5%, chance depends on host)", () => config.ShakingSeedChance, (int val) => config.ShakingSeedChance = val, 0, 100);
-            api.RegisterSimpleOption(manifest, "Faster Normal Tree Growth", "Normal trees try to grow twice every day, still random whether they succeed", () => config.FasterNormalTreeGrowth, (bool val) => config.FasterNormalTreeGrowth = val);
-            api.RegisterChoiceOption(manifest, "Fruit Tree Growth Options", null, () => GetElementFromConfig(FTChoices, config.FruitTreeGrowth), (string val) => config.FruitTreeGrowth = GetIndexFromArrayElement(FTChoices, val), FTChoices);
+            api.AddSectionTitle(manifest, () => "Buffs And Nerfs", null);
+
+            api.AddBoolOption(manifest, () => config.BuffMahoganyTrees, (bool val) => config.BuffMahoganyTrees = val, () => "Buff Mahogany Tree Growth", () => "20% unfertilized and 100% fertilized (from 15% and 60%)");
+            api.AddBoolOption(manifest, () => config.UseCustomShakingSeedChance, (bool val) => config.UseCustomShakingSeedChance = val, () => "Use Custom Shaking Chance", () => "Changes chance that a seed drops from shaking a tree to the config 'Seed Chance From Shaking'.");
+            api.AddNumberOption(manifest, () => config.CustomShakingSeedChance, (int val) => config.CustomShakingSeedChance = val, () => "Seed Chance From Shaking", () => "Chance that a seed drops from shaking a tree if 'Use Custom Shaking Chance' is true (default: 5%)", 0, 100);
+            api.AddBoolOption(manifest, () => config.UseCustomTreeGrowthChance, (bool val) => config.UseCustomTreeGrowthChance = val, () => "Use Custom Tree Growth Chance", () => "Changes tree growth chance (including mahogany and mushroom trees) to the config 'Custom Tree Growth Chance'.");
+            api.AddNumberOption(manifest, () => config.CustomTreeGrowthChance, (int val) => config.CustomTreeGrowthChance = val, () => "Custom Tree Growth Chance", () => "Changes tree growth chance (including mahogany and mushroom trees) if 'Enable Custom Tree Growth Chance' is true (default: 20%)", 0, 100);
         }
 
         private static string GetElementFromConfig(string[] options, int config)
