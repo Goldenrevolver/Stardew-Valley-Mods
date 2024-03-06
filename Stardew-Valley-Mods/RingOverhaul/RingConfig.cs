@@ -1,20 +1,25 @@
 ﻿namespace RingOverhaul
 {
     using StardewModdingAPI;
+    using StardewValley;
     using System;
     using System.Diagnostics.CodeAnalysis;
 
     public interface IGenericModConfigMenuApi
     {
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
         void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
+        void AddParagraph(IManifest mod, Func<string> text);
+
         void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
-        void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
+        void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
 
-        void AddParagraph(IManifest mod, Func<string> text);
+        void AddNumberOption(IManifest mod, Func<float> getValue, Action<float> setValue, Func<string> name, Func<string> tooltip = null, float? min = null, float? max = null, float? interval = null, Func<float, string> formatValue = null, string fieldId = null);
+
+        void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
     }
 
     /// <summary>
@@ -70,15 +75,20 @@
                 mod.Helper.WriteConfig(config);
             }
 
+            InvalidateCache(mod);
+        }
+
+        public static void InvalidateCache(RingOverhaul mod)
+        {
             try
             {
-                mod.Helper.Content.InvalidateCache("Data/CraftingRecipes");
-                mod.Helper.Content.InvalidateCache("Data/ObjectInformation");
-                mod.Helper.Content.InvalidateCache("Maps/springobjects");
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/CraftingRecipes");
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/ObjectInformation");
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Maps/springobjects");
             }
             catch (Exception e)
             {
-                mod.DebugLog($"Exception when trying to invalidate cache on config change {e}");
+                mod.DebugLog($"Exception when trying to invalidate cache after config change: {e}");
             }
         }
 
@@ -95,7 +105,11 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new RingConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(mod, config); });
+            api.Register(
+                mod: manifest,
+                reset: () => { config = new RingConfig(); InvalidateCache(mod); },
+                save: () => { mod.Helper.WriteConfig(config); VerifyConfigValues(mod, config); InvalidateCache(mod); }
+            );
 
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigCraftableGemRings"));
 
@@ -135,13 +149,13 @@
                     return mod.Helper.Translation.Get("ConfigCraftableGemRingsProgressive");
 
                 case "Copper":
-                    return new StardewValley.Object(334, 1).DisplayName;
+                    return ItemRegistry.Create("(O)334", 1).DisplayName;
 
                 case "Iron":
-                    return new StardewValley.Object(335, 1).DisplayName;
+                    return ItemRegistry.Create("(O)335", 1).DisplayName;
 
                 case "Gold":
-                    return new StardewValley.Object(336, 1).DisplayName;
+                    return ItemRegistry.Create("(O)336", 1).DisplayName;
             }
 
             return "Unknown Option";
