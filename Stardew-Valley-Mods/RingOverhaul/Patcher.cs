@@ -148,7 +148,7 @@ namespace RingOverhaul
                     string key = cur.displayName;
                     if (result.TryGetValue(key, out int val))
                     {
-                        result.Add(key, val + 1);
+                        result[key] = val + 1;
                     }
                     else
                     {

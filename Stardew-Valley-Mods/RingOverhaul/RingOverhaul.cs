@@ -138,7 +138,7 @@
 
                     if (Config.JukeboxRingEnabled)
                     {
-                        data.Add("Jukebox Ring", $"336 1 787 1 464 1/Home/528/false/null/");
+                        data["Jukebox Ring"] = $"336 1 787 1 464 1/Home/528/false/null/";
                     }
 
                     if (!Config.OldIridiumBandRecipe)
@@ -168,8 +168,8 @@
 
                     if (!Config.OldGlowStoneRingRecipe)
                     {
-                        data.Add("Glow Ring", $"516 1 768 5/Home/517/false/Mining 4/");
-                        data.Add("Magnet Ring", $"518 1 769 5/Home/519/false/Mining 4/");
+                        data["Glow Ring"] = $"516 1 768 5/Home/517/false/Mining 4/";
+                        data["Magnet Ring"] = $"518 1 769 5/Home/519/false/Mining 4/";
                     }
 
                     if (Config.CraftableGemRings)
@@ -182,7 +182,7 @@
 
                         for (int i = 0; i < dict.Count; i++)
                         {
-                            data.Add(dict[i].Key, $"{dict[i].Value} 1 {oreBar} 1/Home/{itemId}/false/Combat {combatLevel}/");
+                            data[dict[i].Key] = $"{dict[i].Value} 1 {oreBar} 1/Home/{itemId}/false/Combat {combatLevel}/";
 
                             if (Config.CraftableGemRingsMetalBar == 0 && i is 1 or 3)
                             {
