@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Monsters;
 using System;
@@ -17,35 +18,41 @@ namespace MushroomRancher
         volcano = 3
     }
 
-    public class MushroomRancher : Mod, IAssetEditor
+    public class MushroomRancher : Mod
     {
-        internal const int magmaCapId = 851;
-        internal const int redMushroomId = 420;
-        internal const int purpleMushroomId = 422;
+        internal const string magmaCapId = "(O)851";
+        internal const string redMushroomId = "(O)420";
+        internal const string purpleMushroomId = "(O)422";
 
         private HutchType currentHutchType = HutchType.normal;
         private readonly Map[] maps = new Map[4];
         private readonly Texture2D[] waterTextures = new Texture2D[4];
 
-        private MushroomRancherConfig config;
+        internal static MushroomRancher Mod { get; private set; }
+        internal static MushroomRancherConfig Config { get; private set; }
+        internal string MushroomIncubatorAssetPath { get; private set; }
 
         public override void Entry(IModHelper helper)
         {
-            config = Helper.ReadConfig<MushroomRancherConfig>();
+            Mod = this;
+            Config = Helper.ReadConfig<MushroomRancherConfig>();
 
-            MushroomRancherConfig.VerifyConfigValues(config, this);
+            MushroomRancherConfig.VerifyConfigValues(Config, this);
 
-            Helper.Events.GameLoop.GameLaunched += delegate { MushroomRancherConfig.SetUpModConfigMenu(config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { MushroomRancherConfig.SetUpModConfigMenu(Config, this); };
             Helper.Events.GameLoop.SaveLoaded += RespawnLivingMushrooms;
             Helper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
             Helper.Events.Player.Warped += Player_Warped;
+            Helper.Events.Content.AssetRequested += OnAssetRequested;
 
             Patcher.PatchAll(this);
 
+            MushroomIncubatorAssetPath = Helper.ModContent.GetInternalAssetName("assets/mushroomIncubator.png").BaseName;
+
             foreach (var item in Enum.GetValues(typeof(HutchType)))
             {
-                maps[(int)item] = Helper.Content.Load<Map>($"assets/{item}_hutch.tmx");
-                waterTextures[(int)item] = Helper.Content.Load<Texture2D>($"assets/water_spots_{item}.png");
+                maps[(int)item] = Helper.ModContent.Load<Map>($"assets/{item}_hutch.tmx");
+                waterTextures[(int)item] = Helper.ModContent.Load<Texture2D>($"assets/water_spots_{item}.png");
             }
         }
 
@@ -78,7 +85,6 @@ namespace MushroomRancher
             monster.DamageToFarmer = 0;
             monster.Speed /= 2;
             monster.farmerPassesThrough = true;
-            monster.coinsToDrop.Value = 0;
             monster.objectsToDrop.Clear();
             monster.objectsToDrop.Add(MushroomRancher.redMushroomId);
 
@@ -97,7 +103,6 @@ namespace MushroomRancher
             monster.DamageToFarmer = 0;
             monster.Speed /= 2;
             monster.farmerPassesThrough = true;
-            monster.coinsToDrop.Value = 0;
             monster.objectsToDrop.Clear();
             monster.objectsToDrop.Add(MushroomRancher.magmaCapId);
             monster.moveTowardPlayerThreshold.Value = 2;
@@ -105,7 +110,7 @@ namespace MushroomRancher
             return monster;
         }
 
-        private void RespawnLivingMushrooms(object sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
+        private void RespawnLivingMushrooms(object sender, SaveLoadedEventArgs e)
         {
             foreach (var item in Game1.getFarm().buildings)
             {
@@ -115,7 +120,7 @@ namespace MushroomRancher
                     {
                         if (incubator != null && incubator.Name.Equals("Slime Incubator"))
                         {
-                            incubator.Fragility = config.RemovableSlimeHutchIncubator ? StardewObject.fragility_Removable : StardewObject.fragility_Indestructable;
+                            incubator.Fragility = Config.RemovableSlimeHutchIncubator ? StardewObject.fragility_Removable : StardewObject.fragility_Indestructable;
                         }
                     }
 
@@ -136,9 +141,9 @@ namespace MushroomRancher
             }
         }
 
-        private void GameLoop_DayStarted(object sender, StardewModdingAPI.Events.DayStartedEventArgs e)
+        private void GameLoop_DayStarted(object sender, DayStartedEventArgs e)
         {
-            if (!config.RandomizeMonsterPositionInHutch)
+            if (!Config.RandomizeMonsterPositionInHutch)
             {
                 return;
             }
@@ -151,7 +156,7 @@ namespace MushroomRancher
                     {
                         int tries = 50;
                         Vector2 tile = hutch.getRandomTile();
-                        while ((!hutch.isTileLocationTotallyClearAndPlaceable(tile) || tile.Y >= 12f) && tries > 0)
+                        while ((!hutch.CanItemBePlacedHere(tile, false, CollisionMask.All, ~CollisionMask.Objects, false, false) || tile.Y >= 12f) && tries > 0)
                         {
                             tile = hutch.getRandomTile();
                             tries--;
@@ -168,11 +173,11 @@ namespace MushroomRancher
             }
         }
 
-        private void Player_Warped(object sender, StardewModdingAPI.Events.WarpedEventArgs e)
+        private void Player_Warped(object sender, WarpedEventArgs e)
         {
             if (e?.NewLocation is SlimeHutch hutch)
             {
-                if (config.HutchInterior == 1)
+                if (Config.HutchInterior == 1)
                 {
                     int slimes = 0;
                     int mushrooms = 0;
@@ -188,7 +193,7 @@ namespace MushroomRancher
                         {
                             mushrooms++;
                         }
-                        else if (monster is RockCrab crab && monster.Name.Equals("False Magma Cap"))
+                        else if (monster is RockCrab && monster.Name.Equals("False Magma Cap"))
                         {
                             magmaCaps++;
                         }
@@ -213,43 +218,67 @@ namespace MushroomRancher
                     }
                 }
 
-                Helper.Content.InvalidateCache("Maps/SlimeHutch");
-                Helper.Content.InvalidateCache("Maps/townInterior");
+                Helper.GameContent.InvalidateCacheAndLocalized("Maps/SlimeHutch");
+                Helper.GameContent.InvalidateCacheAndLocalized("Maps/townInterior");
             }
         }
 
-        public bool CanEdit<T>(IAssetInfo asset)
+        private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
-            return Context.IsWorldReady && (asset.AssetNameEquals("Maps/SlimeHutch") || asset.AssetNameEquals("Maps/townInterior")) && config.HutchInterior > 0 && config.HutchInterior < MushroomRancherConfig.InteriorChoices.Length;
-        }
-
-        public void Edit<T>(IAssetData asset)
-        {
-            var option = config.HutchInterior == 1 ? (int)currentHutchType : config.HutchInterior - 1;
-
-            if (asset.AssetNameEquals("Maps/SlimeHutch"))
+            if (!(Config.HutchInterior > 0 && Config.HutchInterior < MushroomRancherConfig.InteriorChoices.Length))
             {
-                var editor = asset.AsMap();
-
-                var newVal = maps[option];
-
-                if (newVal != null)
-                {
-                    editor.ReplaceWith(newVal);
-                }
+                return;
             }
 
-            if (asset.AssetNameEquals("Maps/townInterior"))
+            var option = Config.HutchInterior == 1 ? (int)currentHutchType : Config.HutchInterior - 1;
+
+            if (e.NameWithoutLocale.IsEquivalentTo("Maps/SlimeHutch"))
             {
-                var editor = asset.AsImage();
-
-                var newVal = waterTextures[option];
-
-                if (newVal != null)
+                e.Edit((asset) =>
                 {
-                    editor.PatchImage(newVal, targetArea: new Rectangle(352, 1056, 32, 16));
-                }
+                    var editor = asset.AsMap();
+
+                    var newVal = maps[option];
+
+                    if (newVal != null)
+                    {
+                        editor.ReplaceWith(newVal);
+                    }
+                });
             }
+
+            if (e.NameWithoutLocale.IsEquivalentTo("Maps/townInterior"))
+            {
+                e.Edit((asset) =>
+                {
+                    var editor = asset.AsImage();
+
+                    var newVal = waterTextures[option];
+
+                    if (newVal != null)
+                    {
+                        editor.PatchImage(newVal, targetArea: new Rectangle(352, 1056, 32, 16));
+                    }
+                });
+            }
+
+            MushroomIncubator.AddIncubatorAssetChanges(e);
         }
+    }
+
+    /// <summary>
+    /// Extension methods for IGameContentHelper.
+    /// </summary>
+    public static class GameContentHelperExtensions
+    {
+        /// <summary>
+        /// Invalidates both an asset and the locale-specific version of an asset.
+        /// </summary>
+        /// <param name="helper">The game content helper.</param>
+        /// <param name="assetName">The (string) asset to invalidate.</param>
+        /// <returns>if something was invalidated.</returns>
+        public static bool InvalidateCacheAndLocalized(this IGameContentHelper helper, string assetName)
+            => helper.InvalidateCache(assetName)
+                | (helper.CurrentLocaleConstant != LocalizedContentManager.LanguageCode.en && helper.InvalidateCache(assetName + "." + helper.CurrentLocale));
     }
 }
