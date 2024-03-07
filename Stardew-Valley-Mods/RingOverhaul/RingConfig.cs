@@ -74,8 +74,6 @@
                 mod.DebugLog("At least one config value was out of range and was reset.");
                 mod.Helper.WriteConfig(config);
             }
-
-            InvalidateCache(mod);
         }
 
         public static void InvalidateCache(RingOverhaul mod)

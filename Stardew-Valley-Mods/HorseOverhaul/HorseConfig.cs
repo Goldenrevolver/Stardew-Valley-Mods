@@ -136,7 +136,7 @@
             api.AddSectionTitle(manifest, () => "Friendship", null);
 
             api.AddBoolOption(manifest, () => config.MovementSpeed, (bool val) => config.MovementSpeed = val, () => "Movement Speed (MS)", null);
-            api.AddNumberOption(manifest, () => config.MaxMovementSpeedBonus, (float val) => config.MaxMovementSpeedBonus = val, () => "Maximum MS Bonus", null);
+            api.AddNumberOption(manifest, () => config.MaxMovementSpeedBonus, (float val) => config.MaxMovementSpeedBonus = val, () => "Maximum MS Bonus", null, 0);
             api.AddBoolOption(manifest, () => config.Petting, (bool val) => config.Petting = val, () => "Petting", null);
             api.AddBoolOption(manifest, () => config.Water, (bool val) => config.Water = val, () => "Water", null);
             api.AddBoolOption(manifest, () => config.Feeding, (bool val) => config.Feeding = val, () => "Feeding", null);

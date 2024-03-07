@@ -26,6 +26,8 @@ namespace MaritimeSecrets
 
             Config = Helper.ReadConfig<MaritimeSecretsConfig>();
 
+            MaritimeSecretsConfig.VerifyConfigValues(Config, this);
+
             Helper.Events.GameLoop.GameLaunched += delegate { MaritimeSecretsConfig.SetUpModConfigMenu(Config, this); };
 
             IsUsingMermaidMod = false;

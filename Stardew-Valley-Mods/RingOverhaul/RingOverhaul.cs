@@ -38,6 +38,8 @@
         {
             Config = Helper.ReadConfig<RingConfig>();
 
+            RingConfig.VerifyConfigValues(this, Config);
+
             string path = Helper.ModRegistry.IsLoaded("BBR.BetterRings") ? "assets/betterRings" : "assets";
 
             ExplorerRingTexture = Helper.ModContent.Load<Texture2D>($"{path}/explorer_ring.png");
@@ -138,7 +140,7 @@
 
                     if (Config.JukeboxRingEnabled)
                     {
-                        data["Jukebox Ring"] = $"336 1 787 1 464 1/Home/528/false/null/";
+                        data["Jukebox Ring"] = "336 1 787 1 464 1/Home/528/false/null/";
                     }
 
                     if (!Config.OldIridiumBandRecipe)
@@ -168,8 +170,8 @@
 
                     if (!Config.OldGlowStoneRingRecipe)
                     {
-                        data["Glow Ring"] = $"516 1 768 5/Home/517/false/Mining 4/";
-                        data["Magnet Ring"] = $"518 1 769 5/Home/519/false/Mining 4/";
+                        data["Glow Ring"] = "516 1 768 5/Home/517/false/Mining 4/";
+                        data["Magnet Ring"] = "518 1 769 5/Home/519/false/Mining 4/";
                     }
 
                     if (Config.CraftableGemRings)

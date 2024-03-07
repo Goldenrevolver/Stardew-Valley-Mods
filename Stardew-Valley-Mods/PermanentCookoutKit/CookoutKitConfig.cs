@@ -4,7 +4,7 @@
     using System;
     using System.Diagnostics.CodeAnalysis;
 
-    public interface IGenericModConfigMenuAPI
+    public interface IGenericModConfigMenuApi
     {
         void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
@@ -119,7 +119,7 @@
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
         public static void SetUpModConfigMenu(CookoutKitConfig config, PermanentCookoutKit mod)
         {
-            IGenericModConfigMenuAPI api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuAPI>("spacechase0.GenericModConfigMenu");
+            IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
             if (api == null)
             {
@@ -145,25 +145,25 @@
 
             api.AddSectionTitle(manifest, () => "Cookout Kit Reignition Cost", null);
 
-            api.AddNumberOption(manifest, () => config.WoodNeeded, (int val) => config.WoodNeeded = val, () => "Wood Needed", null);
-            api.AddNumberOption(manifest, () => config.CoalNeeded, (int val) => config.CoalNeeded = val, () => "Coal Needed", null);
-            api.AddNumberOption(manifest, () => config.FiberNeeded, (int val) => config.FiberNeeded = val, () => "Fiber/ Kindling Needed", null);
+            api.AddNumberOption(manifest, () => config.WoodNeeded, (int val) => config.WoodNeeded = val, () => "Wood Needed", null, 0);
+            api.AddNumberOption(manifest, () => config.CoalNeeded, (int val) => config.CoalNeeded = val, () => "Coal Needed", null, 0);
+            api.AddNumberOption(manifest, () => config.FiberNeeded, (int val) => config.FiberNeeded = val, () => "Fiber/ Kindling Needed", null, 0);
 
             api.AddSectionTitle(manifest, () => "Charcoal Kiln", null);
 
-            api.AddNumberOption(manifest, () => config.CharcoalKilnWoodNeeded, (int val) => config.CharcoalKilnWoodNeeded = val, () => "Wood Needed", () => "Also works with driftwood and hardwood");
-            api.AddNumberOption(manifest, () => config.CharcoalKilnTimeNeeded, (int val) => config.CharcoalKilnTimeNeeded = val, () => "Time Needed", () => "The game only checks every 10 minutes");
+            api.AddNumberOption(manifest, () => config.CharcoalKilnWoodNeeded, (int val) => config.CharcoalKilnWoodNeeded = val, () => "Wood Needed", () => "Also works with driftwood and hardwood", 1);
+            api.AddNumberOption(manifest, () => config.CharcoalKilnTimeNeeded, (int val) => config.CharcoalKilnTimeNeeded = val, () => "Time Needed", () => "The game only checks every 10 minutes", 10);
 
             api.AddSectionTitle(manifest, () => "Wood Multipliers", null);
 
-            api.AddNumberOption(manifest, () => config.DriftwoodMultiplier, (float val) => config.DriftwoodMultiplier = val, () => "Driftwood Multiplier¹", null);
-            api.AddNumberOption(manifest, () => config.HardwoodMultiplier, (float val) => config.HardwoodMultiplier = val, () => "Hardwood Multiplier¹", null);
+            api.AddNumberOption(manifest, () => config.DriftwoodMultiplier, (float val) => config.DriftwoodMultiplier = val, () => "Driftwood Multiplier¹", null, 0);
+            api.AddNumberOption(manifest, () => config.HardwoodMultiplier, (float val) => config.HardwoodMultiplier = val, () => "Hardwood Multiplier¹", null, 0);
 
             api.AddSectionTitle(manifest, () => "Kindling Multipliers", null);
 
-            api.AddNumberOption(manifest, () => config.NewspaperMultiplier, (float val) => config.NewspaperMultiplier = val, () => "Newspaper Multiplier¹", null);
-            api.AddNumberOption(manifest, () => config.WoolMultiplier, (float val) => config.WoolMultiplier = val, () => "Wool Multiplier¹", null);
-            api.AddNumberOption(manifest, () => config.ClothMultiplier, (float val) => config.ClothMultiplier = val, () => "Cloth Multiplier¹", null);
+            api.AddNumberOption(manifest, () => config.NewspaperMultiplier, (float val) => config.NewspaperMultiplier = val, () => "Newspaper Multiplier¹", null, 0);
+            api.AddNumberOption(manifest, () => config.WoolMultiplier, (float val) => config.WoolMultiplier = val, () => "Wool Multiplier¹", null, 0);
+            api.AddNumberOption(manifest, () => config.ClothMultiplier, (float val) => config.ClothMultiplier = val, () => "Cloth Multiplier¹", null, 0);
 
             // this is a spacer
             api.AddSectionTitle(manifest, () => string.Empty, null);

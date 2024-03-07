@@ -108,14 +108,14 @@
 
             api.AddSectionTitle(manifest, () => "Watering Grants XP", null);
 
-            api.AddNumberOption(manifest, () => config.WateringExperienceAmount, (int val) => config.WateringExperienceAmount = val, () => "Amount Of Experience", null);
+            api.AddNumberOption(manifest, () => config.WateringExperienceAmount, (int val) => config.WateringExperienceAmount = val, () => "Amount Of Experience", null, 0);
             api.AddNumberOption(manifest, () => config.WateringChanceToGetXP, (int val) => config.WateringChanceToGetXP = val, () => "Chance To Get XP", null, 0, 100);
             api.AddBoolOption(manifest, () => config.ForageSeedWateringGrantsForagingXP, (bool val) => config.ForageSeedWateringGrantsForagingXP = val, () => "Forage Seed Watering\nGrants Foraging XP", null);
 
             api.AddSectionTitle(manifest, () => "Crops Die Without Water", null);
 
             api.AddBoolOption(manifest, () => config.CropsCanDieWithoutWater, (bool val) => config.CropsCanDieWithoutWater = val, () => "Withering Feature Enabled", null);
-            api.AddNumberOption(manifest, () => config.DaysWithoutWaterForChanceToDie, (int val) => config.DaysWithoutWaterForChanceToDie = val, () => "Days For Chance Of Withering", null);
+            api.AddNumberOption(manifest, () => config.DaysWithoutWaterForChanceToDie, (int val) => config.DaysWithoutWaterForChanceToDie = val, () => "Days For Chance Of Withering", null, 1);
             api.AddNumberOption(manifest, () => config.ChanceToDieWhenLeftForTooLong, (int val) => config.ChanceToDieWhenLeftForTooLong = val, () => "Chance For Withering", null, 0, 100);
             api.AddBoolOption(manifest, () => config.WitheringAlsoChecksGardenPots, (bool val) => config.WitheringAlsoChecksGardenPots = val, () => "Withering Also Checks Garden Pots", null);
 
