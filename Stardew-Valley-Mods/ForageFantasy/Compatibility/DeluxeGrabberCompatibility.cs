@@ -35,7 +35,7 @@
             }
 
             // if neither is on, we can skip adding our overwrite for better compatibility with other mods
-            if ((mod.Config.AutomationHarvestsGrantXP && mod.Config.MushroomXPAmount > 0) || mod.Config.MushroomBoxQuality)
+            if ((mod.Config.AutomationHarvestsGrantXP && mod.Config.MushroomBoxXPAmount > 0) || mod.Config.MushroomBoxQuality)
             {
                 api.GetMushroomHarvest += ChangeMushroomHarvest;
             }
@@ -43,7 +43,7 @@
 
         private static KeyValuePair<StardewObject, int> ChangeBerryBushHarvest(StardewObject item, Vector2 tile, GameLocation location)
         {
-            if (item == null || (item.ParentSheetIndex != 296 && item.ParentSheetIndex != 410))
+            if (item == null || !(item.QualifiedItemId is BerryBushLogic.springBerries or BerryBushLogic.fallBerries))
             {
                 return new KeyValuePair<StardewObject, int>(item, 0);
             }
@@ -76,7 +76,7 @@
                 return new KeyValuePair<StardewObject, int>(item, 0);
             }
 
-            int expAmount = mod.Config.AutomationHarvestsGrantXP ? mod.Config.MushroomXPAmount : 0;
+            int expAmount = mod.Config.AutomationHarvestsGrantXP ? mod.Config.MushroomBoxXPAmount : 0;
 
             item.Quality = mod.Config.MushroomBoxQuality ? ForageFantasy.DetermineForageQuality(Game1.MasterPlayer) : StardewObject.lowQuality;
 

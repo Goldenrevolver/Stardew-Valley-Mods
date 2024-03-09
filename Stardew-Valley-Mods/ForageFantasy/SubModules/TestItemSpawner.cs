@@ -1,205 +1,207 @@
-﻿namespace ForageFantasy
-{
-    using Microsoft.Xna.Framework;
-    using StardewValley;
-    using System;
-    using System.Collections.Generic;
-    using System.Globalization;
+﻿//namespace ForageFantasy
+//{
+//    using Microsoft.Xna.Framework;
+//    using StardewValley;
+//    using System;
+//    using System.Collections.Generic;
+//    using System.Globalization;
 
-    internal class TestItemSpawner
-    {
-        public static void TestValues(ForageFantasy mod, bool showOnlyTotals, bool ignoreSecretForest)
-        {
-            var seasons = new List<string>() { "summer" }; ////, "spring", "fall", "winter" };
+//    internal class TestItemSpawner
+//    {
+//        public static void TestValues(ForageFantasy mod, bool showOnlyTotals, bool ignoreSecretForest)
+//        {
+//            var seasons = new List<string>() { "summer" }; ////, "spring", "fall", "winter" };
 
-            foreach (var season in seasons)
-            {
-                int[][] results = new int[7][];
-                for (int i = 0; i < results.Length; i++)
-                {
-                    results[i] = new int[1000];
-                }
+//            foreach (var season in seasons)
+//            {
+//                int[][] results = new int[7][];
+//                for (int i = 0; i < results.Length; i++)
+//                {
+//                    results[i] = new int[1000];
+//                }
 
-                foreach (var loc in Game1.locations)
-                {
-                    var r = new Random(((int)Game1.uniqueIDForThisGame / 2) + (int)Game1.stats.DaysPlayed);
-                    Dictionary<string, string> locationData = Game1.content.Load<Dictionary<string, string>>("Data/Locations");
+//                Utility.ForEachLocation(delegate (GameLocation location)
+//                {
+//                    var r = new Random(((int)Game1.uniqueIDForThisGame / 2) + (int)Game1.stats.DaysPlayed);
+//                    Dictionary<string, string> locationData = Game1.content.Load<Dictionary<string, string>>("Data/Locations");
 
-                    int id;
-                    switch (loc.Name)
-                    {
-                        case "BusStop":
-                            id = 0;
-                            break;
+//                    int id;
+//                    switch (loc.Name)
+//                    {
+//                        case "BusStop":
+//                            id = 0;
+//                            break;
 
-                        case "Forest":
+//                        case "Forest":
 
-                            id = 1;
-                            break;
+//                            id = 1;
+//                            break;
 
-                        case "Mountain":
+//                        case "Mountain":
 
-                            id = 2;
-                            break;
+//                            id = 2;
+//                            break;
 
-                        case "Railroad":
+//                        case "Railroad":
 
-                            id = 3;
-                            break;
+//                            id = 3;
+//                            break;
 
-                        case "Woods":
-                            if (ignoreSecretForest)
-                            {
-                                continue;
-                            }
+//                        case "Woods":
+//                            if (ignoreSecretForest)
+//                            {
+//                                continue;
+//                            }
 
-                            id = 4;
-                            break;
+//                            id = 4;
+//                            break;
 
-                        case "Town":
-                            id = 5;
-                            break;
+//                        case "Town":
+//                            id = 5;
+//                            break;
 
-                        case "Backwoods":
-                            id = 6;
-                            break;
+//                        case "Backwoods":
+//                            id = 6;
+//                            break;
 
-                        default:
-                            continue;
-                    }
+//                        default:
+//                            continue;
+//                    }
 
-                    if (locationData.ContainsKey(loc.Name))
-                    {
-                        string rawData = locationData[loc.Name].Split(new char[]
-                        {
-                    '/'
-                        })[Utility.getSeasonNumber(season)];
-                        //// && loc.numberOfSpawnedObjectsOnMap < 6)
-                        if (!rawData.Equals("-1"))
-                        {
-                            string[] split = rawData.Split(new char[]
-                            {
-                        ' '
-                            });
-                            int numberToSpawn = 100000;
-                            for (int i = 0; i < numberToSpawn; i++)
-                            {
-                                int xCoord = r.Next(loc.map.DisplayWidth / 64);
-                                int yCoord = r.Next(loc.map.DisplayHeight / 64);
-                                var location = new Vector2(xCoord, yCoord);
-                                StardewValley.Object o;
-                                //// loc.objects.TryGetValue(location, out StardewValley.Object o);
-                                int whichObject = r.Next(split.Length / 2) * 2;
-                                if (r.NextDouble() < Convert.ToDouble(split[whichObject + 1], CultureInfo.InvariantCulture))
-                                {
-                                    o = new StardewValley.Object(location, Convert.ToInt32(split[whichObject]), null, false, true, false, true);
-                                    results[id][o.ParentSheetIndex]++;
-                                }
-                            }
-                        }
-                    }
-                }
+//                    if (locationData.ContainsKey(loc.Name))
+//                    {
+//                        string rawData = locationData[loc.Name].Split(new char[]
+//                        {
+//                    '/'
+//                        })[Utility.getSeasonNumber(season)];
+//                        //// && loc.numberOfSpawnedObjectsOnMap < 6)
+//                        if (!rawData.Equals("-1"))
+//                        {
+//                            string[] split = rawData.Split(new char[]
+//                            {
+//                        ' '
+//                            });
+//                            int numberToSpawn = 100000;
+//                            for (int i = 0; i < numberToSpawn; i++)
+//                            {
+//                                int xCoord = r.Next(loc.map.DisplayWidth / 64);
+//                                int yCoord = r.Next(loc.map.DisplayHeight / 64);
+//                                var location = new Vector2(xCoord, yCoord);
+//                                StardewValley.Object o;
+//                                //// loc.objects.TryGetValue(location, out StardewValley.Object o);
+//                                int whichObject = r.Next(split.Length / 2) * 2;
+//                                if (r.NextDouble() < Convert.ToDouble(split[whichObject + 1], CultureInfo.InvariantCulture))
+//                                {
+//                                    o = new StardewValley.Object(location, Convert.ToInt32(split[whichObject]), null, false, true, false, true);
+//                                    results[id][o.ParentSheetIndex]++;
+//                                }
+//                            }
+//                        }
+//                    }
 
-                int[] totals = new int[1000];
+//                    return true;
+//                });
 
-                float totaltotal = 0;
-                for (int j = 0; j < results.Length; j++)
-                {
-                    if (j == 4 && ignoreSecretForest)
-                    {
-                        continue;
-                    }
+//                int[] totals = new int[1000];
 
-                    string s = string.Empty;
-                    switch (j)
-                    {
-                        case 0:
-                            s += "BusStop";
-                            break;
+//                float totaltotal = 0;
+//                for (int j = 0; j < results.Length; j++)
+//                {
+//                    if (j == 4 && ignoreSecretForest)
+//                    {
+//                        continue;
+//                    }
 
-                        case 1:
-                            s += "Forest";
-                            break;
+//                    string s = string.Empty;
+//                    switch (j)
+//                    {
+//                        case 0:
+//                            s += "BusStop";
+//                            break;
 
-                        case 2:
-                            s += "Mountain";
-                            break;
+//                        case 1:
+//                            s += "Forest";
+//                            break;
 
-                        case 3:
-                            s += "Railroad";
-                            break;
+//                        case 2:
+//                            s += "Mountain";
+//                            break;
 
-                        case 4:
-                            s += "Woods";
-                            break;
+//                        case 3:
+//                            s += "Railroad";
+//                            break;
 
-                        case 5:
-                            s += "Town";
-                            break;
+//                        case 4:
+//                            s += "Woods";
+//                            break;
 
-                        case 6:
-                            s += "Backwoods";
-                            break;
-                    }
+//                        case 5:
+//                            s += "Town";
+//                            break;
 
-                    float total = 0;
-                    for (int i = 0; i < results[j].Length; i++)
-                    {
-                        total += results[j][i];
-                    }
+//                        case 6:
+//                            s += "Backwoods";
+//                            break;
+//                    }
 
-                    totaltotal += total;
-                    s += $"({total} items)";
+//                    float total = 0;
+//                    for (int i = 0; i < results[j].Length; i++)
+//                    {
+//                        total += results[j][i];
+//                    }
 
-                    if (!showOnlyTotals)
-                    {
-                        mod.DebugLog(s);
-                        mod.DebugLog(string.Empty);
-                    }
+//                    totaltotal += total;
+//                    s += $"({total} items)";
 
-                    for (int i = 0; i < results[j].Length; i++)
-                    {
-                        if (results[j][i] > 0)
-                        {
-                            var o = new StardewValley.Object(new Vector2(0, 0), i, null, false, true, false, true);
+//                    if (!showOnlyTotals)
+//                    {
+//                        mod.DebugLog(s);
+//                        mod.DebugLog(string.Empty);
+//                    }
 
-                            int number = results[j][i];
-                            float percentage = number / total;
-                            string percentageString = percentage.ToString("P", CultureInfo.InvariantCulture);
-                            if (!showOnlyTotals)
-                            {
-                                mod.DebugLog($"{o.DisplayName}: {number}, {percentageString}");
-                            }
-                        }
+//                    for (int i = 0; i < results[j].Length; i++)
+//                    {
+//                        if (results[j][i] > 0)
+//                        {
+//                            var o = new StardewValley.Object(new Vector2(0, 0), i, null, false, true, false, true);
 
-                        totals[i] += results[j][i];
-                    }
+//                            int number = results[j][i];
+//                            float percentage = number / total;
+//                            string percentageString = percentage.ToString("P", CultureInfo.InvariantCulture);
+//                            if (!showOnlyTotals)
+//                            {
+//                                mod.DebugLog($"{o.DisplayName}: {number}, {percentageString}");
+//                            }
+//                        }
 
-                    if (!showOnlyTotals)
-                    {
-                        mod.DebugLog(string.Empty);
-                    }
-                }
+//                        totals[i] += results[j][i];
+//                    }
 
-                mod.DebugLog($"Total ({totaltotal} items)");
+//                    if (!showOnlyTotals)
+//                    {
+//                        mod.DebugLog(string.Empty);
+//                    }
+//                }
 
-                mod.DebugLog(string.Empty);
+//                mod.DebugLog($"Total ({totaltotal} items)");
 
-                for (int i = 0; i < totals.Length; i++)
-                {
-                    if (totals[i] > 0)
-                    {
-                        var o = new StardewValley.Object(new Vector2(0, 0), i, null, false, true, false, true);
+//                mod.DebugLog(string.Empty);
 
-                        int number = totals[i];
-                        float percentage = number / totaltotal;
-                        string percentageString = percentage.ToString("P", CultureInfo.InvariantCulture);
-                        mod.DebugLog($"{o.DisplayName}: {number}, {percentageString}");
-                    }
-                }
+//                for (int i = 0; i < totals.Length; i++)
+//                {
+//                    if (totals[i] > 0)
+//                    {
+//                        var o = new StardewValley.Object(new Vector2(0, 0), i, null, false, true, false, true);
 
-                mod.DebugLog(string.Empty);
-            }
-        }
-    }
-}
+//                        int number = totals[i];
+//                        float percentage = number / totaltotal;
+//                        string percentageString = percentage.ToString("P", CultureInfo.InvariantCulture);
+//                        mod.DebugLog($"{o.DisplayName}: {number}, {percentageString}");
+//                    }
+//                }
+
+//                mod.DebugLog(string.Empty);
+//            }
+//        }
+//    }
+//}
