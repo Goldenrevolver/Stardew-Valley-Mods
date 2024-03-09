@@ -53,69 +53,102 @@
                 {
                     IDictionary<string, WildTreeData> data = asset.AsDictionary<string, WildTreeData>().Data;
 
-                    // for 'UseCustomShakingSeedChance'
-                    float customShakingSeedChance = Math.Clamp(Config.CustomShakingSeedChance / 100f, 0f, 1f);
-                    // for 'UseCustomTreeGrowthChance'
-                    float customGrowthChance = Math.Clamp(Config.CustomTreeGrowthChance / 100f, 0f, 1f);
-
                     var normalTrees = new string[] { Tree.bushyTree, Tree.leafyTree, Tree.pineTree, Tree.mahoganyTree, Tree.palmTree, Tree.palmTree2 };
-                    var palmTrees = new string[] { Tree.palmTree, Tree.palmTree2 };
+                    //var palmTrees = new string[] { Tree.palmTree, Tree.palmTree2 };
 
-                    foreach (var tree in normalTrees)
+                    foreach (var entry in data)
                     {
-                        if (data.TryGetValue(tree, out var treeData))
+                        if (entry.Key == Tree.mushroomTree)
                         {
-                            if (Config.NormalTreesGrowInWinter)
+                            var mushroomTreeData = entry.Value;
+
+                            if (Config.MushroomTreesGrowInWinter)
+                            {
+                                mushroomTreeData.GrowsInWinter = true;
+                                mushroomTreeData.IsStumpDuringWinter = false;
+                                FixWinterTapper(mushroomTreeData);
+                            }
+
+                            if (Config.CustomMushroomTreeSeedOnShakeChance >= 0)
+                            {
+                                mushroomTreeData.SeedOnShakeChance = Math.Clamp(Config.CustomMushroomTreeSeedOnShakeChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomMushroomTreeSeedOnChopChance >= 0)
+                            {
+                                mushroomTreeData.SeedOnChopChance = Math.Clamp(Config.CustomMushroomTreeSeedOnChopChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomMushroomTreeSpawnSeedNearbyChance >= 0)
+                            {
+                                mushroomTreeData.SeedPlantChance = Math.Clamp(Config.CustomMushroomTreeSpawnSeedNearbyChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomMushroomTreeGrowthChance >= 0)
+                            {
+                                mushroomTreeData.GrowthChance = Math.Clamp(Config.CustomMushroomTreeGrowthChance / 100f, 0f, 1f);
+                            }
+                        }
+                        else
+                        {
+                            bool isNormalTree = normalTrees.Contains(entry.Key);
+
+                            var treeData = entry.Value;
+
+                            if ((isNormalTree && Config.NormalTreesGrowInWinter)
+                            || (!isNormalTree && Config.CustomTreesGrowInWinter))
                             {
                                 treeData.GrowsInWinter = true;
+
+                                if (treeData.IsStumpDuringWinter)
+                                {
+                                    treeData.IsStumpDuringWinter = false;
+                                    FixWinterTapper(treeData);
+                                }
                             }
 
-                            if (Config.UseCustomShakingSeedChance && !palmTrees.Contains(tree))
+                            if (isNormalTree || Config.CustomChancesAlsoAffectCustomTrees)
                             {
-                                treeData.SeedChance = customShakingSeedChance;
-                            }
+                                if (Config.CustomSeedOnShakeChance >= 0)
+                                {
+                                    treeData.SeedOnShakeChance = Math.Clamp(Config.CustomSeedOnShakeChance / 100f, 0f, 1f);
+                                }
 
-                            if (Config.UseCustomTreeGrowthChance)
-                            {
-                                treeData.GrowthChance = customGrowthChance;
-                            }
+                                if (Config.CustomSeedOnChopChance >= 0)
+                                {
+                                    treeData.SeedOnChopChance = Math.Clamp(Config.CustomSeedOnChopChance / 100f, 0f, 1f);
+                                }
 
-                            data[tree] = treeData;
+                                if (Config.CustomSpawnSeedNearbyChance >= 0)
+                                {
+                                    treeData.SeedPlantChance = Math.Clamp(Config.CustomSpawnSeedNearbyChance / 100f, 0f, 1f);
+                                }
+
+                                if (Config.CustomTreeGrowthChance >= 0)
+                                {
+                                    treeData.GrowthChance = Math.Clamp(Config.CustomTreeGrowthChance / 100f, 0f, 1f);
+                                }
+                            }
                         }
                     }
 
-                    if (data.TryGetValue(Tree.mushroomTree, out var mushroomTreeData))
-                    {
-                        if (Config.MushroomTreesGrowInWinter)
-                        {
-                            mushroomTreeData.GrowsInWinter = true;
-                            mushroomTreeData.IsStumpDuringWinter = false;
-
-                            foreach (var tapItem in mushroomTreeData.TapItems)
-                            {
-                                var queries = GameStateQuery.SplitRaw(tapItem.Condition).Where(
-                                    (q) => q.ToLower() != "!LOCATION_SEASON Target Winter".ToLower());
-
-                                tapItem.Condition = string.Join(',', queries);
-                            }
-                        }
-
-                        if (Config.UseCustomTreeGrowthChance)
-                        {
-                            mushroomTreeData.GrowthChance = customGrowthChance;
-                        }
-
-                        data[Tree.mushroomTree] = mushroomTreeData;
-                    }
-
-                    if (Config.BuffMahoganyTrees && data.TryGetValue(Tree.mahoganyTree, out var mahoganyTreeData) && data.TryGetValue(Tree.bushyTree, out var oakTreeData))
+                    if (Config.BuffMahoganyTreeGrowthChance && data.TryGetValue(Tree.mahoganyTree, out var mahoganyTreeData) && data.TryGetValue(Tree.bushyTree, out var oakTreeData))
                     {
                         mahoganyTreeData.GrowthChance = oakTreeData.GrowthChance;
                         mahoganyTreeData.FertilizedGrowthChance = oakTreeData.FertilizedGrowthChance;
-
-                        data[Tree.mahoganyTree] = mahoganyTreeData;
                     }
                 }, AssetEditPriority.Late);
+            }
+        }
+
+        private static void FixWinterTapper(WildTreeData treeData)
+        {
+            foreach (var tapItem in treeData.TapItems)
+            {
+                var queries = GameStateQuery.SplitRaw(tapItem.Condition).Where(
+                    (q) => q.ToLower() != "!LOCATION_SEASON Target Winter".ToLower());
+
+                tapItem.Condition = string.Join(',', queries);
             }
         }
 
@@ -158,7 +191,7 @@
             var shakeRotation = Helper.Reflection.GetField<float>(tree, "shakeRotation");
 
             // if the value is higher than this, the game considers the tree as falling or having fallen
-            if (Math.Abs(shakeRotation.GetValue()) < 1.5707963267948966)
+            if (Math.Abs(shakeRotation.GetValue()) <= Math.PI / 2.0)
             {
                 tree.stump.Value = false;
                 tree.health.Value = 10f;

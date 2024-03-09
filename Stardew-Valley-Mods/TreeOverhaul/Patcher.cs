@@ -47,7 +47,7 @@ namespace TreeOverhaul
         {
             GameLocation location = __instance.Location;
             Vector2 tile = __instance.Tile;
-            Rectangle growthRect = new Rectangle((int)((tile.X - 1f) * 64f), (int)((tile.Y - 1f) * 64f), 192, 192);
+            var growthRect = new Rectangle((int)((tile.X - 1f) * 64f), (int)((tile.Y - 1f) * 64f), 192, 192);
 
             foreach (KeyValuePair<Vector2, TerrainFeature> other in location.terrainFeatures.Pairs)
             {
@@ -92,7 +92,7 @@ namespace TreeOverhaul
                 return true;
             }
 
-            if (__instance.growthStage.Value == 1 || __instance.growthStage.Value == 2)
+            if (__instance.growthStage.Value is 1 or 2)
             {
                 if (explosion > 0)
                 {
@@ -134,7 +134,7 @@ namespace TreeOverhaul
                 return true;
             }
 
-            if (__instance.growthStage.Value == 1 || __instance.growthStage.Value == 2)
+            if (__instance.growthStage.Value is 1 or 2)
             {
                 if (explosion > 0)
                 {
