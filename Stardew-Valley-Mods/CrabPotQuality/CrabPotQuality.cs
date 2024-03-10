@@ -7,8 +7,14 @@
 
     public class CrabPotQuality : Mod
     {
+        public static CrabPotQualityConfig Config { get; set; }
+
         public override void Entry(IModHelper helper)
         {
+            Config = Helper.ReadConfig<CrabPotQualityConfig>();
+
+            Helper.Events.GameLoop.GameLaunched += delegate { CrabPotQualityConfig.SetUpModConfigMenu(Config, this); };
+
             Helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
         }
 
@@ -35,7 +41,7 @@
         private static int DeterminePotQuality(CrabPot pot)
         {
             // if it is magic bait, done before trash check so it's never wasted
-            if (pot.bait.Value != null && pot.UsesMagicBait())
+            if (Config.EnableMagicBaitEffect && pot.bait.Value != null && pot.UsesMagicBait())
             {
                 // give the crab pot a rainbow shell
                 pot.heldObject.Value = ItemRegistry.Create("(O)394") as StardewObject;
@@ -55,7 +61,11 @@
 
             Farmer farmer = Game1.getFarmer(pot.owner.Value) ?? Game1.MasterPlayer; // set to host if owner somehow doesn't exist
 
-            if (farmer.IsLuremaster() || farmer.IsMariner())
+            if (Config.LuremasterPerkForcesIridiumQuality && farmer.IsLuremaster())
+            {
+                return 4;
+            }
+            else if (Config.MarinerPerkForcesIridiumQuality && farmer.IsMariner())
             {
                 return 4;
             }
@@ -63,7 +73,7 @@
             int multiplier = 1;
 
             // if it is wild bait
-            if (pot.bait.Value != null && pot.UsesWildBait())
+            if (Config.EnableWildBaitEffect && pot.bait.Value != null && pot.UsesWildBait())
             {
                 multiplier = 2;
             }
