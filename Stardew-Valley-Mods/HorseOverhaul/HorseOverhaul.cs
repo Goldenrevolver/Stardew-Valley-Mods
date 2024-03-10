@@ -60,7 +60,7 @@
 
         public IBetterRanchingApi BetterRanchingApi { get; set; }
 
-        public HorseConfig Config { get; set; }
+        public HorseOverhaulConfig Config { get; set; }
 
         public Texture2D CurrentStableTexture
             => usingMyTextures
@@ -81,14 +81,14 @@
 
         public override void Entry(IModHelper helper)
         {
-            Config = Helper.ReadConfig<HorseConfig>();
+            Config = Helper.ReadConfig<HorseOverhaulConfig>();
 
-            HorseConfig.VerifyConfigValues(Config, this);
+            HorseOverhaulConfig.VerifyConfigValues(Config, this);
 
             Helper.Events.GameLoop.GameLaunched += delegate
             {
                 CheckForKeybindConflict();
-                HorseConfig.SetUpModConfigMenu(Config, this);
+                HorseOverhaulConfig.SetUpModConfigMenu(Config, this);
                 BetterRanchingApi = SetupBetterRanching();
             };
 

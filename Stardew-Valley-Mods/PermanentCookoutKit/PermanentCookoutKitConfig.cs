@@ -22,7 +22,7 @@
     /// <summary>
     /// Config file for the mod
     /// </summary>
-    public class CookoutKitConfig
+    public class PermanentCookoutKitConfig
     {
         public int WoodNeeded { get; set; } = 5;
 
@@ -44,7 +44,7 @@
 
         public int CharcoalKilnTimeNeeded { get; set; } = 30;
 
-        public static void VerifyConfigValues(CookoutKitConfig config, PermanentCookoutKit mod)
+        public static void VerifyConfigValues(PermanentCookoutKitConfig config, PermanentCookoutKit mod)
         {
             bool invalidConfig = false;
 
@@ -117,7 +117,7 @@
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
-        public static void SetUpModConfigMenu(CookoutKitConfig config, PermanentCookoutKit mod)
+        public static void SetUpModConfigMenu(PermanentCookoutKitConfig config, PermanentCookoutKit mod)
         {
             IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
@@ -132,7 +132,7 @@
                 mod: manifest,
                 reset: () =>
                 {
-                    config = new CookoutKitConfig();
+                    config = new PermanentCookoutKitConfig();
                     mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
                 },
                 save: () =>

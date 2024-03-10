@@ -16,7 +16,7 @@
     /// <summary>
     /// Config file for the mod
     /// </summary>
-    public class HorseConfig
+    public class HorseOverhaulConfig
     {
         private static readonly KeybindList HorseMenuKeyDefault = KeybindList.Parse("H, LeftStick+DPadUp");
 
@@ -62,7 +62,7 @@
 
         public bool DisableHorseSounds { get; set; } = false;
 
-        public static void VerifyConfigValues(HorseConfig config, HorseOverhaul mod)
+        public static void VerifyConfigValues(HorseOverhaulConfig config, HorseOverhaul mod)
         {
             bool invalidConfig = false;
 
@@ -90,7 +90,7 @@
             }
         }
 
-        public static void SetUpModConfigMenu(HorseConfig config, HorseOverhaul mod)
+        public static void SetUpModConfigMenu(HorseOverhaulConfig config, HorseOverhaul mod)
         {
             IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
@@ -115,7 +115,7 @@
                     }
                     else
                     {
-                        config = new HorseConfig();
+                        config = new HorseOverhaulConfig();
                     }
                 },
                 save: delegate

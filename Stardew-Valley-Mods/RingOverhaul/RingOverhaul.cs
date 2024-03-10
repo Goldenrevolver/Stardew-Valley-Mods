@@ -30,15 +30,15 @@
         public const string IridiumBandNonQualifiedID = "527";
         public const string JukeBoxRingNonQualifiedID = "528";
 
-        internal RingConfig Config;
+        internal RingOverhaulConfig Config;
 
         // TODO make rings of the same category type not equippable at the same time (care for compatibility with equip more rings)
 
         public override void Entry(IModHelper helper)
         {
-            Config = Helper.ReadConfig<RingConfig>();
+            Config = Helper.ReadConfig<RingOverhaulConfig>();
 
-            RingConfig.VerifyConfigValues(this, Config);
+            RingOverhaulConfig.VerifyConfigValues(this, Config);
 
             string path = Helper.ModRegistry.IsLoaded("BBR.BetterRings") ? "assets/betterRings" : "assets";
 
@@ -49,7 +49,7 @@
             Helper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
 
-            Helper.Events.GameLoop.GameLaunched += delegate { RingConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { RingOverhaulConfig.SetUpModConfigMenu(Config, this); };
 
             Patcher.PatchAll(this);
         }

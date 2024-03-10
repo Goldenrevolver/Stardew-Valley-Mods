@@ -16,7 +16,7 @@
     /// <summary>
     /// Config file for the mod
     /// </summary>
-    public class ScytheConfig
+    public class EnchantableScythesConfig
     {
         public bool GoldenScytheRespawns { get; set; } = true;
 
@@ -28,7 +28,7 @@
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
-        public static void SetUpModConfigMenu(ScytheConfig config, EnchantableScythes mod)
+        public static void SetUpModConfigMenu(EnchantableScythesConfig config, EnchantableScythes mod)
         {
             IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
@@ -41,7 +41,7 @@
 
             api.Register(
                 mod: manifest,
-                reset: () => config = new ScytheConfig(),
+                reset: () => config = new EnchantableScythesConfig(),
                 save: () => mod.Helper.WriteConfig(config)
             );
 

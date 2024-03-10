@@ -11,15 +11,15 @@
 
     public class PermanentCookoutKit : Mod
     {
-        public CookoutKitConfig Config { get; set; }
+        public PermanentCookoutKitConfig Config { get; set; }
 
         public override void Entry(IModHelper helper)
         {
-            Config = Helper.ReadConfig<CookoutKitConfig>();
+            Config = Helper.ReadConfig<PermanentCookoutKitConfig>();
 
-            CookoutKitConfig.VerifyConfigValues(Config, this);
+            PermanentCookoutKitConfig.VerifyConfigValues(Config, this);
 
-            Helper.Events.GameLoop.GameLaunched += delegate { CookoutKitConfig.SetUpModConfigMenu(Config, this); };
+            Helper.Events.GameLoop.GameLaunched += delegate { PermanentCookoutKitConfig.SetUpModConfigMenu(Config, this); };
 
             Helper.Events.GameLoop.DayEnding += delegate { SaveCookingKits(); };
 

@@ -25,7 +25,7 @@
     /// <summary>
     /// Config file for the mod
     /// </summary>
-    public class RingConfig
+    public class RingOverhaulConfig
     {
         public bool CraftableGemRings { get; set; } = true;
 
@@ -53,7 +53,7 @@
 
         public bool JukeboxRingWorksInRain { get; set; } = false;
 
-        public static void VerifyConfigValues(RingOverhaul mod, RingConfig config)
+        public static void VerifyConfigValues(RingOverhaul mod, RingOverhaulConfig config)
         {
             bool invalidConfig = false;
 
@@ -92,7 +92,7 @@
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
-        public static void SetUpModConfigMenu(RingConfig config, RingOverhaul mod)
+        public static void SetUpModConfigMenu(RingOverhaulConfig config, RingOverhaul mod)
         {
             IGenericModConfigMenuApi api = mod.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 
@@ -105,7 +105,7 @@
 
             api.Register(
                 mod: manifest,
-                reset: () => { config = new RingConfig(); InvalidateCache(mod); },
+                reset: () => { config = new RingOverhaulConfig(); InvalidateCache(mod); },
                 save: () => { mod.Helper.WriteConfig(config); VerifyConfigValues(mod, config); InvalidateCache(mod); }
             );
 
