@@ -1,4 +1,4 @@
-﻿namespace ScytheFixes
+﻿namespace EnchantableScythesConfig
 {
     using StardewModdingAPI;
     using System;
