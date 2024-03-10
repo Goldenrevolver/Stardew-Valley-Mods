@@ -5,6 +5,6 @@
   "Description": "Changes the ring progression to how it always should have worked",
   "UniqueID": "Goldenrevolver.RingOverhaul",
   "EntryDll": "RingOverhaul.dll",
-  "MinimumApiVersion": "3.13.2",
+  "MinimumApiVersion": "4.0.0-alpha",
   "UpdateKeys": [ "Nexus:10669" ]
 }
