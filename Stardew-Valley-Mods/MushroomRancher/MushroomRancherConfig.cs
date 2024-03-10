@@ -28,6 +28,8 @@
 
         public bool RandomizeMonsterPositionInHutch { get; set; } = true;
 
+        public bool RandomizeMonsterPositionOnlyAffectsLivingMushrooms { get; set; } = true;
+
         public bool RemovableSlimeHutchIncubator { get; set; } = true;
 
         public int IncubatorDuration { get; set; } = 2;
@@ -130,6 +132,8 @@
                 GetConfigName(mod, "RemovableSlimeHutchIncubator"), GetConfigDescription(mod, "RemovableSlimeHutchIncubator"));
             api.AddBoolOption(manifest, () => config.RandomizeMonsterPositionInHutch, (bool val) => config.RandomizeMonsterPositionInHutch = val,
                 GetConfigName(mod, "RandomizeMonsterPositionInHutch"), GetConfigDescription(mod, "RandomizeMonsterPositionInHutch"));
+            api.AddBoolOption(manifest, () => config.RandomizeMonsterPositionOnlyAffectsLivingMushrooms, (bool val) => config.RandomizeMonsterPositionOnlyAffectsLivingMushrooms = val,
+                GetConfigName(mod, "RandomizeMonsterPositionOnlyAffectsLivingMushrooms"), null);
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "IncubatorSection"));
 

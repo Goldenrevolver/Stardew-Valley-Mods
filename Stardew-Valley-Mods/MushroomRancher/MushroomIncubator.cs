@@ -53,7 +53,7 @@ namespace MushroomRancher
 
                     var mushroomIncubator = new BigCraftableData
                     {
-                        Name = "Mushroom Incubator",
+                        Name = mushroomIncubatorNonQID,
                         DisplayName = MushroomRancher.Mod.Helper.Translation.Get("MushroomIncubator.name"),
                         Description = MushroomRancher.Mod.Helper.Translation.Get("MushroomIncubator.description"),
                         Price = 0,

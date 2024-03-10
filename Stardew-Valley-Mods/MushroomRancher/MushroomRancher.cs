@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.Monsters;
 using System;
 using xTile;
@@ -112,9 +113,9 @@ namespace MushroomRancher
 
         private void RespawnLivingMushrooms(object sender, SaveLoadedEventArgs e)
         {
-            foreach (var item in Game1.getFarm().buildings)
+            Utility.ForEachBuilding(delegate (Building building)
             {
-                if (item?.indoors?.Value is SlimeHutch hutch)
+                if (building?.indoors?.Value is SlimeHutch hutch)
                 {
                     if (hutch.Objects.TryGetValue(new Vector2(1, 4), out StardewObject incubator))
                     {
@@ -138,7 +139,8 @@ namespace MushroomRancher
                         }
                     }
                 }
-            }
+                return true;
+            });
         }
 
         private void GameLoop_DayStarted(object sender, DayStartedEventArgs e)
@@ -148,12 +150,17 @@ namespace MushroomRancher
                 return;
             }
 
-            foreach (var item in Game1.getFarm().buildings)
+            Utility.ForEachBuilding(delegate (Building building)
             {
-                if (item?.indoors?.Value is SlimeHutch hutch)
+                if (building?.indoors?.Value is SlimeHutch hutch)
                 {
                     foreach (var monster in hutch.characters)
                     {
+                        if (Config.RandomizeMonsterPositionOnlyAffectsLivingMushrooms && !(monster is DustSpirit or RockCrab))
+                        {
+                            continue;
+                        }
+
                         int tries = 50;
                         Vector2 tile = hutch.getRandomTile();
                         while ((!hutch.CanItemBePlacedHere(tile, false, CollisionMask.All, ~CollisionMask.Objects, false, false) || tile.Y >= 12f) && tries > 0)
@@ -170,7 +177,8 @@ namespace MushroomRancher
                         }
                     }
                 }
-            }
+                return true;
+            });
         }
 
         private void Player_Warped(object sender, WarpedEventArgs e)

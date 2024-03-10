@@ -9,6 +9,7 @@
   "ConfigRemovableSlimeHutchIncubatorDescription": "Allows you to remove the default slime incubator in the slime hutch",
   "ConfigRandomizeMonsterPositionInHutch": "Randomize Monster Position\nIn Hutch Daily",
   "ConfigRandomizeMonsterPositionInHutchDescription": "Changes the position of all monsters in the hutch, so they are not clumped up in the top left corner",
+  "ConfigRandomizeMonsterPositionOnlyAffectsLivingMushrooms": "Randomize Monster Position Only\nAffects Living Mushrooms",
   "ConfigIncubatorIsAffectedByCoopmaster": "Is Affected By Coopmaster",
   "ConfigIncubatorIsAffectedByCoopmasterDescription": "Whether Coopmaster should half the incubation duration (This is the case for base game slime incubator)",
   "ConfigIncubatorWobblesWhileIncubating": "Wobbles While Incubating",
