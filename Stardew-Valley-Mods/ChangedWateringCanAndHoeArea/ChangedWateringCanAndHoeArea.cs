@@ -11,17 +11,24 @@
     public class ChangedWateringCanAndHoeArea : Mod
     {
         private static ChangedWateringCanAndHoeArea mod;
-        private static bool shouldNotPatchReaching = false;
+
+        private static bool usingIncompatibleIridiumWithReachingMod = false;
+
+        public ChangedWateringCanAndHoeAreaConfig Config { get; set; }
 
         public override void Entry(IModHelper helper)
         {
             mod = this;
 
-            shouldNotPatchReaching = mod.Helper.ModRegistry.IsLoaded("kakashigr.RadioactiveTools");
+            Config = Helper.ReadConfig<ChangedWateringCanAndHoeAreaConfig>();
 
-            if (shouldNotPatchReaching)
+            Helper.Events.GameLoop.GameLaunched += delegate { ChangedWateringCanAndHoeAreaConfig.SetUpModConfigMenu(Config, this); };
+
+            usingIncompatibleIridiumWithReachingMod = mod.Helper.ModRegistry.IsLoaded("kakashigr.RadioactiveTools");
+
+            if (usingIncompatibleIridiumWithReachingMod)
             {
-                ErrorLog("Disabled Reach Buff in favor of Radioactive Tools");
+                ErrorLog("Disabled Reaching Buff in favor of Radioactive Tools");
             }
 
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -54,12 +61,12 @@
 
         public static void TilesAffectedPatch(Tool __instance, Vector2 tileLocation, int power, Farmer who, ref List<Vector2> __result)
         {
-            // this should always be the case, but just to make sure
-            if (__instance is WateringCan or Hoe)
+            if ((__instance is WateringCan && mod.Config.EnableWateringCanChange)
+                || (__instance is Hoe && mod.Config.EnableHoeChange))
             {
                 if (power is 2 or 3 or 6)
                 {
-                    if (power is 6 && shouldNotPatchReaching)
+                    if (power is 6 && (usingIncompatibleIridiumWithReachingMod || !mod.Config.EnableIridiumWithReachingBuff))
                     {
                         return;
                     }
