@@ -1,0 +1,8 @@
+{
+    "FarmImprovement_Initial_Question": "Pssst... ei, continental. Escuta essa. Se você tiver dinheiro... eu e os meus ajudantes podemos melhorar sua fazenda. Tem interesse?",
+    "FarmImprovement_Yes": "Conte-me mais...",
+    "FarmImprovement_No": "Não, obrigado.",
+    "FarmImprovement_Farm_Expansion_Question": "Meus garotos podem adicionar um pouco mais de espaço na sua fazenda. Vai ser só... {{price}}g. O que você fala?",
+    "FarmImprovement_Sprinkler_Question": "Meus garotos podem melhorar a areia, permitindo o uso de aspersores.  Vou precisar de só {{price}}g. O que você acha?",
+    "FarmImprovement_Done_Tomorrow": "Heh heh heh... perfeito. Você pode esperar mudanças amanhã de manhã."
+}

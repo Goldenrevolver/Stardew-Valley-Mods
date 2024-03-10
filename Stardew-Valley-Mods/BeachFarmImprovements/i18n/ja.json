@@ -1,0 +1,8 @@
+{
+    "FarmImprovement_Initial_Question": "ねえ…ちょっと、本土の人。聞いてくれ。コインを持っているなら…私と部下が農場を改良してあげよう。興味あるかい？",
+    "FarmImprovement_Yes": "もっと聞かせて…",
+    "FarmImprovement_No": "やめておきます。",
+    "FarmImprovement_Farm_Expansion_Question": "私は部下たちを使って農場を広げさせることができる。費用は…{{price}}g。どうだい？",
+    "FarmImprovement_Sprinkler_Question": "私は部下たちを使って砂を改良させることができる。スプリンクラーが使えるようになるだろう。{{price}}gが必要だ。どうだい？",
+    "FarmImprovement_Done_Tomorrow": "へっへっへ…完璧だ。明日の朝に期待してくれ。"
+}

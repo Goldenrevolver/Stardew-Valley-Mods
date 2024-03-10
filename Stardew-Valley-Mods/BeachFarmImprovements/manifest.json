@@ -1,0 +1,10 @@
+{
+  "Name": "Beach Farm Improvements - Cut Content",
+  "Author": "Goldenrevolver",
+  "Version": "1.0",
+  "Description": "Pirates want to help you with improving the beach farm... for a price",
+  "UniqueID": "Goldenrevolver.BeachFarmImprovements",
+  "EntryDll": "BeachFarmImprovements.dll",
+  "MinimumApiVersion": "3.13.2",
+  "UpdateKeys": [ ]
+}

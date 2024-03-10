@@ -1,0 +1,8 @@
+{
+    "FarmImprovement_Initial_Question": "Pssst... hey, mainlander. Listen up. If you've got coin... me and my boys can improve your farm. Interested?",
+    "FarmImprovement_Yes": "Tell me more...",
+    "FarmImprovement_No": "No, thanks.",
+    "FarmImprovement_Farm_Expansion_Question": "I can get my boys to add a little extra space on your farm. It'll just be... {{price}}g. What do you say?",
+    "FarmImprovement_Sprinkler_Question": "I can get my boys to improve the sand, allowing you to use sprinklers.  I'll just need {{price}}g. What do you say?",
+    "FarmImprovement_Done_Tomorrow": "Heh heh heh... perfect. You can expect the changes tomorrow morning."
+}

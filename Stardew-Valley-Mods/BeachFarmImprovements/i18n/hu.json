@@ -1,0 +1,8 @@
+{
+    "FarmImprovement_Initial_Question": "Psszt... Hé, szárazföldi. Figyelj. Ha van pénzed... Akkor én és a fiúk felfejleszthetnénk a farmodat. Érdekel?",
+    "FarmImprovement_Yes": "Mesélj még...",
+    "FarmImprovement_No": "Kösz, nem.",
+    "FarmImprovement_Farm_Expansion_Question": "Én és a fiúk adhatnánk némi extra teret a farmodra. Ez csupán... {{price}}g lesz. Mit szólsz hozzá?",
+    "FarmImprovement_Sprinkler_Question": "Elérhetem a fiúkkal, hogy jobb legyen a homok minősége, és így használhatsz majd öntözőket. Csak {{price}}g-re van szükségem. Mit szólsz hozzá?",
+    "FarmImprovement_Done_Tomorrow": "Heh heh heh... tökéletes. A változásokat holnap reggel fogod tapasztalni."
+}
