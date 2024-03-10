@@ -81,7 +81,7 @@
 
                             if (Config.CustomMushroomTreeSpawnSeedNearbyChance >= 0)
                             {
-                                mushroomTreeData.SeedPlantChance = Math.Clamp(Config.CustomMushroomTreeSpawnSeedNearbyChance / 100f, 0f, 1f);
+                                mushroomTreeData.SeedSpreadChance = Math.Clamp(Config.CustomMushroomTreeSpawnSeedNearbyChance / 100f, 0f, 1f);
                             }
 
                             if (Config.CustomMushroomTreeGrowthChance >= 0)
@@ -121,7 +121,7 @@
 
                                 if (Config.CustomSpawnSeedNearbyChance >= 0)
                                 {
-                                    treeData.SeedPlantChance = Math.Clamp(Config.CustomSpawnSeedNearbyChance / 100f, 0f, 1f);
+                                    treeData.SeedSpreadChance = Math.Clamp(Config.CustomSpawnSeedNearbyChance / 100f, 0f, 1f);
                                 }
 
                                 if (Config.CustomTreeGrowthChance >= 0)

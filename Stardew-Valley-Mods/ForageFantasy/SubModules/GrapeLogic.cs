@@ -45,7 +45,7 @@
                             SpriteIndex = 0,
                             Edibility = 17,
                             IsDrink = false,
-                            Buff = null,
+                            Buffs = null,
                             GeodeDropsDefaultItems = false,
                             GeodeDrops = null,
                             ArtifactSpotChances = null,

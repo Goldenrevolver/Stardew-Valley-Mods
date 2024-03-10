@@ -63,7 +63,7 @@
         {
             double chance = mod.config.WateringChanceToGetXP / 100.0;
 
-            if (t is WateringCan && __instance != null && __instance.state.Value == HoeDirt.dry && __instance.needsWatering() && __instance.crop != null && !__instance.crop.dead.Value)
+            if (t is WateringCan && __instance.state.Value == HoeDirt.dry && __instance.needsWatering() && __instance.crop != null && !__instance.crop.dead.Value)
             {
                 if (Game1.random.NextDouble() < chance)
                 {

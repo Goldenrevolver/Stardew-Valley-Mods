@@ -42,6 +42,8 @@
                     {
                         var index = val.IndexOf('/');
 
+                        // "388 15 771 10 382 3/Field/926/false/Foraging 9/"
+
                         if (index > 0)
                         {
                             data[cookoutKitRecipeName] = "390 10 388 10 771 10 382 3 335 1" + val[index..];
