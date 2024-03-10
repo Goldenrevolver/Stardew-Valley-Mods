@@ -105,7 +105,7 @@
             }
         }
 
-        public int CalculateIllness(FarmAnimal animal, byte actualFullness, bool gotWater, bool wasLeftOutLastNight)
+        public int CalculateIllness(FarmAnimal animal, int actualFullness, bool gotWater, bool wasLeftOutLastNight)
         {
             int addIllness = 0;
             StringBuilder potentialLog = new();
@@ -127,7 +127,7 @@
                 if (WasColdOutside())
                 {
                     // and the door was left open
-                    if (animal.home.animalDoorOpen.Value)
+                    if (animal.home?.animalDoorOpen.Value == true)
                     {
                         // if it's winter it's too cold regardless of if there is a heater (no heater even grants one more point)
                         if (Game1.IsWinter)
@@ -224,7 +224,7 @@
             return dehydration;
         }
 
-        public int CalculateStarvation(FarmAnimal animal, byte actualFullness)
+        public int CalculateStarvation(FarmAnimal animal, int actualFullness)
         {
             animal.modData.TryGetValue($"{ModManifest.UniqueID}/starvation", out string moddata);
 
@@ -282,7 +282,7 @@
 
         private static bool HasHeater(FarmAnimal animal)
         {
-            return animal.home.indoors.Value.numberOfObjectsWithName("Heater") > 0;
+            return animal.home?.GetIndoors()?.numberOfObjectsWithName("Heater") > 0;
         }
 
         private static double Map(double from, double fromMin, double fromMax, double toMin, double toMax)
@@ -339,8 +339,13 @@
                 AnimalType.Duck => new Tuple<int, int>(Config.MinAgeDuck, Config.MaxAgeDuck),
                 AnimalType.Rabbit => new Tuple<int, int>(Config.MinAgeRabbit, Config.MaxAgeRabbit),
                 AnimalType.Dinosaur => new Tuple<int, int>(Config.MinAgeDinosaur, Config.MaxAgeDinosaur),
-                _ => animal.isCoopDweller() ? new Tuple<int, int>(coopPlaceHolderAge, coopPlaceHolderAge) : new Tuple<int, int>(barnPlaceHolderAge, barnPlaceHolderAge),
+                _ => IsCoopDweller(animal) ? new Tuple<int, int>(coopPlaceHolderAge, coopPlaceHolderAge) : new Tuple<int, int>(barnPlaceHolderAge, barnPlaceHolderAge),
             };
+        }
+
+        private static bool IsCoopDweller(FarmAnimal animal)
+        {
+            return animal.GetAnimalData()?.House == "Coop";
         }
 
         private void CalculateDeathMessage(FarmAnimal animal, string cause)
@@ -457,13 +462,18 @@
             VerboseLog($"Killed {animal.Name} due to {cause}");
 
             // right before this Utility.fixAllAnimals gets called, so if it's still not fixed then... it truly doesn't have a home and I don't need to remove it
-            if (animal.home != null)
+            if (animal.home?.GetIndoors() is AnimalHouse animalHouse)
             {
-                (animal.home.indoors.Value as AnimalHouse).animalsThatLiveHere.Remove(animal.myID.Value);
-                (animal.home.indoors.Value as AnimalHouse).animals.Remove(animal.myID.Value);
+                animalHouse.animalsThatLiveHere.Remove(animal.myID.Value);
+                animalHouse.animals.Remove(animal.myID.Value);
             }
 
-            Game1.getFarm().animals.Remove(animal.myID.Value);
+            Utility.ForEachLocation(delegate (GameLocation location)
+            {
+                location.animals.Remove(animal.myID.Value);
+
+                return true;
+            });
 
             animal.health.Value = -1;
 
@@ -566,22 +576,8 @@
             }
 
             CheckedToday.Clear();
-            CheckHomeStatus();
             KillAnimals();
             DisplayIllMessage();
-        }
-
-        private void CheckHomeStatus()
-        {
-            foreach (var animal in Game1.getFarm().getAllFarmAnimals())
-            {
-                if (animal.home == null)
-                {
-                    Utility.fixAllAnimals();
-                    DebugLog("Fixed at least one animal from the base game animal home bug");
-                    break;
-                }
-            }
         }
 
         private void KillAnimals()

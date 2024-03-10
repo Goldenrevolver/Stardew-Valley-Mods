@@ -1,34 +1,18 @@
 ﻿namespace AnimalsDie
 {
-    using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
     using System;
     using System.Text.RegularExpressions;
 
     public interface IGenericModConfigMenuApi
     {
-        void RegisterModConfig(IManifest mod, Action revertToDefault, Action saveToFile);
+        void Register(IManifest mod, Action reset, Action save, bool titleScreenOnly = false);
 
-        void RegisterLabel(IManifest mod, string labelName, string labelDesc);
+        void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<bool> optionGet, Action<bool> optionSet);
+        void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet);
-
-        void RegisterSimpleOption(IManifest mod, string optionName, string optionDesc, Func<SButton> optionGet, Action<SButton> optionSet);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<int> optionGet, Action<int> optionSet, int min, int max);
-
-        void RegisterClampedOption(IManifest mod, string optionName, string optionDesc, Func<float> optionGet, Action<float> optionSet, float min, float max);
-
-        void RegisterChoiceOption(IManifest mod, string optionName, string optionDesc, Func<string> optionGet, Action<string> optionSet, string[] choices);
-
-        void RegisterComplexOption(IManifest mod, string optionName, string optionDesc, Func<Vector2, object, object> widgetUpdate, Func<SpriteBatch, Vector2, object, object> widgetDraw, Action<object> onSave);
+        void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
     }
 
     /// <summary>
@@ -148,9 +132,9 @@
 
             var manifest = mod.ModManifest;
 
-            api.RegisterModConfig(manifest, () => config = new AnimalsDieConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
+            api.Register(manifest, () => config = new AnimalsDieConfig(), delegate { mod.Helper.WriteConfig(config); VerifyConfigValues(config, mod); });
 
-            api.RegisterLabel(manifest, "Features", null);
+            api.AddSectionTitle(manifest, () => "Features", null);
 
             foreach (var prop in typeof(AnimalsDieConfig).GetProperties())
             {
@@ -169,7 +153,7 @@
                         }
                     }
 
-                    api.RegisterSimpleOption(manifest, betterName, null, () => (bool)prop.GetValue(config), (bool b) => prop.SetValue(config, b));
+                    api.AddBoolOption(manifest, () => (bool)prop.GetValue(config), (bool b) => prop.SetValue(config, b), () => betterName);
                 }
                 else
                 {
@@ -177,7 +161,7 @@
                     {
                         string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
-                        api.RegisterSimpleOption(manifest, betterName, null, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b));
+                        api.AddNumberOption(manifest, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b), () => betterName);
                     }
 
                     if (prop.Name == nameof(config.DaysToDieDueToDehydrationWithAnimalsNeedWaterMod))
@@ -193,12 +177,12 @@
                             betterName = Regex.Replace(prop.Name.Remove(prop.Name.Length - "WithAnimalsNeedWaterMod".Length), "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
                         }
 
-                        api.RegisterSimpleOption(manifest, betterName, null, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b));
+                        api.AddNumberOption(manifest, () => (int)prop.GetValue(config), (int b) => prop.SetValue(config, b), () => betterName);
                     }
                 }
             }
 
-            api.RegisterLabel(manifest, "Ages (in years)", null);
+            api.AddSectionTitle(manifest, () => "Ages (in years)", null);
 
             foreach (var prop in typeof(AnimalsDieConfig).GetProperties())
             {
@@ -208,13 +192,15 @@
                     {
                         string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
-                        api.RegisterSimpleOption(manifest, betterName, "must at least 0 and smaller or equal to maximum age, otherwise it's reset", () => (int)prop.GetValue(config), (int i) => prop.SetValue(config, i));
+                        api.AddNumberOption(manifest, () => (int)prop.GetValue(config), (int i) => prop.SetValue(config, i),
+                            () => betterName, () => "must at least 0 and smaller or equal to maximum age, otherwise it's reset");
 
                         var maxProp = typeof(AnimalsDieConfig).GetProperty("Max" + prop.Name[3..]);
 
                         betterName = Regex.Replace(maxProp.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
-                        api.RegisterSimpleOption(manifest, betterName, "must be larger or equal to the minimum age, otherwise it's reset", () => (int)maxProp.GetValue(config), (int i) => maxProp.SetValue(config, i));
+                        api.AddNumberOption(manifest, () => (int)maxProp.GetValue(config), (int i) => maxProp.SetValue(config, i),
+                            () => betterName, () => "must be larger or equal to the minimum age, otherwise it's reset");
                     }
                 }
             }
