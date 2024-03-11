@@ -16,6 +16,7 @@
   "ConfigCraftableGemRingsUnlockLevel": "Unlock Level",
   "ConfigCraftableGemRingsCustomSprites": "Custom Sprites",
   "ConfigCraftableGemRingsCustomSpritesBetterRings": "Custom Sprites disabled in favor of 'Better Rings' mod",
+  "ConfigOtherCraftingChangesCategory": "Other Crafting Changes",
   "ConfigOtherCategory": "Other",
   "ConfigJukeboxRing": "Jukebox Ring",
   "ConfigJukeboxRingWorksInRain": "Jukebox Ring Works In Rain",
@@ -24,5 +25,7 @@
   "ConfigRemoveLTooltip": "Remove Lucky Ring Tooltip\nFrom Combined Ring",
   "ConfigOldGlowStoneRingRecipe": "Old Glow Stone Ring Recipe",
   "ConfigOldIridiumBandRecipe": "Old Iridium Band Recipe",
+  "ConfigIridiumBandChangesEnabled": "Iridium Band Changes Enabled",
+  "ConfigPrecisionBuffsSlingshotDamage": "Precision Buffs Slingshot Damage",
   "ConfigFeedback": "Everything else about the mod can currently not be configured. Feedback is welcome."
 }

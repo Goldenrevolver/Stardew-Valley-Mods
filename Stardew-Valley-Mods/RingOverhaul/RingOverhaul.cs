@@ -32,6 +32,8 @@
 
         internal RingOverhaulConfig Config;
 
+        // TODO double check 1.6 mini jukebox changes, especially Game1.player calls vs who calls
+
         // TODO make rings of the same category type not equippable at the same time (care for compatibility with equip more rings)
 
         public override void Entry(IModHelper helper)
@@ -63,7 +65,8 @@
 
             foreach (var farmer in Game1.getAllFarmers())
             {
-                if (farmer.craftingRecipes.ContainsKey("Mini-Jukebox") && !farmer.craftingRecipes.ContainsKey("Jukebox Ring"))
+                if (farmer.craftingRecipes.ContainsKey("Mini-Jukebox")
+                    && !farmer.craftingRecipes.ContainsKey("Jukebox Ring"))
                 {
                     farmer.craftingRecipes.Add("Jukebox Ring", 0);
                 }
@@ -101,14 +104,20 @@
                 {
                     IDictionary<string, ObjectData> data = asset.AsDictionary<string, ObjectData>().Data;
 
-                    var entry = data[IridiumBandNonQualifiedID];
-                    entry.Description = Helper.Translation.Get("IridiumBandTooltip");
-                    data[IridiumBandNonQualifiedID] = entry;
+                    if (Config.IridiumBandChangesEnabled)
+                    {
+                        var entry = data[IridiumBandNonQualifiedID];
+                        entry.Description = Helper.Translation.Get("IridiumBandTooltip");
+                        data[IridiumBandNonQualifiedID] = entry;
+                    }
 
-                    entry = data[JukeBoxRingNonQualifiedID];
-                    //entry.Description = "[LocalizedText Strings\\Objects:JukeboxRing_Description]";
-                    entry.Description = "[LocalizedText Strings\\BigCraftables:MiniJukebox_Description]";
-                    data[JukeBoxRingNonQualifiedID] = entry;
+                    if (Config.JukeboxRingEnabled)
+                    {
+                        var entry = data[JukeBoxRingNonQualifiedID];
+                        //entry.Description = "[LocalizedText Strings\\Objects:JukeboxRing_Description]";
+                        entry.Description = "[LocalizedText Strings\\BigCraftables:MiniJukebox_Description]";
+                        data[JukeBoxRingNonQualifiedID] = entry;
+                    }
                 });
             }
 

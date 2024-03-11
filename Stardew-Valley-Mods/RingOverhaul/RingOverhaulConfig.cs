@@ -41,17 +41,21 @@
 
         public bool MinorRingCraftingChanges { get; set; } = true;
 
-        public bool RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing { get; set; } = true;
-
-        public bool RemoveLuckyTooltipFromCombinedRing { get; set; } = false;
-
         public bool OldGlowStoneRingRecipe { get; set; } = false;
 
         public bool OldIridiumBandRecipe { get; set; } = false;
 
+        public bool IridiumBandChangesEnabled { get; set; } = true;
+
+        public bool PrecisionBuffsSlingshotDamage { get; set; } = true;
+
         public bool JukeboxRingEnabled { get; set; } = true;
 
         public bool JukeboxRingWorksInRain { get; set; } = false;
+
+        public bool RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing { get; set; } = true;
+
+        public bool RemoveLuckyTooltipFromCombinedRing { get; set; } = false;
 
         public static void VerifyConfigValues(RingOverhaul mod, RingOverhaulConfig config)
         {
@@ -125,18 +129,22 @@
                 api.AddBoolOption(manifest, () => config.CraftableGemRingsCustomSprites, (bool val) => config.CraftableGemRingsCustomSprites = val, () => mod.Helper.Translation.Get("ConfigCraftableGemRingsCustomSprites"));
             }
 
+            api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCraftingChangesCategory"));
+
+            api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val, () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"));
+            api.AddBoolOption(manifest, () => config.OldGlowStoneRingRecipe, (bool val) => config.OldGlowStoneRingRecipe = val, () => mod.Helper.Translation.Get("ConfigOldGlowStoneRingRecipe"));
+            api.AddBoolOption(manifest, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val, () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipe"));
+
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCategory"));
+
+            api.AddBoolOption(manifest, () => config.IridiumBandChangesEnabled, (bool val) => config.IridiumBandChangesEnabled = val, () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabled"));
+            api.AddBoolOption(manifest, () => config.PrecisionBuffsSlingshotDamage, (bool val) => config.PrecisionBuffsSlingshotDamage = val, () => mod.Helper.Translation.Get("ConfigPrecisionBuffsSlingshotDamage"));
 
             api.AddBoolOption(manifest, () => config.JukeboxRingEnabled, (bool val) => config.JukeboxRingEnabled = val, () => mod.Helper.Translation.Get("ConfigJukeboxRing"));
             api.AddBoolOption(manifest, () => config.JukeboxRingWorksInRain, (bool val) => config.JukeboxRingWorksInRain = val, () => mod.Helper.Translation.Get("ConfigJukeboxRingWorksInRain"));
 
-            api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val, () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"));
             api.AddBoolOption(manifest, () => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing, (bool val) => config.RemoveCrabshellRingAndImmunityBandTooltipFromCombinedRing = val, () => mod.Helper.Translation.Get("ConfigRemoveCITooltip"));
             api.AddBoolOption(manifest, () => config.RemoveLuckyTooltipFromCombinedRing, (bool val) => config.RemoveLuckyTooltipFromCombinedRing = val, () => mod.Helper.Translation.Get("ConfigRemoveLTooltip"));
-            api.AddBoolOption(manifest, () => config.OldGlowStoneRingRecipe, (bool val) => config.OldGlowStoneRingRecipe = val, () => mod.Helper.Translation.Get("ConfigOldGlowStoneRingRecipe"));
-            api.AddBoolOption(manifest, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val, () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipe"));
-
-            api.AddParagraph(manifest, () => mod.Helper.Translation.Get("ConfigFeedback"));
         }
 
         private static string TranslateProgressionChoice(string englishValue, RingOverhaul mod)

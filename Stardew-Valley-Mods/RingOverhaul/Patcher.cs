@@ -42,7 +42,7 @@ namespace RingOverhaul
 
         public static readonly string JukeBoxRingTrackKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingTrackKey";
         public static readonly string JukeBoxRingHasAddedKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingHasAddedKey";
-        public static readonly string PrecisionSlingShotBuffKey = $"{mod?.ModManifest?.UniqueID}.PrecisionSlingShotDamage";
+        public static readonly string PrecisionSlingshotBuffKey = $"{mod?.ModManifest?.UniqueID}.PrecisionSlingShotDamage";
 
         private static readonly List<string> explorerIds = new() { "(O)520", "(O)859", "(O)888", "(O)528" }; // 516, 517, 518, 519,
         private static readonly List<string> berserkerIds = new() { "(O)521", "(O)522", "(O)523", "(O)526", "(O)811", "(O)860", "(O)862" };
@@ -86,19 +86,19 @@ namespace RingOverhaul
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.onEquip)),
-                    prefix: new HarmonyMethod(typeof(Patcher), nameof(OnEquip_Pre)));
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(OnEquip_Post)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.onUnequip)),
-                    prefix: new HarmonyMethod(typeof(Patcher), nameof(OnUnequip_Pre)));
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(OnUnequip_Post)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.onNewLocation)),
-                    prefix: new HarmonyMethod(typeof(Patcher), nameof(OnNewLocation_Pre)));
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(OnNewLocation_Post)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.onLeaveLocation)),
-                    prefix: new HarmonyMethod(typeof(Patcher), nameof(OnLeaveLocation_Pre)));
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(OnLeaveLocation_Post)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsMiniJukeboxPlaying)),
@@ -367,10 +367,15 @@ namespace RingOverhaul
             return true; // run original logic
         }
 
-        public static bool PerformFire_Pre(Farmer who)
+        public static void PerformFire_Pre(Farmer who)
         {
+            if (!mod.Config.PrecisionBuffsSlingshotDamage)
+            {
+                return;
+            }
+
             var precisionSlingShotBuff = new Buff(
-                id: PrecisionSlingShotBuffKey,
+                id: PrecisionSlingshotBuffKey,
                 duration: Buff.ENDLESS,
                 effects: new BuffEffects()
                 {
@@ -382,16 +387,25 @@ namespace RingOverhaul
             };
 
             who.applyBuff(precisionSlingShotBuff);
-            return true;
         }
 
         public static void PerformFire_Post(Farmer who)
         {
-            who.buffs.Remove(PrecisionSlingShotBuffKey);
+            if (!mod.Config.PrecisionBuffsSlingshotDamage)
+            {
+                return;
+            }
+
+            who.buffs.Remove(PrecisionSlingshotBuffKey);
         }
 
         public static void AddEquipmentEffects_Post(Ring __instance, ref BuffEffects effects)
         {
+            if (!mod.Config.IridiumBandChangesEnabled)
+            {
+                return;
+            }
+
             if (__instance.QualifiedItemId == IridiumBandQualifiedID)
             {
                 //effects.AttackMultiplier.Value += 0.1f; // base is still called, so we don't need to add this
@@ -403,7 +417,7 @@ namespace RingOverhaul
             }
         }
 
-        public static bool OnEquip_Pre(Ring __instance, Farmer who)
+        public static void OnEquip_Post(Ring __instance, Farmer who)
         {
             GameLocation location = who.currentLocation;
             if (mod.Config.JukeboxRingEnabled && __instance.QualifiedItemId == JukeBoxRingQualifiedID)
@@ -411,41 +425,25 @@ namespace RingOverhaul
                 TryAddJukeBoxRing(__instance, location);
 
                 OnEquipJukeBoxRing(who, __instance);
-                return false;
+                return;
             }
             else if (__instance.QualifiedItemId == IridiumBandQualifiedID)
             {
-                var fieldInfo = AccessTools.Field(typeof(Ring), "_lightSourceID");
-
-                if (fieldInfo.GetValue(__instance) != null)
-                {
-                    location.removeLightSource(((int?)fieldInfo.GetValue(__instance)).Value);
-                }
-
-                fieldInfo.SetValue(__instance, null);
-
-                return false;
-            }
-            else
-            {
-                return true;
+                OnEquipIridiumBand(location, __instance);
+                return;
             }
         }
 
-        public static bool OnUnequip_Pre(Ring __instance, Farmer who)
+        public static void OnUnequip_Post(Ring __instance, Farmer who)
         {
             GameLocation location = who.currentLocation;
             if (mod.Config.JukeboxRingEnabled && __instance.QualifiedItemId == JukeBoxRingQualifiedID)
             {
                 TryRemoveJukeBoxRing(__instance, location);
-
-                return false;
             }
-
-            return true;
         }
 
-        public static bool OnNewLocation_Pre(Ring __instance, GameLocation environment)
+        public static void OnNewLocation_Post(Ring __instance, GameLocation environment)
         {
             if (mod.Config.JukeboxRingEnabled && __instance.QualifiedItemId == JukeBoxRingQualifiedID)
             {
@@ -465,37 +463,21 @@ namespace RingOverhaul
                     }
                 }
 
-                return false;
+                return;
             }
             else if (__instance.QualifiedItemId == IridiumBandQualifiedID)
             {
-                var fieldInfo = AccessTools.Field(typeof(Ring), "_lightSourceID");
-
-                if (fieldInfo.GetValue(__instance) != null)
-                {
-                    environment.removeLightSource(((int?)fieldInfo.GetValue(__instance)).Value);
-                }
-
-                fieldInfo.SetValue(__instance, null);
-
-                return false;
-            }
-            else
-            {
-                return true;
+                OnEquipIridiumBand(environment, __instance);
+                return;
             }
         }
 
-        public static bool OnLeaveLocation_Pre(Ring __instance, GameLocation environment)
+        public static void OnLeaveLocation_Post(Ring __instance, GameLocation environment)
         {
             if (mod.Config.JukeboxRingEnabled && __instance.QualifiedItemId == JukeBoxRingQualifiedID)
             {
                 TryRemoveJukeBoxRing(__instance, environment);
-
-                return false;
             }
-
-            return true;
         }
 
         public static void IsMiniJukeboxPlaying(GameLocation __instance, ref bool __result)
@@ -540,6 +522,23 @@ namespace RingOverhaul
             Game1.activeClickableMenu = new ChooseFromListMenu(list, new ChooseFromListMenu.actionOnChoosingListOption((s) => OnSongChosen(s, ring)), true, who.currentLocation.miniJukeboxTrack.Value);
         }
 
+        public static void OnEquipIridiumBand(GameLocation environment, Ring ring)
+        {
+            if (!mod.Config.IridiumBandChangesEnabled)
+            {
+                return;
+            }
+
+            var fieldInfo = AccessTools.Field(typeof(Ring), "_lightSourceID");
+
+            if (fieldInfo.GetValue(ring) != null)
+            {
+                environment.removeLightSource(((int?)fieldInfo.GetValue(ring)).Value);
+            }
+
+            fieldInfo.SetValue(ring, null);
+        }
+
         public static void OnSongChosen(string selection, Ring ring)
         {
             if (Game1.player.currentLocation != null)
@@ -547,14 +546,15 @@ namespace RingOverhaul
                 if (selection == "turn_off")
                 {
                     Game1.player.currentLocation.miniJukeboxTrack.Value = "";
-                    return;
                 }
-
-                Game1.player.currentLocation.miniJukeboxTrack.Value = selection;
-
-                if (selection == "random")
+                else
                 {
-                    Game1.player.currentLocation.SelectRandomMiniJukeboxTrack();
+                    Game1.player.currentLocation.miniJukeboxTrack.Value = selection;
+
+                    if (selection == "random")
+                    {
+                        Game1.player.currentLocation.SelectRandomMiniJukeboxTrack();
+                    }
                 }
 
                 ring.modData[JukeBoxRingTrackKey] = selection;
