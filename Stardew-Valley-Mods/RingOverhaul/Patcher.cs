@@ -42,7 +42,7 @@ namespace RingOverhaul
 
         public static readonly string JukeBoxRingTrackKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingTrackKey";
         public static readonly string JukeBoxRingHasAddedKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingHasAddedKey";
-        public static readonly string PrecisionSlingshotBuffKey = $"{mod?.ModManifest?.UniqueID}.PrecisionSlingShotDamage";
+        public static readonly string PrecisionSlingshotBuffKey = $"{mod?.ModManifest?.UniqueID}.PrecisionSlingshotDamage";
 
         private static readonly List<string> explorerIds = new() { "(O)520", "(O)859", "(O)888", "(O)528" }; // 516, 517, 518, 519,
         private static readonly List<string> berserkerIds = new() { "(O)521", "(O)522", "(O)523", "(O)526", "(O)811", "(O)860", "(O)862" };
@@ -102,7 +102,7 @@ namespace RingOverhaul
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.IsMiniJukeboxPlaying)),
-                    postfix: new HarmonyMethod(typeof(Patcher), nameof(IsMiniJukeboxPlaying)));
+                    postfix: new HarmonyMethod(typeof(Patcher), nameof(IsMiniJukeboxPlaying_Post)));
             }
             catch (Exception e)
             {
@@ -429,7 +429,7 @@ namespace RingOverhaul
             }
             else if (__instance.QualifiedItemId == IridiumBandQualifiedID)
             {
-                OnEquipIridiumBand(location, __instance);
+                RemoveIridiumBandLight(location, __instance);
                 return;
             }
         }
@@ -467,7 +467,7 @@ namespace RingOverhaul
             }
             else if (__instance.QualifiedItemId == IridiumBandQualifiedID)
             {
-                OnEquipIridiumBand(environment, __instance);
+                RemoveIridiumBandLight(environment, __instance);
                 return;
             }
         }
@@ -480,11 +480,22 @@ namespace RingOverhaul
             }
         }
 
-        public static void IsMiniJukeboxPlaying(GameLocation __instance, ref bool __result)
+        public static void IsMiniJukeboxPlaying_Post(GameLocation __instance, ref bool __result)
         {
-            // anti rain check
-            if (mod.Config.JukeboxRingWorksInRain && !__result && __instance.miniJukeboxCount.Value > 0 && __instance.miniJukeboxTrack.Value != "")
+            // we only try to override an 'anti rain check', so if the config is off, we don't need to do anything
+            if (__result || !mod.Config.JukeboxRingWorksInRain || !mod.Config.JukeboxRingEnabled)
             {
+                return;
+            }
+
+            bool isRaining = __instance.IsOutdoors && __instance.IsRainingHere();
+            bool couldPlayMiniJukeBox = __instance.miniJukeboxCount.Value > 0 && __instance.miniJukeboxTrack.Value != string.Empty;
+
+            bool wasOnlyCancelledDueToRain = isRaining && couldPlayMiniJukeBox;
+
+            if (wasOnlyCancelledDueToRain)
+            {
+                // check if one of the 'miniJukeboxCount' was a jukebox ring
                 foreach (var player in Game1.getOnlineFarmers())
                 {
                     if (player.currentLocation == __instance && player.isWearingRing(JukeBoxRingQualifiedID))
@@ -522,7 +533,7 @@ namespace RingOverhaul
             Game1.activeClickableMenu = new ChooseFromListMenu(list, new ChooseFromListMenu.actionOnChoosingListOption((s) => OnSongChosen(s, ring)), true, who.currentLocation.miniJukeboxTrack.Value);
         }
 
-        public static void OnEquipIridiumBand(GameLocation environment, Ring ring)
+        public static void RemoveIridiumBandLight(GameLocation environment, Ring ring)
         {
             if (!mod.Config.IridiumBandChangesEnabled)
             {
@@ -545,7 +556,7 @@ namespace RingOverhaul
             {
                 if (selection == "turn_off")
                 {
-                    Game1.player.currentLocation.miniJukeboxTrack.Value = "";
+                    Game1.player.currentLocation.miniJukeboxTrack.Value = string.Empty;
                 }
                 else
                 {

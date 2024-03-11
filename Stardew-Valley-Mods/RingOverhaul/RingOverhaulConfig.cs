@@ -131,13 +131,16 @@
 
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCraftingChangesCategory"));
 
-            api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val, () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"));
+            api.AddBoolOption(manifest, () => config.MinorRingCraftingChanges, (bool val) => config.MinorRingCraftingChanges = val,
+                () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChanges"), () => mod.Helper.Translation.Get("ConfigMinorRingCraftingChangesDescription"));
             api.AddBoolOption(manifest, () => config.OldGlowStoneRingRecipe, (bool val) => config.OldGlowStoneRingRecipe = val, () => mod.Helper.Translation.Get("ConfigOldGlowStoneRingRecipe"));
-            api.AddBoolOption(manifest, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val, () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipe"));
+            api.AddBoolOption(manifest, () => config.OldIridiumBandRecipe, (bool val) => config.OldIridiumBandRecipe = val,
+                () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipe"), () => mod.Helper.Translation.Get("ConfigOldIridiumBandRecipeDescription"));
 
             api.AddSectionTitle(manifest, () => mod.Helper.Translation.Get("ConfigOtherCategory"));
 
-            api.AddBoolOption(manifest, () => config.IridiumBandChangesEnabled, (bool val) => config.IridiumBandChangesEnabled = val, () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabled"));
+            api.AddBoolOption(manifest, () => config.IridiumBandChangesEnabled, (bool val) => config.IridiumBandChangesEnabled = val,
+                () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabled"), () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabledDescription"));
             api.AddBoolOption(manifest, () => config.PrecisionBuffsSlingshotDamage, (bool val) => config.PrecisionBuffsSlingshotDamage = val, () => mod.Helper.Translation.Get("ConfigPrecisionBuffsSlingshotDamage"));
 
             api.AddBoolOption(manifest, () => config.JukeboxRingEnabled, (bool val) => config.JukeboxRingEnabled = val, () => mod.Helper.Translation.Get("ConfigJukeboxRing"));

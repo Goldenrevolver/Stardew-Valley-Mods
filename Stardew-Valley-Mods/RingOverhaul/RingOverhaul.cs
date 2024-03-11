@@ -152,7 +152,7 @@
                         data["Jukebox Ring"] = "336 1 787 1 464 1/Home/528/false/null/";
                     }
 
-                    if (!Config.OldIridiumBandRecipe)
+                    if (!Config.OldIridiumBandRecipe && Config.IridiumBandChangesEnabled)
                     {
                         recipeChanges["Iridium Band"] = new Tuple<string, string>("337 2 529 1 530 1 531 1 532 1 533 1 534 1", "Combat 9");
                     }
