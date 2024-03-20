@@ -110,6 +110,7 @@
             { "(O)597", HorseFoodData.ShouldntID }, // Blue Jazz
 
             // Fruits
+            { "(O)Powdermelon", HorseFoodData.ExoticTreeFruitValue }, // TODO balance
             { "(O)88", HorseFoodData.SpecialForageValue }, // Coconut
             { "(O)90", HorseFoodData.SpecialForageValue }, // Cactus Fruit
             { "(O)91", HorseFoodData.ExoticTreeFruitValue }, // Banana
@@ -138,6 +139,9 @@
             { "(O)889", HorseFoodData.DislikeID }, // Qi Fruit
 
             // Vegetables
+            { "(O)Carrot", HorseFoodData.RareVegetableValue }, // TODO balance
+            { "(O)SummerSquash", HorseFoodData.RareVegetableValue }, // TODO balance
+            { "(O)Broccoli", HorseFoodData.RareVegetableValue }, // TODO balance
             { "(O)24", HorseFoodData.NormalVegetableValue }, // Parsnip
             { "(O)188", HorseFoodData.NormalVegetableValue }, // Green Bean
             { "(O)190", HorseFoodData.CabbageId }, // Cauliflower

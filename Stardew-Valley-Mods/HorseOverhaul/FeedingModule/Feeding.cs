@@ -19,6 +19,11 @@
                     HorseWrapper horseW = null;
                     mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => horseW = h);
 
+                    if (horseW == null)
+                    {
+                        continue;
+                    }
+
                     if (Game1.player.CurrentItem != null && mod.Config.Feeding)
                     {
                         Item currentItem = Game1.player.CurrentItem;

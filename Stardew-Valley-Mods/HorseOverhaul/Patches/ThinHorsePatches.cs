@@ -19,8 +19,8 @@
             mod = horseOverhaul;
 
             harmony.Patch(
-                   original: AccessTools.Method(typeof(Character), nameof(Character.GetSpriteWidthForPositioning)),
-                   prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(SetOneTileWide)));
+               original: AccessTools.Method(typeof(Character), nameof(Character.GetSpriteWidthForPositioning)),
+               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(SetOneTileWide)));
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.showRiding)),
@@ -47,8 +47,8 @@
                prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(DoMountingAnimation)));
 
             harmony.Patch(
-                original: AccessTools.Method(typeof(Farmer), "setMount"),
-                postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixSetMount)));
+               original: AccessTools.Method(typeof(Farmer), "setMount"),
+               postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixSetMount)));
         }
 
         // transpiler checked for 1.6
@@ -60,6 +60,9 @@
 
                 bool foundHead = false;
                 bool foundHat = false;
+
+                bool foundFirstMunch = false;
+                bool foundSecondMunch = false;
 
                 for (int i = 0; i < instructionsList.Count; i++)
                 {
@@ -81,10 +84,68 @@
                         }
                     }
 
+                    // TODO clean this all up later
+                    if (!foundFirstMunch || !foundSecondMunch)
+                    {
+                        if (instructionsList[i].opcode == OpCodes.Ldfld
+                            && instructionsList[i].operand != null
+                            && instructionsList[i].operand.ToString().ToLower().Contains("munchingcarrottimer"))
+                        {
+                            if (!foundFirstMunch)
+                            {
+                                foundFirstMunch = true;
+                            }
+                            else if (!foundSecondMunch)
+                            {
+                                foundSecondMunch = true;
+                            }
+
+                            for (int j = i; j < instructionsList.Count; j++)
+                            {
+                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
+                                    && (float)instructionsList[j].operand >= 23.9f
+                                    && (float)instructionsList[j].operand <= 24.1f)
+                                {
+                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchOne));
+                                    var oldLables = instructionsList[j].labels;
+                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
+                                    {
+                                        labels = oldLables
+                                    };
+                                }
+
+                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
+                                    && (float)instructionsList[j].operand >= 79.9f
+                                    && (float)instructionsList[j].operand <= 80.1f)
+                                {
+                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchTwo));
+                                    var oldLables = instructionsList[j].labels;
+                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
+                                    {
+                                        labels = oldLables
+                                    };
+                                }
+
+                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
+                                    && (float)instructionsList[j].operand >= -16.1f
+                                    && (float)instructionsList[j].operand <= -15.9f)
+                                {
+                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchThree));
+                                    var oldLables = instructionsList[j].labels;
+                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
+                                    {
+                                        labels = oldLables
+                                    };
+                                }
+                            }
+                        }
+                    }
+
                     if (!foundHat)
                     {
                         if (i + 2 < instructionsList.Count
                             && instructionsList[i].opcode == OpCodes.Call
+                            && instructionsList[i].operand != null
                             && instructionsList[i].operand.ToString().ToLower().Contains("get_zero")
                             && instructionsList[i + 1].opcode == OpCodes.Stloc_1
                             && instructionsList[i + 2].opcode == OpCodes.Ldarg_0)
@@ -108,6 +169,26 @@
                 mod.ErrorLog("There was an exception in a transpiler patch", e);
                 return instructions;
             }
+        }
+
+        public static float GetHorseHeadXPositionMunchOne()
+        {
+            return mod.Config.ThinHorse ? -8f : 24f;
+        }
+
+        public static float GetHorseHeadXPositionMunchTwo()
+        {
+            return mod.Config.ThinHorse ? 52f : 80f;
+        }
+
+        public static float GetHorseHeadXPositionMunchThree()
+        {
+            return mod.Config.ThinHorse ? -48f : -16f;
+        }
+
+        public static float GetHorseHeadXPosition()
+        {
+            return mod.Config.ThinHorse ? 16f : 48f;
         }
 
         public static bool PreventBaseEmoteDraw(ref Horse __instance, ref bool __state)
@@ -354,12 +435,7 @@
             }
         }
 
-        public static float GetHorseHeadXPosition()
-        {
-            return mod.Config.ThinHorse ? 16f : 48f;
-        }
-
-        private static readonly Vector2 thinHorseHatVector = new Vector2(-8f, 0f);
+        private static readonly Vector2 thinHorseHatVector = new(-8f, 0f);
 
         public static Vector2 GetHatVector()
         {

@@ -19,8 +19,8 @@
             mod = horseOverhaul;
 
             harmony.Patch(
-                    original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.checkAction)),
-                    transpiler: new HarmonyMethod(typeof(InteractPatches), nameof(AllowInteractWhileRiding)));
+               original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.checkAction)),
+               transpiler: new HarmonyMethod(typeof(InteractPatches), nameof(AllowInteractWhileRiding)));
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.animateOnce)),
@@ -53,11 +53,6 @@
         {
             try
             {
-                if (!mod.Config.EnableLimitedInteractionWhileRiding)
-                {
-                    return instructions;
-                }
-
                 var instructionsList = instructions.ToList();
 
                 int foundSpawnedObject = -1;
