@@ -38,6 +38,8 @@
 
         public bool BuffMahoganyTreeGrowthChance { get; set; } = false;
 
+        public bool BuffMysticTreeGrowthChance { get; set; } = false;
+
         public bool CustomChancesAlsoAffectCustomTrees { get; set; } = false;
 
         public int CustomSeedOnShakeChance { get; set; } = -1;
@@ -171,6 +173,8 @@
 
             api.AddBoolOption(manifest, () => config.BuffMahoganyTreeGrowthChance, (bool val) => config.BuffMahoganyTreeGrowthChance = val,
                 () => "Buff Mahogany Tree Growth", () => "Changes the growth chance of mahogany trees to be the same as the other base game tree, 20% unfertilized and 100% fertilized (from 15% and 60%). If 'CustomTreeGrowthChance' is used, it properly takes priority for the unfertilized growth chance.");
+            api.AddBoolOption(manifest, () => config.BuffMysticTreeGrowthChance, (bool val) => config.BuffMysticTreeGrowthChance = val,
+                () => "Buff Mystic Tree Growth", () => "Changes the growth chance of mystic trees to be the same as the other base game tree, 20% unfertilized and 100% fertilized (from 15% and 30%). If 'CustomTreeGrowthChance' is used, it properly takes priority for the unfertilized growth chance.");
 
             api.AddTextOption(manifest, () => GetElementFromConfig(SSChoices, config.SaveSprouts), (string val) => config.SaveSprouts = GetIndexFromArrayElement(SSChoices, val), () => "Save Sprouts From Tools", () => "Normal and fruit trees can't be killed by the selected tools", SSChoices);
 
@@ -189,11 +193,11 @@
                 () => "Also Affect Custom Trees", () => "Whether, in addition to base game trees, mod added trees should also be affected");
 
             api.AddNumberOption(manifest, () => config.CustomSeedOnShakeChance, (int val) => config.CustomSeedOnShakeChance = val,
-                () => "'Seed On Shake' Chance", () => "Chance that a seed drops when shaking a tree (base game: 5-15%, -1 to use base game value)", -1, 100);
+                () => "'Seed On Shake' Chance", () => "Chance that a seed drops when shaking a tree (base game: 5-15%, -1 to use base game value). Does not apply to mystic trees.", -1, 100);
             api.AddNumberOption(manifest, () => config.CustomSeedOnChopChance, (int val) => config.CustomSeedOnChopChance = val,
-                () => "'Seed On Chop' Chance", () => "Chance that a seed drops when chopping down a tree (base game: 56-75%, -1 to use base game value)", -1, 100);
+                () => "'Seed On Chop' Chance", () => "Chance that a seed drops when chopping down a tree (base game: 56-75%, -1 to use base game value). Does not apply to mystic trees.", -1, 100);
             api.AddNumberOption(manifest, () => config.CustomSpawnSeedNearbyChance, (int val) => config.CustomSpawnSeedNearbyChance = val,
-                () => "'Spawn Seed Nearby' Chance", () => "Chance to attempt to spawn a seed near a tree overnight (base game: 15%, -1 to use base game value)", -1, 100);
+                () => "'Spawn Seed Nearby' Chance", () => "Chance to attempt to spawn a seed near a tree overnight (base game: 15%, -1 to use base game value). Does not apply to mystic trees.", -1, 100);
             api.AddNumberOption(manifest, () => config.CustomTreeGrowthChance, (int val) => config.CustomTreeGrowthChance = val,
                 () => "Tree Growth Chance", () => "Chance for a tree to grow overnight (including mahogany trees) (base game: 20%, -1 to use base game value)", -1, 100);
 

@@ -53,8 +53,7 @@
                 {
                     IDictionary<string, WildTreeData> data = asset.AsDictionary<string, WildTreeData>().Data;
 
-                    var normalTrees = new string[] { Tree.bushyTree, Tree.leafyTree, Tree.pineTree, Tree.mahoganyTree, Tree.palmTree, Tree.palmTree2 };
-                    //var palmTrees = new string[] { Tree.palmTree, Tree.palmTree2 };
+                    var normalTrees = new string[] { Tree.bushyTree, Tree.leafyTree, Tree.pineTree, Tree.mahoganyTree, Tree.palmTree, Tree.palmTree2, Tree.greenRainTreeBushy, Tree.greenRainTreeLeafy, Tree.greenRainTreeFern, Tree.mysticTree };
 
                     foreach (var entry in data)
                     {
@@ -109,6 +108,16 @@
 
                             if (isNormalTree || Config.CustomChancesAlsoAffectCustomTrees)
                             {
+                                if (Config.CustomTreeGrowthChance >= 0)
+                                {
+                                    treeData.GrowthChance = Math.Clamp(Config.CustomTreeGrowthChance / 100f, 0f, 1f);
+                                }
+
+                                if (entry.Key == Tree.mysticTree)
+                                {
+                                    continue;
+                                }
+
                                 if (Config.CustomSeedOnShakeChance >= 0)
                                 {
                                     treeData.SeedOnShakeChance = Math.Clamp(Config.CustomSeedOnShakeChance / 100f, 0f, 1f);
@@ -123,19 +132,22 @@
                                 {
                                     treeData.SeedSpreadChance = Math.Clamp(Config.CustomSpawnSeedNearbyChance / 100f, 0f, 1f);
                                 }
-
-                                if (Config.CustomTreeGrowthChance >= 0)
-                                {
-                                    treeData.GrowthChance = Math.Clamp(Config.CustomTreeGrowthChance / 100f, 0f, 1f);
-                                }
                             }
                         }
                     }
 
-                    if (Config.BuffMahoganyTreeGrowthChance && data.TryGetValue(Tree.mahoganyTree, out var mahoganyTreeData) && data.TryGetValue(Tree.bushyTree, out var oakTreeData))
+                    if (data.TryGetValue(Tree.bushyTree, out var oakTreeData))
                     {
-                        mahoganyTreeData.GrowthChance = oakTreeData.GrowthChance;
-                        mahoganyTreeData.FertilizedGrowthChance = oakTreeData.FertilizedGrowthChance;
+                        if (Config.BuffMahoganyTreeGrowthChance && data.TryGetValue(Tree.mahoganyTree, out var mahoganyTreeData))
+                        {
+                            mahoganyTreeData.GrowthChance = oakTreeData.GrowthChance;
+                            mahoganyTreeData.FertilizedGrowthChance = oakTreeData.FertilizedGrowthChance;
+                        }
+                        if (Config.BuffMysticTreeGrowthChance && data.TryGetValue(Tree.mysticTree, out var mythicTreeData))
+                        {
+                            mythicTreeData.GrowthChance = oakTreeData.GrowthChance;
+                            mythicTreeData.FertilizedGrowthChance = oakTreeData.FertilizedGrowthChance;
+                        }
                     }
                 }, AssetEditPriority.Late);
             }
