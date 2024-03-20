@@ -240,8 +240,11 @@
             };
         }
 
+        // revert forage level increase
         private const string craftingInfix = "/Field/241/false/s Foraging 2/";
-        private const string cookingInfix = "/70 1/241 2/s Foraging 2/";
+
+        // revert forage level increase
+        private const string cookingInfix = "/70 1/241 2/s Foraging 3/";
 
         private const string springCraftingRecipe = "216 1 16 1 20 1 22 1";
         private const string summerCraftingRecipe = "216 1 398 1 396 1 259 1";

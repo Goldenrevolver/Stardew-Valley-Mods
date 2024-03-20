@@ -12,11 +12,6 @@
         {
             return o != null && o.QualifiedItemId == "(BC)128";
         }
-
-        //public static bool IsBaseGameTapper(this StardewObject o)
-        //{
-        //    return o != null && (o.QualifiedItemId is "(BC)105" or "BC)264");
-        //}
     }
 
     internal class TapperAndMushroomQualityLogic
@@ -67,21 +62,21 @@
             }
         }
 
-        public static void RewardMushroomBoxExp(ForageFantasyConfig config, Farmer player)
-        {
-            if (config.MushroomBoxXPAmount > 0)
-            {
-                player.gainExperience(Farmer.foragingSkill, config.MushroomBoxXPAmount);
-            }
-        }
+        //public static void RewardMushroomBoxExp(ForageFantasyConfig config, Farmer player)
+        //{
+        //    if (config.MushroomBoxXPAmount > 0)
+        //    {
+        //        player.gainExperience(Farmer.foragingSkill, config.MushroomBoxXPAmount);
+        //    }
+        //}
 
-        public static void RewardTapperExp(ForageFantasyConfig config, Farmer player)
-        {
-            if (config.TapperXPAmount > 0)
-            {
-                player.gainExperience(Farmer.foragingSkill, config.TapperXPAmount);
-            }
-        }
+        //public static void RewardTapperExp(ForageFantasyConfig config, Farmer player)
+        //{
+        //    if (config.TapperXPAmount > 0)
+        //    {
+        //        player.gainExperience(Farmer.foragingSkill, config.TapperXPAmount);
+        //    }
+        //}
 
         public static int DetermineTapperQuality(ForageFantasyConfig config, Farmer player, Tree tree)
         {

@@ -42,7 +42,7 @@
                     {
                         var index = val.IndexOf('/');
 
-                        // "388 15 771 10 382 3/Field/926/false/Foraging 9/"
+                        // "388 15 771 10 382 3/Field/926/false/Foraging 3/"
 
                         if (index > 0)
                         {

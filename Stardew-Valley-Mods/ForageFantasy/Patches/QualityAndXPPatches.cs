@@ -20,9 +20,9 @@
                original: AccessTools.Method(typeof(StardewObject), "CheckForActionOnMachine"),
                prefix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(PatchTapperAndMushroomBoxQuality)));
 
-            harmony.Patch(
-               original: AccessTools.Method(typeof(StardewObject), "CheckForActionOnMachine"),
-               postfix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(GiveTapperAndMushroomBoxXP)));
+            //harmony.Patch(
+            //   original: AccessTools.Method(typeof(StardewObject), "CheckForActionOnMachine"),
+            //   postfix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(GiveTapperAndMushroomBoxXP)));
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Bush), nameof(Bush.shake)),
@@ -94,26 +94,26 @@
             }
         }
 
-        public static void GiveTapperAndMushroomBoxXP(ref StardewObject __instance, ref Farmer who, ref bool justCheckingForActivity, ref bool __state, ref bool __result)
-        {
-            if (justCheckingForActivity || !__result)
-            {
-                return;
-            }
+        //public static void GiveTapperAndMushroomBoxXP(ref StardewObject __instance, ref Farmer who, ref bool justCheckingForActivity, ref bool __state, ref bool __result)
+        //{
+        //    if (justCheckingForActivity || !__result)
+        //    {
+        //        return;
+        //    }
 
-            if (__state && !__instance.readyForHarvest.Value)
-            {
-                if (__instance.IsTapper())
-                {
-                    TapperAndMushroomQualityLogic.RewardTapperExp(config, who);
-                }
+        //    if (__state && !__instance.readyForHarvest.Value)
+        //    {
+        //        if (__instance.IsTapper())
+        //        {
+        //            TapperAndMushroomQualityLogic.RewardTapperExp(config, who);
+        //        }
 
-                if (__instance.IsMushroomBox())
-                {
-                    TapperAndMushroomQualityLogic.RewardMushroomBoxExp(config, who);
-                }
-            }
-        }
+        //        if (__instance.IsMushroomBox())
+        //        {
+        //            TapperAndMushroomQualityLogic.RewardMushroomBoxExp(config, who);
+        //        }
+        //    }
+        //}
 
         public static void PatchTapperAndMushroomBoxQuality(ref StardewObject __instance, ref Farmer who, ref bool justCheckingForActivity, ref bool __state)
         {

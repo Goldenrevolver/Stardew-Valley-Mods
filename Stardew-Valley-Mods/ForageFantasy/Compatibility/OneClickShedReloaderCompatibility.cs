@@ -24,9 +24,9 @@
                    original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(TryAddItemToPlayerInventory_Pre)));
 
-                harmony.Patch(
-                   original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(TryAddItemToPlayerInventory_Post)));
+                //harmony.Patch(
+                //   original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
+                //   postfix: new HarmonyMethod(typeof(Patcher), nameof(TryAddItemToPlayerInventory_Post)));
 
                 harmony.Patch(
                    original: AccessTools.Method(entry, "HarvestAllItemsInBuilding"),
@@ -46,18 +46,18 @@
             }
         }
 
-        public static void TryAddItemToPlayerInventory_Post(ref StardewObject container, ref bool __result)
-        {
-            // I can't reduce the quality of a non successfully harvested box here,
-            // because it doesn't get called if the method throws an inventoryfull exception
-            if (__result && container.IsMushroomBox())
-            {
-                if (mod.Config.AutomationHarvestsGrantXP)
-                {
-                    TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod.Config, Game1.player);
-                }
-            }
-        }
+        //public static void TryAddItemToPlayerInventory_Post(ref StardewObject container, ref bool __result)
+        //{
+        //    // I can't reduce the quality of a non successfully harvested box here,
+        //    // because it doesn't get called if the method throws an inventoryfull exception
+        //    if (__result && container.IsMushroomBox())
+        //    {
+        //        if (mod.Config.AutomationHarvestsGrantXP)
+        //        {
+        //            TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod.Config, Game1.player);
+        //        }
+        //    }
+        //}
 
         public static void ReduceQualityAfterHarvest(ref GameLocation location)
         {

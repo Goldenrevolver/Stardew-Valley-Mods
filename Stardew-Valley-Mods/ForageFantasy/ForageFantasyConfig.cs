@@ -12,6 +12,8 @@
 
         void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
 
+        void AddParagraph(IManifest mod, Func<string> text);
+
         void AddBoolOption(IManifest mod, Func<bool> getValue, Action<bool> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
 
         void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name, Func<string> tooltip = null, int? min = null, int? max = null, int? interval = null, Func<int, string> formatValue = null, string fieldId = null);
@@ -40,11 +42,11 @@
 
         public bool TapperQualityRequiresTapperPerk { get; set; } = false;
 
-        public int BerryBushChanceToGetXP { get; set; } = 100;
+        //public int BerryBushChanceToGetXP { get; set; } = 100;
 
-        public int BerryBushXPAmount { get; set; } = 1;
+        //public int BerryBushXPAmount { get; set; } = 1;
 
-        public int MushroomBoxXPAmount { get; set; } = 1;
+        //public int MushroomBoxXPAmount { get; set; } = 1;
 
         public int TapperXPAmount { get; set; } = 3;
 
@@ -52,7 +54,7 @@
 
         public int TwigDebrisXPAmount { get; set; } = 1;
 
-        public bool AutomationHarvestsGrantXP { get; set; } = false;
+        //public bool AutomationHarvestsGrantXP { get; set; } = false;
 
         public bool TapperDaysNeededChangesEnabled { get; set; } = true;
 
@@ -104,34 +106,34 @@
                 config.TapperQualityOptions = 0;
             }
 
-            if (config.BerryBushChanceToGetXP < 0)
-            {
-                invalidConfig = true;
-                config.BerryBushChanceToGetXP = 0;
-            }
+            //if (config.BerryBushChanceToGetXP < 0)
+            //{
+            //    invalidConfig = true;
+            //    config.BerryBushChanceToGetXP = 0;
+            //}
 
-            if (config.BerryBushChanceToGetXP > 100)
-            {
-                invalidConfig = true;
-                config.BerryBushChanceToGetXP = 100;
-            }
+            //if (config.BerryBushChanceToGetXP > 100)
+            //{
+            //    invalidConfig = true;
+            //    config.BerryBushChanceToGetXP = 100;
+            //}
 
-            if (config.BerryBushXPAmount < 0)
-            {
-                invalidConfig = true;
-                config.BerryBushXPAmount = 0;
-            }
+            //if (config.BerryBushXPAmount < 0)
+            //{
+            //    invalidConfig = true;
+            //    config.BerryBushXPAmount = 0;
+            //}
+
+            //if (config.MushroomBoxXPAmount < 0)
+            //{
+            //    invalidConfig = true;
+            //    config.MushroomBoxXPAmount = 0;
+            //}
 
             if (config.TapperXPAmount < 0)
             {
                 invalidConfig = true;
                 config.TapperXPAmount = 0;
-            }
-
-            if (config.MushroomBoxXPAmount < 0)
-            {
-                invalidConfig = true;
-                config.MushroomBoxXPAmount = 0;
             }
 
             if (config.SmallStumpBonusXPAmount < 0)
@@ -165,6 +167,9 @@
 
                 // ForageSurvivalBurger
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/CookingRecipes");
+
+                // Tapper XP
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
 
                 // Tapper days needed changes, Fine Grapes
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Objects");
@@ -233,20 +238,23 @@
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "SectionXPRewards"));
 
-            api.AddNumberOption(manifest, () => config.BerryBushChanceToGetXP, (int val) => config.BerryBushChanceToGetXP = val,
-                GetConfigName(mod, "BerryBushChanceToGetXP"), GetConfigDescription(mod, "BerryBushChanceToGetXP"), 0, 100);
-            api.AddNumberOption(manifest, () => config.BerryBushXPAmount, (int val) => config.BerryBushXPAmount = val,
-                GetConfigName(mod, "BerryBushXPAmount"), GetConfigDescription(mod, "BerryBushXPAmount"), 0);
-            api.AddNumberOption(manifest, () => config.MushroomBoxXPAmount, (int val) => config.MushroomBoxXPAmount = val,
-                GetConfigName(mod, "MushroomBoxXPAmount"), GetConfigDescription(mod, "MushroomBoxXPAmount"), 0);
+            api.AddParagraph(manifest, GetConfigName(mod, "MushroomBoxBerryBushXPUpdate"));
+
+            //api.AddNumberOption(manifest, () => config.BerryBushChanceToGetXP, (int val) => config.BerryBushChanceToGetXP = val,
+            //    GetConfigName(mod, "BerryBushChanceToGetXP"), GetConfigDescription(mod, "BerryBushChanceToGetXP"), 0, 100);
+            //api.AddNumberOption(manifest, () => config.BerryBushXPAmount, (int val) => config.BerryBushXPAmount = val,
+            //    GetConfigName(mod, "BerryBushXPAmount"), GetConfigDescription(mod, "BerryBushXPAmount"), 0);
+            //api.AddNumberOption(manifest, () => config.MushroomBoxXPAmount, (int val) => config.MushroomBoxXPAmount = val,
+            //    GetConfigName(mod, "MushroomBoxXPAmount"), GetConfigDescription(mod, "MushroomBoxXPAmount"), 0);
+
             api.AddNumberOption(manifest, () => config.TapperXPAmount, (int val) => config.TapperXPAmount = val,
                 GetConfigName(mod, "TapperXPAmount"), GetConfigDescription(mod, "TapperXPAmount"), 0);
             api.AddNumberOption(manifest, () => config.SmallStumpBonusXPAmount, (int val) => config.SmallStumpBonusXPAmount = val,
                 GetConfigName(mod, "SmallStumpBonusXPAmount"), GetConfigDescription(mod, "SmallStumpBonusXPAmount"), 0);
             api.AddNumberOption(manifest, () => config.TwigDebrisXPAmount, (int val) => config.TwigDebrisXPAmount = val,
                 GetConfigName(mod, "TwigDebrisXPAmount"), GetConfigDescription(mod, "TwigDebrisXPAmount"), 0);
-            api.AddBoolOption(manifest, () => config.AutomationHarvestsGrantXP, (bool val) => config.AutomationHarvestsGrantXP = val,
-                GetConfigName(mod, "AutomationHarvestsGrantXP"), GetConfigDescription(mod, "AutomationHarvestsGrantXP"));
+            //api.AddBoolOption(manifest, () => config.AutomationHarvestsGrantXP, (bool val) => config.AutomationHarvestsGrantXP = val,
+            //    GetConfigName(mod, "AutomationHarvestsGrantXP"), GetConfigDescription(mod, "AutomationHarvestsGrantXP"));
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "SectionTapperDaysNeededChanges"));
 

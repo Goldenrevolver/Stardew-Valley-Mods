@@ -44,6 +44,7 @@
   "ConfigSectionXPRewards": "XP Rewards",
   "ConfigSectionTapperDaysNeededChanges": "Tapper Days Needed Changes",
   "ConfigSectionOtherFeatures": "Other Features",
+  "ConfigMushroomBoxBerryBushXPUpdate": "Mushroom Boxes and Berry Bushes now give XP in the base game.",
   "ConfigBerryBushQuality": "Berry Bush Quality",
   "ConfigBerryBushQualityDescription": "Salmonberries and blackberries have quality based on forage level even without botanist perk.",
   "ConfigMushroomBoxQuality": "Mushroom Box Quality",

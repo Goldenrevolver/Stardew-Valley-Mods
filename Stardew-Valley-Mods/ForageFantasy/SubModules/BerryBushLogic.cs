@@ -14,18 +14,23 @@
             return bush != null && !bush.townBush.Value && bush.inBloom() && bush.size.Value != Bush.greenTeaBush && bush.size.Value != Bush.walnutBush;
         }
 
-        public static void RewardBerryXP(ForageFantasyConfig config, Farmer who)
-        {
-            double chance = config.BerryBushChanceToGetXP / 100.0;
+        //public static void RewardBerryXP(ForageFantasyConfig config, Farmer who)
+        //{
+        //    double chance = config.BerryBushChanceToGetXP / 100.0;
 
-            if (config.BerryBushXPAmount > 0 && Game1.random.NextDouble() < chance)
-            {
-                who.gainExperience(Farmer.foragingSkill, config.BerryBushXPAmount);
-            }
-        }
+        //    if (config.BerryBushXPAmount > 0 && Game1.random.NextDouble() < chance)
+        //    {
+        //        who.gainExperience(Farmer.foragingSkill, config.BerryBushXPAmount);
+        //    }
+        //}
 
         public static void ChangeBerryQualityAndGiveExp(Bush bush, ForageFantasyConfig config)
         {
+            if (!config.BerryBushQuality)
+            {
+                return;
+            }
+
             string shakeOff;
 
             var season = bush.Location.GetSeason();
@@ -44,23 +49,12 @@
                     return;
             }
 
-            bool gaveExp = false;
-
-            // change quality of every nearby matching berry debris, and give XP if we find at least one
+            // change quality of every nearby matching berry debris
             foreach (var item in bush.Location.debris)
             {
-                if (item?.item?.QualifiedItemId == shakeOff)
+                if (item?.item?.QualifiedItemId == shakeOff && item.timeSinceDoneBouncing == 0f)
                 {
-                    if (!gaveExp)
-                    {
-                        gaveExp = true;
-                        RewardBerryXP(config, Game1.player);
-                    }
-
-                    if (config.BerryBushQuality)
-                    {
-                        ((StardewObject)item.item).Quality = ForageFantasy.DetermineForageQuality(Game1.player);
-                    }
+                    ((StardewObject)item.item).Quality = ForageFantasy.DetermineForageQuality(Game1.player);
                 }
             }
         }
