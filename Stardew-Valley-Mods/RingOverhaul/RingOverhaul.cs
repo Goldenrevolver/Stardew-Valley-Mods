@@ -33,8 +33,6 @@
         internal RingOverhaulConfig Config;
 
         // TODO check multiplayer jukebox ring behavior
-        // TODO check ring combining jukebox ring behavior (do equip and unequip get called?)
-
         // TODO make rings of the same category type not equippable at the same time (care for compatibility with equip more rings)
 
         public override void Entry(IModHelper helper)
@@ -108,7 +106,7 @@
                     if (Config.IridiumBandChangesEnabled)
                     {
                         var entry = data[IridiumBandNonQualifiedID];
-                        entry.Description = Helper.Translation.Get("IridiumBandTooltip");
+                        entry.Description = $"{Helper.Translation.Get("IridiumBandTooltip")}\n{Game1.content.LoadString("Strings\\UI:ItemHover_DefenseBonus", 1)}";
                         data[IridiumBandNonQualifiedID] = entry;
                     }
 

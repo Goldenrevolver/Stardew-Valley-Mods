@@ -47,7 +47,7 @@
 
         public bool IridiumBandChangesEnabled { get; set; } = true;
 
-        public bool PrecisionBuffsSlingshotDamage { get; set; } = true;
+        //public bool PrecisionBuffsSlingshotDamage { get; set; } = true;
 
         public bool JukeboxRingEnabled { get; set; } = true;
 
@@ -141,7 +141,7 @@
 
             api.AddBoolOption(manifest, () => config.IridiumBandChangesEnabled, (bool val) => config.IridiumBandChangesEnabled = val,
                 () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabled"), () => mod.Helper.Translation.Get("ConfigIridiumBandChangesEnabledDescription"));
-            api.AddBoolOption(manifest, () => config.PrecisionBuffsSlingshotDamage, (bool val) => config.PrecisionBuffsSlingshotDamage = val, () => mod.Helper.Translation.Get("ConfigPrecisionBuffsSlingshotDamage"));
+            //api.AddBoolOption(manifest, () => config.PrecisionBuffsSlingshotDamage, (bool val) => config.PrecisionBuffsSlingshotDamage = val, () => mod.Helper.Translation.Get("ConfigPrecisionBuffsSlingshotDamage"));
 
             api.AddBoolOption(manifest, () => config.JukeboxRingEnabled, (bool val) => config.JukeboxRingEnabled = val, () => mod.Helper.Translation.Get("ConfigJukeboxRing"));
             api.AddBoolOption(manifest, () => config.JukeboxRingWorksInRain, (bool val) => config.JukeboxRingWorksInRain = val, () => mod.Helper.Translation.Get("ConfigJukeboxRingWorksInRain"));
