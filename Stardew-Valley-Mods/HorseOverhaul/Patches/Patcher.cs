@@ -101,7 +101,6 @@
 
                 // use nops instead of removeal in case there are labels (unlikely but more safe)
                 // remove the initial 4 instructions, which correspond to 'if (Game1.player.isRidingHorse()) return;'
-                //instructionList.RemoveRange(0, 4);
                 for (int i = 0; i < 4; i++)
                 {
                     instructionList[i].opcode = OpCodes.Nop;
@@ -110,15 +109,14 @@
                 // the null check is now at the top
 
                 // get the return instruction address
-                // index 2 points to the first Brfalse_S
+                // index 6 points to the first Brfalse_S
                 Label branchDestination = (Label)instructionList[6].operand;
 
                 // insert 'if (this.owner.isRidingHorse()) return;' after the null check
                 instructionList.InsertRange(3, new List<CodeInstruction>()
                 {
                     new CodeInstruction(OpCodes.Ldarg_0),
-                    new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(FarmerSprite), "owner")),
-                    new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(Farmer), nameof(Farmer.isRidingHorse))),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patcher), nameof(Patcher.CheckSpriteOwnerIsRidingHorse))),
                     new CodeInstruction(OpCodes.Brtrue_S, branchDestination)
                 });
 
@@ -129,6 +127,11 @@
                 mod.ErrorLog("There was an exception in a transpiler patch", e);
                 return instructions;
             }
+        }
+
+        public static bool CheckSpriteOwnerIsRidingHorse(FarmerSprite sprite)
+        {
+            return sprite.Owner is Farmer farmer && farmer.isRidingHorse();
         }
 
         public static void PerformDefaultHorseFootstep(Horse __instance, string step_type)

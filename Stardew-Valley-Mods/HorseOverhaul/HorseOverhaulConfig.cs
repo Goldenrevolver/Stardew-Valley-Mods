@@ -28,7 +28,7 @@
 
         public bool MovementSpeed { get; set; } = true;
 
-        public float MaxMovementSpeedBonus { get; set; } = 3f;
+        public float MaxMovementSpeedBonus { get; set; } = 2.5f;
 
         public bool SaddleBag { get; set; } = true;
 
