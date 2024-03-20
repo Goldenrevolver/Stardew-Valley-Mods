@@ -170,7 +170,7 @@ namespace MaritimeSecrets
                 return true;
             }
 
-            if (__instance.QualifiedItemId != "(BC)154" || !(who?.modData?.ContainsKey(wormBinUpgradeKey) == true))
+            if (!(__instance.QualifiedItemId is "(BC)154" or "(BC)DeluxeWormBin") || !(who?.modData?.ContainsKey(wormBinUpgradeKey) == true))
             {
                 return true;
             }
@@ -183,6 +183,7 @@ namespace MaritimeSecrets
 
                     who.currentLocation.playSound("slimeHit");
 
+                    // 8 to 10 (11 is exclusive)
                     var newStackSize = Game1.random.Next(8, 11);
 
                     __instance.heldObject.Value.Stack = newStackSize;
