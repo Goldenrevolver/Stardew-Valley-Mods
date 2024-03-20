@@ -5,6 +5,7 @@ namespace CrabPotQuality
 {
     public static class CrabPotExtension
     {
+        // TODO maybe turn crabpot into permanent trash catcher (bait not consumed)
         public static bool UsesMagnetBait(this CrabPot pot)
         {
             return pot?.bait.Value is not null && pot.bait.Value.QualifiedItemId == "(O)703";
@@ -18,6 +19,16 @@ namespace CrabPotQuality
         public static bool UsesMagicBait(this CrabPot pot)
         {
             return pot?.bait.Value is not null && pot.bait.Value.QualifiedItemId == "(O)908";
+        }
+
+        public static bool UsesChallengeBait(this CrabPot pot)
+        {
+            return pot?.bait.Value is not null && pot.bait.Value.QualifiedItemId == "Challenge Bait";
+        }
+
+        public static bool UsesDeluxeBait(this CrabPot pot)
+        {
+            return pot?.bait.Value is not null && pot.bait.Value.QualifiedItemId == "Deluxe Bait";
         }
 
         public static bool IsMariner(this Farmer farmer)

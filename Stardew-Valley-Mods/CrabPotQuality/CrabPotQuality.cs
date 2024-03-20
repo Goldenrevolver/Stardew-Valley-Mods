@@ -72,8 +72,12 @@
 
             int multiplier = 1;
 
-            // if it is wild bait
-            if (Config.EnableWildBaitEffect && pot.bait.Value != null && pot.UsesWildBait())
+            if (Config.EnableWildBaitEffect && pot.UsesWildBait())
+            {
+                multiplier = 2;
+            }
+
+            if (Config.EnableWildBaitEffect && pot.UsesDeluxeBait())
             {
                 multiplier = 2;
             }

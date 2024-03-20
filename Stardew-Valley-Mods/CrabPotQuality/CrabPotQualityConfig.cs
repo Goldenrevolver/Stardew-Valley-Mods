@@ -24,7 +24,11 @@
 
         public bool EnableWildBaitEffect { get; set; } = true;
 
+        public bool EnableDeluxeBaitEffect { get; set; } = true;
+
         public bool EnableMagicBaitEffect { get; set; } = true;
+
+        public bool EnableChallengerBaitEffect { get; set; } = true;
 
         [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1107:CodeMustNotContainMultipleStatementsOnOneLine", Justification = "Reviewed.")]
         [SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Necessary.")]
@@ -53,7 +57,9 @@
             api.AddSectionTitle(manifest, () => "Bait Effects", null);
 
             api.AddBoolOption(manifest, () => config.EnableWildBaitEffect, (bool val) => config.EnableWildBaitEffect = val, () => "Wild Bait Double Quality Chance", null);
+            api.AddBoolOption(manifest, () => config.EnableDeluxeBaitEffect, (bool val) => config.EnableDeluxeBaitEffect = val, () => "Deluxe Bait Double Quality Chance", null);
             api.AddBoolOption(manifest, () => config.EnableMagicBaitEffect, (bool val) => config.EnableMagicBaitEffect = val, () => "Magic Bait Creates Rainbow Shell", null);
+            api.AddBoolOption(manifest, () => config.EnableChallengerBaitEffect, (bool val) => config.EnableChallengerBaitEffect = val, () => "Challenger Bait Creates Rainbow Shell", null);
         }
     }
 }
