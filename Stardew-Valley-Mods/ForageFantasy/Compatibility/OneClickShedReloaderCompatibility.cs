@@ -17,20 +17,20 @@
             {
                 mod.DebugLog("This mod patches OneClickShedReloader. If you notice issues with OneClickShedReloader, make sure it happens without this mod before reporting it to the OneClickShedReloader page.");
 
-                var handler = AccessTools.TypeByName("BitwiseJonMods.BuildingContentsHandler");
-                var entry = AccessTools.TypeByName("BitwiseJonMods.ModEntry");
+                var handler = AccessTools.TypeByName("BitwiseJonMods.OneClickShedReloader.BuildingContentsHandler");
+                var entry = AccessTools.TypeByName("BitwiseJonMods.OneClickShedReloader.ModEntry");
 
                 harmony.Patch(
                    original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(TryAddItemToPlayerInventory_Pre)));
+                   prefix: new HarmonyMethod(typeof(OneClickShedReloaderCompatibility), nameof(TryAddItemToPlayerInventory_Pre)));
 
                 //harmony.Patch(
                 //   original: AccessTools.Method(handler, "TryAddItemToPlayerInventory"),
-                //   postfix: new HarmonyMethod(typeof(Patcher), nameof(TryAddItemToPlayerInventory_Post)));
+                //   postfix: new HarmonyMethod(typeof(OneClickShedReloaderCompatibility), nameof(TryAddItemToPlayerInventory_Post)));
 
                 harmony.Patch(
                    original: AccessTools.Method(entry, "HarvestAllItemsInBuilding"),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(ReduceQualityAfterHarvest)));
+                   postfix: new HarmonyMethod(typeof(OneClickShedReloaderCompatibility), nameof(ReduceQualityAfterHarvest)));
             }
             catch (Exception e)
             {
@@ -38,7 +38,7 @@
             }
         }
 
-        public static void TryAddItemToPlayerInventory_Pre(ref Farmer player, ref Item item, ref StardewObject container)
+        public static void TryAddItemToPlayerInventory_Pre(Farmer player, Item item, StardewObject container)
         {
             if (mod.Config.MushroomBoxQuality && container.IsMushroomBox())
             {
@@ -46,7 +46,7 @@
             }
         }
 
-        //public static void TryAddItemToPlayerInventory_Post(ref StardewObject container, ref bool __result)
+        //public static void TryAddItemToPlayerInventory_Post(StardewObject container, ref bool __result)
         //{
         //    // I can't reduce the quality of a non successfully harvested box here,
         //    // because it doesn't get called if the method throws an inventoryfull exception
@@ -59,7 +59,7 @@
         //    }
         //}
 
-        public static void ReduceQualityAfterHarvest(ref GameLocation location)
+        public static void ReduceQualityAfterHarvest(GameLocation location)
         {
             // reduce quality of non successfully harvested items and reset in general
             if (!mod.Config.MushroomBoxQuality)
