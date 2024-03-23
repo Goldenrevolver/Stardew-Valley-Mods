@@ -1,6 +1,5 @@
 ﻿namespace HorseOverhaul
 {
-    using HarmonyLib;
     using Microsoft.Xna.Framework;
     using Microsoft.Xna.Framework.Graphics;
     using StardewModdingAPI;
@@ -11,10 +10,10 @@
     using StardewValley.Characters;
     using StardewValley.Objects;
     using System;
-    using System.Buffers;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using static StableOverlayTextures;
 
     public enum SeasonalVersion
     {
@@ -24,19 +23,6 @@
         Magimatica
     }
 
-    public static class ExtensionMethods
-    {
-        public static bool IsTractor(this Horse horse)
-        {
-            return horse?.modData.ContainsKey("Pathoschild.TractorMod") == true || horse?.Name.StartsWith("tractor/") == true;
-        }
-
-        public static bool IsTractorGarage(this Stable stable)
-        {
-            return stable != null && (stable.buildingType.Value == "TractorGarage" || stable.maxOccupants.Value == -794739);
-        }
-    }
-
     public class HorseOverhaul : Mod
     {
         //// the relative stable coordinates
@@ -44,17 +30,9 @@
         //// (tile.x, tile.y), (tile.x+1, tile.y), (tile.x+2, tile.y), (tile.x+3, tile.y)
         //// (tile.x, tile.y+1), (tile.x+1, tile.y+1), (tile.x+2, tile.y+1), (tile.x+3, tile.y+1)
 
-        private readonly List<SButton> mouseButtons = new() { SButton.MouseLeft, SButton.MouseRight, SButton.MouseMiddle, SButton.MouseX1, SButton.MouseX2 };
-
         private readonly PerScreen<List<HorseWrapper>> horses = new(createNewState: () => new List<HorseWrapper>());
 
         private readonly PerScreen<bool> dayJustStarted = new(createNewState: () => false);
-
-        private string gwenOption = "1";
-
-        private bool usingMyTextures = false;
-
-        private SeasonalVersion seasonalVersion = SeasonalVersion.None;
 
         public List<HorseWrapper> Horses { get => horses.Value; }
 
@@ -62,22 +40,71 @@
 
         public HorseOverhaulConfig Config { get; set; }
 
-        public Texture2D CurrentStableTexture
-            => usingMyTextures
-            ? Helper.ModContent.Load<Texture2D>("assets/stable.png")
-            : Helper.GameContent.Load<Texture2D>("Buildings/Stable");
+        internal string GwenOption { get; set; } = "1";
 
-        public Texture2D FilledTroughTexture => FilledTroughOverlay == null ? CurrentStableTexture : MergeTextures(FilledTroughOverlay, CurrentStableTexture);
+        internal SeasonalVersion SeasonalVersion { get; set; }
 
-        public Texture2D EmptyTroughTexture => EmptyTroughOverlay == null ? CurrentStableTexture : MergeTextures(EmptyTroughOverlay, CurrentStableTexture);
+        internal bool UsingMyStableTextures { get; set; }
+
+        private IRawTextureData filledTroughOverlay;
+
+        internal IRawTextureData FilledTroughOverlay
+        {
+            get => filledTroughOverlay; set
+            {
+                filledTroughOverlay = value;
+                filledTroughTexture = null;
+            }
+        }
+
+        private Texture2D filledTroughTexture;
+
+        internal Texture2D FilledTroughTexture
+        {
+            get
+            {
+                if (filledTroughTexture == null)
+                {
+                    filledTroughTexture = FilledTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(FilledTroughOverlay, GetCurrentStableTexture(this));
+                    filledTroughTexture.Name = ModManifest.UniqueID + ".FilledTrough";
+                }
+
+                return filledTroughTexture;
+            }
+        }
+
+        private IRawTextureData emptyTroughOverlay;
+
+        internal IRawTextureData EmptyTroughOverlay
+        {
+            get => emptyTroughOverlay; set
+            {
+                emptyTroughOverlay = value;
+                emptyTroughTexture = null;
+            }
+        }
+
+        private Texture2D emptyTroughTexture;
+
+        internal Texture2D EmptyTroughTexture
+        {
+            get
+            {
+                if (emptyTroughTexture == null)
+                {
+                    emptyTroughTexture = EmptyTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(EmptyTroughOverlay, GetCurrentStableTexture(this));
+                    emptyTroughTexture.Name = ModManifest.UniqueID + ".EmptyTrough";
+                }
+
+                return emptyTroughTexture;
+            }
+        }
 
         public Texture2D SaddleBagOverlay { get; set; }
 
         public bool IsUsingHorsemanship { get; set; } = false;
 
-        private IRawTextureData FilledTroughOverlay { get; set; }
-
-        private IRawTextureData EmptyTroughOverlay { get; set; }
+        private const int maximumSaddleBagPositionsChecked = 10;
 
         public override void Entry(IModHelper helper)
         {
@@ -94,17 +121,19 @@
 
             SoundModule.SetupSounds(this);
 
-            helper.Events.GameLoop.SaveLoaded += delegate { SetOverlays(); };
-
+            helper.Events.GameLoop.SaveLoaded += delegate { OnSaveLoaded(); };
             helper.Events.GameLoop.Saving += delegate { ResetHorses(); };
             helper.Events.GameLoop.DayStarted += delegate { OnDayStarted(); };
             helper.Events.GameLoop.UpdateTicked += delegate { LateDayStarted(); };
-            helper.Events.Display.RenderedWorld += OnRenderedWorld;
+
+            helper.Events.Display.RenderedWorld += delegate { OnRenderedWorld(); };
 
             helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
 
-            helper.Events.Input.ButtonPressed += OnButtonPressed;
-            helper.Events.Input.ButtonsChanged += OnButtonsChanged;
+            helper.Events.Content.AssetReady += InvalidateStableTroughTexture;
+
+            helper.Events.Input.ButtonPressed += (_, e) => ButtonHandling.OnButtonPressed(this, e);
+            helper.Events.Input.ButtonsChanged += (_, e) => ButtonHandling.OnButtonsChanged(this, e);
 
             Patcher.PatchAll(this);
         }
@@ -123,38 +152,13 @@
             Monitor.Log(baseMessage + errorMessage, LogLevel.Error);
         }
 
-        private static Texture2D MergeTextures(IRawTextureData overlay, Texture2D oldTexture)
+        private void InvalidateStableTroughTexture(object sender, AssetReadyEventArgs e)
         {
-            if (overlay == null || oldTexture == null)
+            if (e.NameWithoutLocale.IsEquivalentTo("Buildings/Stable"))
             {
-                return oldTexture;
+                filledTroughTexture = null;
+                emptyTroughTexture = null;
             }
-
-            int count = oldTexture.Width * oldTexture.Height;
-            var newData = overlay.Data;
-
-            var origData = ArrayPool<Color>.Shared.Rent(count);
-            oldTexture.GetData(origData, 0, count);
-
-            if (newData == null || origData == null)
-            {
-                ArrayPool<Color>.Shared.Return(origData);
-                return oldTexture;
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                ref Color newValue = ref newData[i];
-                if (newValue.A != 0)
-                {
-                    origData[i] = newValue;
-                }
-            }
-
-            oldTexture.SetData(origData, 0, count);
-
-            ArrayPool<Color>.Shared.Return(origData);
-            return oldTexture;
         }
 
         // this is legacy code for backwards compatibility, as we now patch GetSpriteWidthForPositioning
@@ -291,7 +295,7 @@
             }
         }
 
-        private void SetOverlays()
+        private void OnSaveLoaded()
         {
             var horseIDs = new List<Guid>();
 
@@ -310,139 +314,13 @@
                 ErrorLog("There appear to exist multiple stables with the same ID (which is supposed to be unique). Is this an old save? This will cause a lot of issues with this mod. I recommend to destroy and rebuild the stables to get new unique IDs.");
             }
 
-            if (Config.SaddleBag && Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
-            {
-                SaddleBagOverlay = Helper.ModContent.Load<Texture2D>($"assets/saddlebags_{Config.VisibleSaddleBags.ToLower()}.png");
-                IsUsingHorsemanship = Helper.ModRegistry.IsLoaded("red.horsemanship");
-            }
+            filledTroughOverlay = null;
+            emptyTroughOverlay = null;
 
-            if (!Config.Water || Config.DisableStableSpriteChanges)
-            {
-                return;
-            }
+            SetOverlays(this);
 
-            seasonalVersion = SeasonalVersion.None;
-
-            usingMyTextures = false;
-
-            FilledTroughOverlay = null;
-
-            if (Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
-            {
-                // seasonal overlays are assigned in LateDayStarted
-                EmptyTroughOverlay = null;
-
-                seasonalVersion = SeasonalVersion.Sonr;
-                return;
-            }
-
-            if (Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))
-            {
-                EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty.png");
-
-                return;
-            }
-
-            if (Helper.ModRegistry.IsLoaded("Elle.SeasonalBuildings"))
-            {
-                var data = Helper.ModRegistry.Get("Elle.SeasonalBuildings");
-
-                var path = data.GetType().GetProperty("DirectoryPath");
-
-                if (path != null && path.GetValue(data) != null)
-                {
-                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "color palette", "stable" }, data.Manifest.Name, false);
-
-                    if (list["stable"].ToLower() != "false")
-                    {
-                        EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/elle/overlay_empty_{list["color palette"]}.png");
-
-                        return;
-                    }
-                }
-            }
-
-            if (Helper.ModRegistry.IsLoaded("Elle.SeasonalVanillaBuildings"))
-            {
-                var data = Helper.ModRegistry.Get("Elle.SeasonalVanillaBuildings");
-
-                var path = data.GetType().GetProperty("DirectoryPath");
-
-                if (path != null && path.GetValue(data) != null)
-                {
-                    var list = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stable" }, data.Manifest.Name, false);
-
-                    if (list["stable"].ToLower() == "true")
-                    {
-                        FilledTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_filled_tone.png");
-                        EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty_tone.png");
-
-                        return;
-                    }
-                }
-            }
-
-            if (Helper.ModRegistry.IsLoaded("Gweniaczek.Medieval_stables"))
-            {
-                IModInfo data = Helper.ModRegistry.Get("Gweniaczek.Medieval_stables");
-
-                var path = data.GetType().GetProperty("DirectoryPath");
-
-                if (path != null && path.GetValue(data) != null)
-                {
-                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "stableOption" }, data.Manifest.Name, false);
-
-                    SetupGwenTextures(dict);
-
-                    return;
-                }
-            }
-
-            if (Helper.ModRegistry.IsLoaded("Gweniaczek.Medieval_buildings"))
-            {
-                var data = Helper.ModRegistry.Get("Gweniaczek.Medieval_buildings");
-
-                var path = data.GetType().GetProperty("DirectoryPath");
-
-                if (path != null && path.GetValue(data) != null)
-                {
-                    var dict = ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "buildingsReplaced", "stableOption" }, data.Manifest.Name, false);
-
-                    if (dict["buildingsReplaced"].Contains("stable"))
-                    {
-                        SetupGwenTextures(dict);
-
-                        return;
-                    }
-                }
-            }
-
-            if (Helper.ModRegistry.IsLoaded("magimatica.SeasonalVanillaBuildings") || Helper.ModRegistry.IsLoaded("red.HudsonValleyBuildings"))
-            {
-                EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty_no_bucket.png");
-
-                seasonalVersion = SeasonalVersion.Magimatica;
-
-                return;
-            }
-
-            // no compatible texture mod found so we will use mine
-            usingMyTextures = true;
-
-            EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/overlay_empty.png");
-        }
-
-        private void SetupGwenTextures(Dictionary<string, string> dict)
-        {
-            if (dict["stableOption"] == "4")
-            {
-                FilledTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{dict["stableOption"]}_full.png");
-            }
-
-            EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{dict["stableOption"]}.png");
-
-            seasonalVersion = SeasonalVersion.Gwen;
-            gwenOption = dict["stableOption"];
+            filledTroughTexture = null;
+            emptyTroughTexture = null;
         }
 
         private IBetterRanchingApi SetupBetterRanching()
@@ -455,7 +333,7 @@
             return null;
         }
 
-        private Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName, bool isNonString)
+        internal Dictionary<string, string> ReadConfigFile(string path, string modFolderPath, string[] options, string modName, bool isNonString)
         {
             string fullPath = Path.Combine(modFolderPath, PathUtilities.NormalizePath(path));
 
@@ -503,19 +381,19 @@
                 return;
             }
 
-            if (seasonalVersion == SeasonalVersion.Sonr)
+            if (SeasonalVersion == SeasonalVersion.Sonr)
             {
                 EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/sonr/overlay_empty_{Game1.currentSeason.ToLower()}.png");
             }
-            else if (seasonalVersion == SeasonalVersion.Gwen)
+            else if (SeasonalVersion == SeasonalVersion.Gwen)
             {
-                if (Game1.IsWinter && Game1.isSnowing)
+                if (Game1.IsWinter && Game1.isSnowing && GwenOption == "1")
                 {
                     EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_1_snow_peta.png");
                 }
                 else
                 {
-                    EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{gwenOption}.png");
+                    EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{GwenOption}.png");
                 }
             }
 
@@ -563,16 +441,21 @@
                     {
                         stable.modData.TryGetValue($"{ModManifest.UniqueID}/stableID", out string modData);
 
-                        if (!string.IsNullOrEmpty(modData))
+                        if (!string.IsNullOrEmpty(modData) && int.TryParse(modData, out int parsedID))
                         {
-                            stableID = int.Parse(modData);
-
+                            stableID = parsedID;
                             saddleBag = GetSaddleBag(() => stable, stableID.Value);
                         }
 
                         if (Config.SaddleBag && saddleBag == null)
                         {
-                            stableID = CreateNewSaddleBag(ref stable, ref saddleBag);
+                            stableID = null;
+
+                            if (TryCreateNewSaddleBag(stable, out var newSaddleBag, out int newStableID))
+                            {
+                                saddleBag = newSaddleBag;
+                                stableID = newStableID;
+                            }
                         }
                     }
 
@@ -589,15 +472,20 @@
 
             if (Context.IsMainPlayer)
             {
-                if (Game1.player.hasPet())
+                Utility.ForEachCharacter(delegate (NPC npc)
                 {
-                    Pet pet = Game1.player.getPet();
+                    if (npc is not Pet pet)
+                    {
+                        return true;
+                    }
 
-                    if (pet?.modData?.ContainsKey($"{ModManifest.UniqueID}/gotFed") == true)
+                    if (pet.modData?.ContainsKey($"{ModManifest.UniqueID}/gotFed") == true)
                     {
                         pet.modData.Remove($"{ModManifest.UniqueID}/gotFed");
                     }
-                }
+
+                    return true;
+                });
             }
             else
             {
@@ -609,44 +497,40 @@
         {
             var horse = stable.getStableHorse();
 
-            if (horse != null && Game1.IsWinter)
+            if (horse == null || !Game1.IsWinter)
             {
-                // this stable skin includes a heater, so we give the player the bonus for free
-                if (seasonalVersion == SeasonalVersion.Magimatica)
+                return;
+            }
+
+            // this stable skin includes a heater, so we give the player the bonus for free
+            if (SeasonalVersion == SeasonalVersion.Magimatica)
+            {
+                var horseW = Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).FirstOrDefault();
+
+                horseW?.AddHeaterBonus();
+
+                return;
+            }
+
+            var farmObjects = location.Objects.Values;
+
+            foreach (var item in farmObjects)
+            {
+                if (item == null || !item.Name.Equals("Heater"))
                 {
-                    HorseWrapper horseW = null;
-                    Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => horseW = h);
-
-                    if (horseW != null)
-                    {
-                        horseW.AddHeaterBonus();
-                    }
-
-                    return;
+                    continue;
                 }
 
-                var farmObjects = location.Objects.Values;
-
-                foreach (var item in farmObjects)
+                // check if the heater is on any tile of the stable or one tile around it
+                if (stable.tileX.Value - 1 <= item.TileLocation.X && item.TileLocation.X <= stable.tileX.Value + 4)
                 {
-                    if (item != null && item.Name.Equals("Heater"))
+                    if (stable.tileY.Value - 1 <= item.TileLocation.Y && item.TileLocation.Y <= stable.tileY.Value + 2)
                     {
-                        // check if the heater is on any tile of the stable or one tile around it
-                        if (stable.tileX.Value - 1 <= item.TileLocation.X && item.TileLocation.X <= stable.tileX.Value + 4)
-                        {
-                            if (stable.tileY.Value - 1 <= item.TileLocation.Y && item.TileLocation.Y <= stable.tileY.Value + 2)
-                            {
-                                HorseWrapper horseW = null;
-                                Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => horseW = h);
+                        var horseW = Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).FirstOrDefault();
 
-                                if (horseW != null)
-                                {
-                                    horseW.AddHeaterBonus();
-                                }
+                        horseW?.AddHeaterBonus();
 
-                                return;
-                            }
-                        }
+                        return;
                     }
                 }
             }
@@ -700,17 +584,20 @@
             return null;
         }
 
-        private int? CreateNewSaddleBag(ref Stable stable, ref Chest saddleBag)
+        private bool TryCreateNewSaddleBag(Stable stable, out Chest saddleBag, out int stableID)
         {
+            saddleBag = null;
+            stableID = -1;
+
             if (!Context.IsMainPlayer)
             {
-                return null;
+                return false;
             }
 
             // find position for the new chest
-            int stableID = -1;
+            stableID = -1;
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < maximumSaddleBagPositionsChecked; i++)
             {
                 if (!Game1.getFarm().Objects.ContainsKey(new Vector2(i, 0)))
                 {
@@ -722,7 +609,7 @@
             if (stableID == -1)
             {
                 ErrorLog("Couldn't find a spot to place the saddle bag chest");
-                return null;
+                return false;
             }
 
             saddleBag = new Chest(true, new Vector2(stableID, 0));
@@ -730,89 +617,10 @@
             saddleBag.modData[$"{ModManifest.UniqueID}/isSaddleBag"] = "true";
             Game1.getFarm().Objects.Add(new Vector2(stableID, 0), saddleBag);
 
-            return stableID;
+            return true;
         }
 
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
-        {
-            if (!Context.IsWorldReady || !Context.IsPlayerFree || Config.DisableMainSaddleBagAndFeedKey)
-            {
-                return;
-            }
-
-            if (e.Button.IsUseToolButton())
-            {
-                ////bool wasController = e.Button.TryGetController(out _);
-                bool ignoreMousePosition = !mouseButtons.Contains(e.Button);
-                Point cursorPosition = Game1.getMousePosition();
-
-                bool interacted = Feeding.CheckHorseInteraction(this, Game1.currentLocation, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
-
-                if (!interacted)
-                {
-                    Feeding.CheckPetInteraction(this, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
-                }
-            }
-        }
-
-        private void OnButtonsChanged(object sender, ButtonsChangedEventArgs e)
-        {
-            if (!Context.IsWorldReady || !Context.IsPlayerFree)
-            {
-                return;
-            }
-
-            // this is done in buttonsChanged instead of buttonPressed as recommended
-            // in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
-            if (Config.HorseMenuKey.JustPressed())
-            {
-                OpenHorseMenu();
-                return;
-            }
-
-            if (Config.PetMenuKey.JustPressed())
-            {
-                OpenPetMenu();
-                return;
-            }
-
-            if (Config.AlternateSaddleBagAndFeedKey.JustPressed())
-            {
-                bool interacted = Feeding.CheckHorseInteraction(this, Game1.currentLocation, 0, 0, true);
-
-                if (!interacted)
-                {
-                    Feeding.CheckPetInteraction(this, 0, 0, true);
-                }
-            }
-        }
-
-        private void OpenHorseMenu()
-        {
-            HorseWrapper horse = null;
-
-            Horses.Where(h => h?.Horse?.getOwner() == Game1.player && h?.Horse?.getName() == Game1.player.horseName.Value).Do(h => horse = h);
-
-            if (horse != null)
-            {
-                Game1.activeClickableMenu = new HorseMenu(this, horse);
-            }
-        }
-
-        private void OpenPetMenu()
-        {
-            if (Game1.player.hasPet())
-            {
-                Pet pet = Game1.player.getPet();
-
-                if (pet != null)
-                {
-                    Game1.activeClickableMenu = new PetMenu(this, pet);
-                }
-            }
-        }
-
-        private void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
+        private void OnRenderedWorld()
         {
             if (Config.Petting && BetterRanchingApi != null && !Game1.eventUp)
             {

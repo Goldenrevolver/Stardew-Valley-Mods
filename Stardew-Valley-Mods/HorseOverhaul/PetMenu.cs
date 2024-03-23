@@ -9,7 +9,7 @@
 
         private readonly HorseOverhaul mod;
 
-        public PetMenu(HorseOverhaul mod, Pet pet) : base(pet.displayName)
+        public PetMenu(HorseOverhaul mod, Pet pet) : base(pet.GetNPCNameForDisplay(mod))
         {
             this.mod = mod;
             this.pet = pet;

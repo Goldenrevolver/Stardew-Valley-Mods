@@ -66,7 +66,7 @@
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Building), nameof(Building.resetTexture)),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture)));
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), nameof(Horse.PerformDefaultHorseFootstep)),
@@ -143,7 +143,7 @@
 
             var rider = __instance.rider;
 
-            if (rider == null || __instance.IsTractor())
+            if (rider?.currentLocation == null || __instance.IsTractor())
             {
                 return;
             }
@@ -161,7 +161,7 @@
                         break;
 
                     case "Grass":
-                        step_type = Game1.GetSeasonForLocation(Game1.currentLocation) == Season.Winter ? "snowyStep" : "grassyStep";
+                        step_type = Game1.GetSeasonForLocation(rider.currentLocation) == Season.Winter ? "snowyStep" : "grassyStep";
                         break;
 
                     case "Wood":
@@ -172,8 +172,8 @@
 
             Vector2 riderTileLocation = rider.Tile;
 
-            if (Game1.currentLocation.terrainFeatures.ContainsKey(riderTileLocation)
-                && Game1.currentLocation.terrainFeatures[riderTileLocation] is Flooring flooring)
+            if (rider.currentLocation.terrainFeatures.TryGetValue(riderTileLocation, out var terrainFeature)
+                && terrainFeature is Flooring flooring)
             {
                 step_type = flooring.getFootstepSound();
             }
@@ -217,20 +217,20 @@
             switch (step_type)
             {
                 case "sandyStep":
-                    Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(128, 2948, 64, 64), 80f, 8, 0, new Vector2(position.X + dustXOffset + (float)Game1.random.Next(-8, 8), position.Y + (float)(Game1.random.Next(-3, -1) * 4)), false, Game1.random.NextDouble() < 0.5, position.Y / 10000f, 0.03f, Color.Khaki * 0.45f, 0.75f + (float)Game1.random.Next(-3, 4) * 0.05f, 0f, 0f, 0f, false));
-                    Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(128, 2948, 64, 64), 80f, 8, 0, new Vector2(position.X + dustXOffset + (float)Game1.random.Next(-4, 4), position.Y + (float)(Game1.random.Next(-3, -1) * 4)), false, Game1.random.NextDouble() < 0.5, position.Y / 10000f, 0.03f, Color.Khaki * 0.45f, 0.55f + (float)Game1.random.Next(-3, 4) * 0.05f, 0f, 0f, 0f, false)
+                    rider.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(128, 2948, 64, 64), 80f, 8, 0, new Vector2(position.X + dustXOffset + (float)Game1.random.Next(-8, 8), position.Y + (float)(Game1.random.Next(-3, -1) * 4)), false, Game1.random.NextDouble() < 0.5, position.Y / 10000f, 0.03f, Color.Khaki * 0.45f, 0.75f + (float)Game1.random.Next(-3, 4) * 0.05f, 0f, 0f, 0f, false));
+                    rider.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("TileSheets\\animations", new Microsoft.Xna.Framework.Rectangle(128, 2948, 64, 64), 80f, 8, 0, new Vector2(position.X + dustXOffset + (float)Game1.random.Next(-4, 4), position.Y + (float)(Game1.random.Next(-3, -1) * 4)), false, Game1.random.NextDouble() < 0.5, position.Y / 10000f, 0.03f, Color.Khaki * 0.45f, 0.55f + (float)Game1.random.Next(-3, 4) * 0.05f, 0f, 0f, 0f, false)
                     {
                         delayBeforeAnimationStart = 20
                     });
                     break;
 
                 case "snowyStep":
-                    Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Microsoft.Xna.Framework.Rectangle(247, 407, 6, 6), 2000f, 1, 10000, new Vector2(position.X + snowXOffset + (float)(Game1.random.Next(-4, 4) * 4), position.Y + 8f + (float)(Game1.random.Next(-4, 4) * 4)), false, false, position.Y / 10000000f, 0.01f, Color.White, 3f + (float)Game1.random.NextDouble(), 0f, isFacingLeftOrRight ? -0.7853982f : 0f, 0f, false));
+                    rider.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Microsoft.Xna.Framework.Rectangle(247, 407, 6, 6), 2000f, 1, 10000, new Vector2(position.X + snowXOffset + (float)(Game1.random.Next(-4, 4) * 4), position.Y + 8f + (float)(Game1.random.Next(-4, 4) * 4)), false, false, position.Y / 10000000f, 0.01f, Color.White, 3f + (float)Game1.random.NextDouble(), 0f, isFacingLeftOrRight ? -0.7853982f : 0f, 0f, false));
 
                     // do two footprints so we have a total of 4 (footstep event gets raised on 3 frames)
                     if (isLastFrame)
                     {
-                        Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Microsoft.Xna.Framework.Rectangle(247, 407, 6, 6), 2000f, 1, 10000, new Vector2(position.X + snowXOffset + (float)(Game1.random.Next(-4, 4) * 4), position.Y + 8f + (float)(Game1.random.Next(-4, 4) * 4)), false, false, position.Y / 10000000f, 0.01f, Color.White, 3f + (float)Game1.random.NextDouble(), 0f, isFacingLeftOrRight ? -0.7853982f : 0f, 0f, false)
+                        rider.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Microsoft.Xna.Framework.Rectangle(247, 407, 6, 6), 2000f, 1, 10000, new Vector2(position.X + snowXOffset + (float)(Game1.random.Next(-4, 4) * 4), position.Y + 8f + (float)(Game1.random.Next(-4, 4) * 4)), false, false, position.Y / 10000000f, 0.01f, Color.White, 3f + (float)Game1.random.NextDouble(), 0f, isFacingLeftOrRight ? -0.7853982f : 0f, 0f, false)
                         {
                             delayBeforeAnimationStart = 20
                         });
@@ -242,7 +242,7 @@
             }
         }
 
-        public static bool PreventSoftlock(ref Character c)
+        public static bool PreventSoftlock(Character c)
         {
             if (c != null && c is Farmer player && player.isRidingHorse())
             {
@@ -260,55 +260,58 @@
             return !__instance?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/isSaddleBag") == true;
         }
 
-        public static bool ResetStableTexture(Building __instance)
+        public static void ResetStableTexture(Building __instance)
         {
-            if (__instance is Stable stable && !stable.IsTractorGarage() && mod.Config.Water && !mod.Config.DisableStableSpriteChanges)
+            if (__instance is not Stable stable || stable.IsTractorGarage() || !mod.Config.Water || mod.Config.DisableStableSpriteChanges)
             {
-                __instance.texture = new Lazy<Texture2D>(
-                    delegate
-                    {
-                        Texture2D val = Game1.content.Load<Texture2D>(__instance.textureName());
+                return;
+            }
 
-                        if (__instance?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/gotWater") == true)
-                        {
-                            if (mod.FilledTroughTexture != null)
-                            {
-                                val = mod.FilledTroughTexture;
-                            }
-                        }
-                        else
-                        {
-                            if (mod.EmptyTroughTexture != null)
-                            {
-                                val = mod.EmptyTroughTexture;
-                            }
-                        }
+            __instance.texture = new Lazy<Texture2D>(CreateUpdatedStableTexture(stable));
+        }
 
-                        if (__instance.paintedTexture != null)
-                        {
-                            __instance.paintedTexture.Dispose();
-                            __instance.paintedTexture = null;
-                        }
+        internal static Texture2D CreateUpdatedStableTexture(Stable stable)
+        {
+            if (stable.paintedTexture != null)
+            {
+                stable.paintedTexture.Dispose();
+                stable.paintedTexture = null;
+            }
 
-                        __instance.paintedTexture = BuildingPainter.Apply(val, __instance.textureName() + "_PaintMask", __instance.netBuildingPaintColor.Value);
+            string text = stable.textureName();
+            Texture2D texture2D;
 
-                        if (__instance.paintedTexture != null)
-                        {
-                            val = __instance.paintedTexture;
-                        }
+            try
+            {
+                texture2D = Game1.content.Load<Texture2D>(text);
+            }
+            catch
+            {
+                return Game1.content.Load<Texture2D>("Buildings\\Error");
+            }
 
-                        return val;
-                    });
+            bool isTroughFull = stable?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/gotWater") == true;
 
-                return false;
+            if (isTroughFull)
+            {
+                texture2D = mod.FilledTroughTexture;
             }
             else
             {
-                return true;
+                texture2D = mod.EmptyTroughTexture;
             }
+
+            stable.paintedTexture = BuildingPainter.Apply(texture2D, text + "_PaintMask", stable.netBuildingPaintColor.Value);
+
+            if (stable.paintedTexture != null)
+            {
+                texture2D = stable.paintedTexture;
+            }
+
+            return texture2D;
         }
 
-        public static void IterateOverSaddles(ref Action<Item> action)
+        public static void IterateOverSaddles(Action<Item> action)
         {
             var farmItems = Game1.getFarm().Objects.Values;
 
@@ -329,7 +332,7 @@
             }
         }
 
-        public static void ChangeHorseMovementSpeed(ref Farmer __instance, ref float __result)
+        public static void ChangeHorseMovementSpeed(Farmer __instance, ref float __result)
         {
             if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence) && !(__instance.hasBuff("19") && Game1.CurrentEvent == null))
             {
@@ -337,8 +340,16 @@
 
                 if (horse != null && !horse.IsTractor() && mod?.Horses != null)
                 {
-                    float addedMovementSpeed = 0f;
-                    mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).Do(h => addedMovementSpeed = h.GetMovementSpeedBonus());
+                    var horseW = mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).FirstOrDefault();
+
+                    if (horseW == null)
+                    {
+                        return;
+                    }
+
+                    mod.DebugLog(__result);
+
+                    float addedMovementSpeed = horseW.GetMovementSpeedBonus();
 
                     if (__instance.movementDirections.Count > 1)
                     {
@@ -350,7 +361,7 @@
             }
         }
 
-        public static void CheckForWaterHit(GameLocation __instance, ref Tool t, ref int tileX, ref int tileY)
+        public static void CheckForWaterHit(GameLocation __instance, Tool t, int tileX, int tileY)
         {
             if (__instance is not Farm)
             {
@@ -386,9 +397,7 @@
                 return true;
             }
 
-            HorseWrapper horseW = null;
-
-            mod.Horses.Where(h => h?.Stable?.HorseId == __instance.HorseId).Do(h => horseW = h);
+            var horseW = mod.Horses.Where(h => h?.Stable?.HorseId == __instance.HorseId).FirstOrDefault();
 
             if (horseW != null && horseW.SaddleBag != null)
             {
@@ -414,23 +423,14 @@
             return true;
         }
 
-        public static bool CheckForPetting(ref Horse __instance, ref bool __result)
+        public static bool CheckForPetting(Horse __instance, ref bool __result)
         {
             if (!mod.Config.Petting || __instance.IsTractor())
             {
                 return true;
             }
 
-            HorseWrapper horseW = null;
-
-            foreach (var item in mod.Horses)
-            {
-                if (item?.Horse?.HorseId == __instance.HorseId)
-                {
-                    horseW = item;
-                    break;
-                }
-            }
+            var horseW = mod.Horses.Where(h => h?.Horse?.HorseId == __instance.HorseId).FirstOrDefault();
 
             if (horseW != null && !horseW.WasPet)
             {

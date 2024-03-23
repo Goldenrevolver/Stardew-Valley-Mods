@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using StardewObject = StardewValley.Object;
 
-    //// TODO ingame horse book OR horse TV? TODO compatibility with butcher mod tv show?
+    // TODO ingame horse book OR horse TV? compatibility with butcher mod tv show?
 
     internal class HorseFoodData : FoodData
     {
@@ -17,6 +17,7 @@
         public const int NormalTreeFruitValue = 14;
         public const int ExoticTreeFruitValue = 16;
         public const int RareFruitValue = 22;
+        public const int NormalFruitValue = 10;
 
         public const int NormalVegetableValue = 10;
         public const int RareVegetableValue = 18;
@@ -110,7 +111,7 @@
             { "(O)597", HorseFoodData.ShouldntID }, // Blue Jazz
 
             // Fruits
-            { "(O)Powdermelon", HorseFoodData.ExoticTreeFruitValue }, // TODO balance
+            { "(O)Powdermelon", HorseFoodData.NormalFruitValue },
             { "(O)88", HorseFoodData.SpecialForageValue }, // Coconut
             { "(O)90", HorseFoodData.SpecialForageValue }, // Cactus Fruit
             { "(O)91", HorseFoodData.ExoticTreeFruitValue }, // Banana
@@ -139,9 +140,9 @@
             { "(O)889", HorseFoodData.DislikeID }, // Qi Fruit
 
             // Vegetables
-            { "(O)Carrot", HorseFoodData.RareVegetableValue }, // TODO balance
-            { "(O)SummerSquash", HorseFoodData.RareVegetableValue }, // TODO balance
-            { "(O)Broccoli", HorseFoodData.RareVegetableValue }, // TODO balance
+            { "(O)Carrot", HorseFoodData.NormalVegetableValue - 2 },
+            { "(O)SummerSquash", HorseFoodData.NormalVegetableValue },
+            { "(O)Broccoli", HorseFoodData.NormalVegetableValue },
             { "(O)24", HorseFoodData.NormalVegetableValue }, // Parsnip
             { "(O)188", HorseFoodData.NormalVegetableValue }, // Green Bean
             { "(O)190", HorseFoodData.CabbageId }, // Cauliflower
@@ -201,15 +202,18 @@
             {
                 // filter out some modded cabbage, onions and peppers
                 // I can't filter out other potatoes because some crops like "sweet potato" are not actually related to potatoes (or yam, even if they are similar)
-                if (itemToFeed?.Name?.ToLower()?.Contains("cabbage") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("cabbage") == true)
+                if (itemToFeed.Name?.ToLower().Contains("cabbage") == true
+                    || itemToFeed.DisplayName?.ToLower().Contains("cabbage") == true)
                 {
                     return new HorseFoodData(0, GetReplyForID(CabbageId));
                 }
-                else if (itemToFeed?.Name?.ToLower()?.Contains("onion") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("onion") == true)
+                else if (itemToFeed.Name?.ToLower().Contains("onion") == true
+                    || itemToFeed.DisplayName?.ToLower().Contains("onion") == true)
                 {
                     return new HorseFoodData(0, GetReplyForID(OnionId));
                 }
-                else if (itemToFeed?.Name?.ToLower()?.Contains("pepper") == true || itemToFeed?.DisplayName?.ToLower()?.Contains("pepper") == true)
+                else if (itemToFeed.Name?.ToLower().Contains("pepper") == true
+                    || itemToFeed.DisplayName?.ToLower().Contains("pepper") == true)
                 {
                     return new HorseFoodData(0, GetReplyForID(NightshadeID));
                 }

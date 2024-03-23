@@ -191,7 +191,7 @@
             return mod.Config.ThinHorse ? 16f : 48f;
         }
 
-        public static bool PreventBaseEmoteDraw(ref Horse __instance, ref bool __state)
+        public static bool PreventBaseEmoteDraw(Horse __instance, ref bool __state)
         {
             if (mod.Config.ThinHorse)
             {
@@ -202,7 +202,7 @@
             return true;
         }
 
-        public static void DrawEmoteAndSaddleBags(ref Horse __instance, ref SpriteBatch b, ref bool __state)
+        public static void DrawEmoteAndSaddleBags(Horse __instance, SpriteBatch b, ref bool __state)
         {
             if (__instance.IsTractor())
             {
@@ -375,7 +375,7 @@
             }
         }
 
-        public static bool DoMountingAnimation(ref Horse __instance)
+        public static bool DoMountingAnimation(Horse __instance)
         {
             Horse horse = __instance;
 
@@ -422,7 +422,7 @@
             return true;
         }
 
-        public static void FixSetMount(ref Farmer __instance, ref Horse mount)
+        public static void FixSetMount(Farmer __instance, Horse mount)
         {
             if (mod.Config.ThinHorse && mount != null)
             {
