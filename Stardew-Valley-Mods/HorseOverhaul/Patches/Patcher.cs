@@ -347,8 +347,6 @@
                         return;
                     }
 
-                    mod.DebugLog(__result);
-
                     float addedMovementSpeed = horseW.GetMovementSpeedBonus();
 
                     if (__instance.movementDirections.Count > 1)
