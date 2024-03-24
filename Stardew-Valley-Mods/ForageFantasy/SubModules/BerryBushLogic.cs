@@ -14,16 +14,6 @@
             return bush != null && !bush.townBush.Value && bush.inBloom() && bush.size.Value != Bush.greenTeaBush && bush.size.Value != Bush.walnutBush;
         }
 
-        //public static void RewardBerryXP(ForageFantasyConfig config, Farmer who)
-        //{
-        //    double chance = config.BerryBushChanceToGetXP / 100.0;
-
-        //    if (config.BerryBushXPAmount > 0 && Game1.random.NextDouble() < chance)
-        //    {
-        //        who.gainExperience(Farmer.foragingSkill, config.BerryBushXPAmount);
-        //    }
-        //}
-
         public static void ChangeBerryQualityAndGiveExp(Bush bush, ForageFantasyConfig config)
         {
             if (!config.BerryBushQuality)

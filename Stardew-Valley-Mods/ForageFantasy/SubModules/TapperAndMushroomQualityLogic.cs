@@ -62,22 +62,6 @@
             }
         }
 
-        //public static void RewardMushroomBoxExp(ForageFantasyConfig config, Farmer player)
-        //{
-        //    if (config.MushroomBoxXPAmount > 0)
-        //    {
-        //        player.gainExperience(Farmer.foragingSkill, config.MushroomBoxXPAmount);
-        //    }
-        //}
-
-        //public static void RewardTapperExp(ForageFantasyConfig config, Farmer player)
-        //{
-        //    if (config.TapperXPAmount > 0)
-        //    {
-        //        player.gainExperience(Farmer.foragingSkill, config.TapperXPAmount);
-        //    }
-        //}
-
         public static int DetermineTapperQuality(ForageFantasyConfig config, Farmer player, Tree tree)
         {
             switch (config.TapperQualityOptions)

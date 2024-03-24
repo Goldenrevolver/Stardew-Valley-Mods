@@ -3,10 +3,8 @@
     using StardewModdingAPI;
     using StardewModdingAPI.Events;
     using StardewValley;
-    using StardewValley.GameData.WildTrees;
     using StardewValley.TerrainFeatures;
     using System;
-    using System.Collections.Generic;
     using System.Linq;
 
     public class ForageFantasy : Mod
@@ -50,6 +48,8 @@
 
             helper.Events.Content.AssetRequested += OnAssetRequested;
 
+            helper.Events.Content.AssetReady += OnAssetReady;
+
             Patcher.PatchAll(this);
         }
 
@@ -57,30 +57,28 @@
         {
             FernAndBurgerLogic.Apply(e, this.Config, this.Helper.Translation);
 
-            TapperAssetChanges.Apply(e, this.Config, this.Helper.Translation);
-
             GrapeLogic.Apply(e, this.Config, this.Helper.Translation);
 
+            TapperAssetChanges.Apply(e, this.Config);
+        }
+
+        private void OnAssetReady(object sender, AssetReadyEventArgs e)
+        {
             if (e.NameWithoutLocale.IsEquivalentTo("Data/WildTrees"))
             {
-                e.Edit((asset) =>
+                if (Tree.TryGetData(Tree.mushroomTree, out var mushroomTreeData))
                 {
-                    IDictionary<string, WildTreeData> data = asset.AsDictionary<string, WildTreeData>().Data;
+                    var defaultTap = mushroomTreeData.TapItems.Where((s) => s.Id == "Default").FirstOrDefault();
 
-                    if (data.TryGetValue(Tree.mushroomTree, out var mushroomTreeData))
+                    if (defaultTap?.Condition != null && defaultTap.Condition.Contains("!LOCATION_SEASON Target Winter"))
                     {
-                        var defaultTap = mushroomTreeData.TapItems.Where((s) => s.Id == "Default").FirstOrDefault();
-
-                        if (defaultTap?.Condition != null && defaultTap.Condition.Contains("!LOCATION_SEASON Target Winter"))
-                        {
-                            MushroomTreeTapperWorksInWinter = false;
-                        }
-                        else
-                        {
-                            MushroomTreeTapperWorksInWinter = !mushroomTreeData.IsStumpDuringWinter;
-                        }
+                        MushroomTreeTapperWorksInWinter = false;
                     }
-                }, AssetEditPriority.Late + (int)AssetEditPriority.Late);
+                    else
+                    {
+                        MushroomTreeTapperWorksInWinter = !mushroomTreeData.IsStumpDuringWinter;
+                    }
+                }
             }
         }
 
@@ -155,26 +153,22 @@
         {
             foreach (var terrainfeature in currentLocation.terrainFeatures.Pairs)
             {
-                if (Game1.currentCursorTile == terrainfeature.Value.Tile)
+                if (Game1.currentCursorTile != terrainfeature.Value.Tile)
                 {
-                    if (terrainfeature.Value is Tree tree)
-                    {
-                        if (tree.growthStage.Value >= 5)
-                        {
-                            Game1.activeClickableMenu = new TreeMenu(this, tree);
-                            return;
-                        }
-                    }
+                    continue;
+                }
 
-                    if (terrainfeature.Value is FruitTree fruittree)
-                    {
-                        // fruit tree ages are negative
-                        if (fruittree.daysUntilMature.Value <= 0)
-                        {
-                            Game1.activeClickableMenu = new TreeMenu(this, fruittree);
-                            return;
-                        }
-                    }
+                if (terrainfeature.Value is Tree tree && tree.growthStage.Value >= 5)
+                {
+                    Game1.activeClickableMenu = new TreeMenu(this, tree);
+                    return;
+                }
+
+                // fruit tree ages are negative
+                if (terrainfeature.Value is FruitTree fruittree && fruittree.daysUntilMature.Value <= 0)
+                {
+                    Game1.activeClickableMenu = new TreeMenu(this, fruittree);
+                    return;
                 }
             }
         }

@@ -37,10 +37,6 @@
                 harmony.Patch(
                    original: AccessTools.Method(berryBush, "GetOutput"),
                    transpiler: new HarmonyMethod(typeof(AutomateCompatibility), nameof(TranspileBushMachineQuality)));
-
-                //harmony.Patch(
-                //   original: AccessTools.Method(berryBush, "GetOutput"),
-                //   postfix: new HarmonyMethod(typeof(AutomateCompatibility), nameof(PatchPostBushMachineXP)));
             }
             catch (Exception e)
             {
@@ -48,7 +44,7 @@
             }
         }
 
-        public static void PatchMushroomBoxMachineOutput(ref object __instance)
+        public static void PatchMushroomBoxMachineOutput(object __instance)
         {
             var machineTypeID = mod.Helper.Reflection.GetProperty<string>(__instance, "MachineTypeID").GetValue();
 
@@ -70,28 +66,18 @@
             // intentionally not using getFarmerMaybeOffline because that is a waste
             var who = Game1.getFarmer(mushroomBox.owner.Value) ?? Game1.MasterPlayer;
 
-            //if (mod.Config.AutomationHarvestsGrantXP)
-            //{
-            //    TapperAndMushroomQualityLogic.RewardMushroomBoxExp(mod.Config, who);
-            //}
-
             if (mod.Config.MushroomBoxQuality)
             {
                 mushroomBox.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
             }
         }
 
-        public static void PatchTapperMachineOutput(ref object __instance)
+        public static void PatchTapperMachineOutput(object __instance)
         {
             var tapper = mod.Helper.Reflection.GetProperty<StardewObject>(__instance, "Machine").GetValue();
 
             // intentionally not using getFarmerMaybeOffline because that is a waste
             var who = Game1.getFarmer(tapper.owner.Value) ?? Game1.MasterPlayer;
-
-            //if (mod.Config.AutomationHarvestsGrantXP)
-            //{
-            //    TapperAndMushroomQualityLogic.RewardTapperExp(mod.Config, who);
-            //}
 
             // if tapper quality feature is disabled
             if (mod.Config.TapperQualityOptions <= 0 || mod.Config.TapperQualityOptions > 4)
@@ -160,18 +146,5 @@
                 return instructions;
             }
         }
-
-        //public static void PatchPostBushMachineXP(ref object __instance)
-        //{
-        //    if (mod.Config.AutomationHarvestsGrantXP)
-        //    {
-        //        var bush = mod.Helper.Reflection.GetProperty<Bush>(__instance, "Machine").GetValue();
-
-        //        if (bush.size.Value != Bush.greenTeaBush && bush.size.Value != Bush.walnutBush)
-        //        {
-        //            BerryBushLogic.RewardBerryXP(mod.Config, Game1.MasterPlayer);
-        //        }
-        //    }
-        //}
     }
 }

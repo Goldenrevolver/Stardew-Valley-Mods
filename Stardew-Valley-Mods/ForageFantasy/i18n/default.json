@@ -84,7 +84,7 @@
   "ConfigWildAndFineGrapes": "Wild And Fine Grapes",
   "ConfigWildAndFineGrapesDescription": "Renames base game 'Grapes' to 'Wild Grapes', adds more valuable non-forage 'Fine Grapes' and makes the 'Grape Starter' produce 'Fine Grapes'.",
   "ConfigMushroomTapperCalendar": "Mushroom Tapper Calendar",
-  "ConfigMushroomTapperCalendarDescription": "Displays mushroom icons for recommended harvesting days on the billboard (When not using 'MushroomTreeTapperConsistentDaysNeeded', not harvesting the red mushroom on Summer 24 until Fall 1 is optimal).",
+  "ConfigMushroomTapperCalendarDescription": "Displays mushroom icons for recommended harvesting days on the billboard (When not using 'MushroomTreeTappersConsistentDaysNeeded', not harvesting the red mushroom on Summer 24 until Fall 1 is optimal).",
   "ConfigTreeMenuKey": "Tree Menu Key",
   "ConfigTreeMenuKeyDescription": "When pressed while hovering over a tree, opens a menu to see a bit of information about it, like its age."
 }

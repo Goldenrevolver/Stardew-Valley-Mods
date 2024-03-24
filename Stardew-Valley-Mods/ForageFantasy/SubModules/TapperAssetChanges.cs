@@ -14,11 +14,11 @@
     {
         private static readonly HashSet<string> tappers = new();
 
-        internal static void Apply(AssetRequestedEventArgs e, ForageFantasyConfig config, ITranslationHelper translation)
+        internal static void Apply(AssetRequestedEventArgs e, ForageFantasyConfig config)
         {
             if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))
             {
-                e.Edit((asset) => CheckForTappers(asset, config), AssetEditPriority.Late);
+                e.Edit((asset) => CheckForTappers(asset), AssetEditPriority.Late + 1);
             }
 
             if (e.NameWithoutLocale.IsEquivalentTo("Data/Machines"))
@@ -42,7 +42,7 @@
             }
         }
 
-        private static void CheckForTappers(IAssetData asset, ForageFantasyConfig config)
+        private static void CheckForTappers(IAssetData asset)
         {
             IDictionary<string, BigCraftableData> data = asset.AsDictionary<string, BigCraftableData>().Data;
 

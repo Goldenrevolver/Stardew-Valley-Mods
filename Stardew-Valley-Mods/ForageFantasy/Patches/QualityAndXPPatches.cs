@@ -20,10 +20,6 @@
                original: AccessTools.Method(typeof(StardewObject), "CheckForActionOnMachine"),
                prefix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(PatchTapperAndMushroomBoxQuality)));
 
-            //harmony.Patch(
-            //   original: AccessTools.Method(typeof(StardewObject), "CheckForActionOnMachine"),
-            //   postfix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(GiveTapperAndMushroomBoxXP)));
-
             harmony.Patch(
                original: AccessTools.Method(typeof(Bush), nameof(Bush.shake)),
                prefix: new HarmonyMethod(typeof(QualityAndXPPatches), nameof(DetectHarvestableBerryBush)));
@@ -77,7 +73,7 @@
             }
         }
 
-        public static void GiveXPForAxedTwig(GameLocation location, int x, int y, Farmer who, ref bool __state)
+        public static void GiveXPForAxedTwig(GameLocation location, int x, int y, Farmer who, bool __state)
         {
             if (config.TwigDebrisXPAmount <= 0)
             {
@@ -94,31 +90,8 @@
             }
         }
 
-        //public static void GiveTapperAndMushroomBoxXP(ref StardewObject __instance, ref Farmer who, ref bool justCheckingForActivity, ref bool __state, ref bool __result)
-        //{
-        //    if (justCheckingForActivity || !__result)
-        //    {
-        //        return;
-        //    }
-
-        //    if (__state && !__instance.readyForHarvest.Value)
-        //    {
-        //        if (__instance.IsTapper())
-        //        {
-        //            TapperAndMushroomQualityLogic.RewardTapperExp(config, who);
-        //        }
-
-        //        if (__instance.IsMushroomBox())
-        //        {
-        //            TapperAndMushroomQualityLogic.RewardMushroomBoxExp(config, who);
-        //        }
-        //    }
-        //}
-
-        public static void PatchTapperAndMushroomBoxQuality(ref StardewObject __instance, ref Farmer who, ref bool justCheckingForActivity, ref bool __state)
+        public static void PatchTapperAndMushroomBoxQuality(StardewObject __instance, Farmer who, bool justCheckingForActivity)
         {
-            __state = false;
-
             if (justCheckingForActivity)
             {
                 return;
@@ -128,18 +101,14 @@
             {
                 if (__instance.IsTapper())
                 {
-                    // for XP after successful harvest
-                    __state = true;
-
                     // if tapper quality feature is disabled
                     if (config.TapperQualityOptions <= 0 || config.TapperQualityOptions > 4)
                     {
                         return;
                     }
 
-                    who.currentLocation.terrainFeatures.TryGetValue(__instance.TileLocation, out TerrainFeature terrain);
-
-                    if (terrain is Tree tree)
+                    if (who.currentLocation.terrainFeatures.TryGetValue(__instance.TileLocation, out var terrainFeature)
+                        && terrainFeature is Tree tree)
                     {
                         __instance.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(config, who, tree);
                     }
@@ -149,9 +118,6 @@
 
                 if (__instance.IsMushroomBox())
                 {
-                    // for XP after successful harvest
-                    __state = true;
-
                     if (config.MushroomBoxQuality)
                     {
                         __instance.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
@@ -163,16 +129,16 @@
         // set to high so it hopefully catches that the tileSheetOffset before some other mod wants to harvest this bush in prepatch
         // if other mods also define a __state variable of type bool they will have different values (aka harmony does not make us fight over the __state variable)
         [HarmonyPriority(Priority.High)]
-        public static void DetectHarvestableBerryBush(ref Bush __instance, ref bool __state)
+        public static void DetectHarvestableBerryBush(Bush __instance, ref bool __state)
         {
             // tileSheetOffset == 1 means it currently has berries to harvest
             __state = BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset.Value == 1;
         }
 
         // config calls are in ChangeBerryQualityAndGiveExp
-        public static void FixBerryQuality(ref Bush __instance, ref bool __state, float ___maxShake)
+        public static void FixBerryQuality(Bush __instance, bool __state, float ___maxShake)
         {
-            // __state && tileSheetOffset == 0 means the bush was harvested between prepatch and this
+            // '__state && tileSheetOffset == 0' means the bush was harvested between prepatch and this
             if (__state && BerryBushLogic.IsHarvestableBush(__instance) && __instance.tileSheetOffset.Value == 0)
             {
                 if (___maxShake == (float)Math.PI / 128f)

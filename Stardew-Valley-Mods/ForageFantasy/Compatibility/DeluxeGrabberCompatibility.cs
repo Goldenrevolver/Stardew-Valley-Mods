@@ -29,14 +29,12 @@
             }
 
             // if neither is on, we can skip adding our overwrite for better compatibility with other mods
-            //if ((mod.Config.AutomationHarvestsGrantXP && mod.Config.BerryBushXPAmount > 0 && mod.Config.BerryBushChanceToGetXP > 0) ||
             if (mod.Config.BerryBushQuality)
             {
                 api.GetBerryBushHarvest += ChangeBerryBushHarvest;
             }
 
             // if neither is on, we can skip adding our overwrite for better compatibility with other mods
-            //if ((mod.Config.AutomationHarvestsGrantXP && mod.Config.MushroomBoxXPAmount > 0) ||
             if (mod.Config.MushroomBoxQuality)
             {
                 api.GetMushroomHarvest += ChangeMushroomHarvest;
@@ -51,13 +49,6 @@
             }
 
             int expAmount = 0;
-
-            //double chance = mod.Config.BerryBushChanceToGetXP / 100.0;
-
-            //if (mod.Config.AutomationHarvestsGrantXP && Game1.random.NextDouble() < chance)
-            //{
-            //    expAmount = mod.Config.BerryBushXPAmount;
-            //}
 
             if (mod.Config.BerryBushQuality)
             {
@@ -79,8 +70,6 @@
             }
 
             int expAmount = 0;
-
-            //expAmount = mod.Config.AutomationHarvestsGrantXP ? mod.Config.MushroomBoxXPAmount : 0;
 
             item.Quality = mod.Config.MushroomBoxQuality ? ForageFantasy.DetermineForageQuality(Game1.MasterPlayer) : StardewObject.lowQuality;
 

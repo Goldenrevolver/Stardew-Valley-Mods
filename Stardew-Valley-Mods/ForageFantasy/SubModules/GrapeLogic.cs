@@ -14,7 +14,6 @@
         private const string grapeStarterNonQID = "301";
 
         public static readonly string fineGrapeNonQID = $"{ForageFantasy.Manifest?.UniqueID}.FineGrape";
-        //public static readonly string fineGrapeQualifiedID = $"(O){fineGrapeNonQID}";
 
         internal static void Apply(AssetRequestedEventArgs e, ForageFantasyConfig config, ITranslationHelper translation)
         {
