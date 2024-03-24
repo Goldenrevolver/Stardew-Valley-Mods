@@ -21,12 +21,12 @@ namespace HorseOverhaul
 
         public static bool IsTractor(this Horse horse)
         {
-            return horse != null && (horse.modData.ContainsKey("Pathoschild.TractorMod") || horse.Name.StartsWith("tractor/"));
+            return horse != null && horse.modData.ContainsKey("Pathoschild.TractorMod");
         }
 
         public static bool IsTractorGarage(this Stable stable)
         {
-            return stable != null && (stable.buildingType.Value == "TractorGarage" || stable.maxOccupants.Value == -794739);
+            return stable != null && stable.buildingType.Value == "Pathoschild.TractorMod_Stable";
         }
 
         internal static bool MouseOrPlayerIsInRange(this Character chara, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)
