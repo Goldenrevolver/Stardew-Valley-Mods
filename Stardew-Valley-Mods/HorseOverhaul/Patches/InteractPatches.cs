@@ -100,7 +100,7 @@
                     }
                 }
 
-                // checking foundTerrainFeature before foundSpawnedObject is import, because we insert into the list
+                // checking foundTerrainFeature before foundSpawnedObject is important, because we insert into the list
 
                 if (foundTerrainFeature > 0)
                 {
@@ -167,7 +167,7 @@
 
             bool yes = mod.Config.InteractWithForageWhileRiding && obj.IsSpawnedObject && obj.isForage();
             bool yes2 = mod.Config.InteractWithTappersWhileRiding && obj.IsTapper();
-            // '|=' is 'x = x | y' which still calculates y
+            // '|=' is 'x = x | y', so if yes2 is true it still calculates y
             yes2 = yes2 || (mod.Config.InteractWithMushroomLogsAndBoxesWhileRiding && IsMushroomLogOrBox(obj));
 
             bool allowForage = !no && !no2 && yes;

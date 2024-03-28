@@ -5,11 +5,11 @@
 		So if you don't want to translate the gmcm config menu, you don't have to.
 		\n means insert a line break (you can see I use line breaks in the gmcm config menu because it doesn't do that automatically).
   */
-  "IridiumBandTooltip": "Increases every weapon stat by 10%.",
-  "ExplorerRingName": "Explorer Ring",
-  "BerserkerRingName": "Berserker Ring",
-  "PaladinRingName": "Paladin Ring",
-  "GemBandName": "Gem Band", // this one is used when you combined the gem rings at the forge for some reason, instead of crafting an iridium band, so it's almost never seen
+  "IridiumBandTooltip": "Erhöht jeden Waffenwert um 10%.",
+  "ExplorerRingName": "Entdecker-Ring",
+  "BerserkerRingName": "Berserker-Ring",
+  "PaladinRingName": "Paladin-Ring",
+  "GemBandName": "Edelsteinband", // this one is used when you combined the gem rings at the forge for some reason, instead of crafting an iridium band, so it's almost never seen
   "ConfigCraftableGemRings": "Craftable Gem Rings",
   "ConfigCraftableGemRingsMetalBar": "Required Metal Bar",
   "ConfigCraftableGemRingsProgressive": "Progressive",

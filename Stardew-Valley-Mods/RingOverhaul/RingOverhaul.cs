@@ -163,8 +163,8 @@
 
                     if (Config.MinorRingCraftingChanges)
                     {
-                        recipeChanges["Sturdy Ring"] = new Tuple<string, string>("334 2 86 5 338 5", "Combat 1");
-                        recipeChanges["Warrior Ring"] = new Tuple<string, string>("335 5 382 25 84 10", "Combat 4");
+                        recipeChanges["Sturdy Ring"] = new Tuple<string, string>("334 1 86 2 338 1", "Combat 1");
+                        recipeChanges["Warrior Ring"] = new Tuple<string, string>("335 1 382 10 84 5", "Combat 4");
                     }
 
                     foreach (var item in recipeChanges)

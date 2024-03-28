@@ -26,7 +26,6 @@ namespace RingOverhaul
 
         public static readonly string JukeBoxRingTrackKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingTrackKey";
         public static readonly string JukeBoxRingHasAddedKey = $"{mod?.ModManifest?.UniqueID}JukeBoxRingHasAddedKey";
-        //public static readonly string PrecisionSlingshotBuffKey = $"{mod?.ModManifest?.UniqueID}.PrecisionSlingshotDamage";
 
         private static readonly List<string> explorerIds = new() { "(O)520", "(O)859", "(O)888", "(O)528" }; // 516, 517, 518, 519,
         private static readonly List<string> berserkerIds = new() { "(O)521", "(O)522", "(O)523", "(O)526", "(O)811", "(O)860", "(O)862" };
@@ -55,14 +54,6 @@ namespace RingOverhaul
                 harmony.Patch(
                     original: AccessTools.Method(typeof(CombinedRing), nameof(CombinedRing.drawInMenu), new Type[] { typeof(SpriteBatch), typeof(Vector2), typeof(float), typeof(float), typeof(float), typeof(StackDrawType), typeof(Color), typeof(bool) }),
                     prefix: new HarmonyMethod(typeof(Patcher), nameof(DrawInMenu_Prefix)));
-
-                //harmony.Patch(
-                //    original: AccessTools.Method(typeof(Slingshot), nameof(Slingshot.PerformFire)),
-                //    prefix: new HarmonyMethod(typeof(Patcher), nameof(PerformFire_Pre)));
-
-                //harmony.Patch(
-                //    original: AccessTools.Method(typeof(Slingshot), nameof(Slingshot.PerformFire)),
-                //    postfix: new HarmonyMethod(typeof(Patcher), nameof(PerformFire_Post)));
 
                 harmony.Patch(
                     original: AccessTools.Method(typeof(Ring), nameof(Ring.AddEquipmentEffects)),
@@ -351,38 +342,6 @@ namespace RingOverhaul
             return true; // run original logic
         }
 
-        //public static void PerformFire_Pre(Farmer who)
-        //{
-        //    if (!mod.Config.PrecisionBuffsSlingshotDamage)
-        //    {
-        //        return;
-        //    }
-
-        //    var precisionSlingShotBuff = new Buff(
-        //        id: PrecisionSlingshotBuffKey,
-        //        duration: Buff.ENDLESS,
-        //        effects: new BuffEffects()
-        //        {
-        //            AttackMultiplier = { who.buffs.WeaponPrecisionMultiplier }
-        //        }
-        //    )
-        //    {
-        //        visible = false
-        //    };
-
-        //    who.applyBuff(precisionSlingShotBuff);
-        //}
-
-        //public static void PerformFire_Post(Farmer who)
-        //{
-        //    if (!mod.Config.PrecisionBuffsSlingshotDamage)
-        //    {
-        //        return;
-        //    }
-
-        //    who.buffs.Remove(PrecisionSlingshotBuffKey);
-        //}
-
         public static void AddEquipmentEffects_Post(Ring __instance, ref BuffEffects effects)
         {
             if (!mod.Config.IridiumBandChangesEnabled)
@@ -395,7 +354,6 @@ namespace RingOverhaul
                 effects.Defense.Value += 1f;
                 //effects.AttackMultiplier.Value += 0.1f; // base is still called, so we don't need to add this
                 effects.KnockbackMultiplier.Value += 0.1f;
-                //effects.WeaponPrecisionMultiplier.Value += 0.1f;
                 effects.CriticalChanceMultiplier.Value += 0.1f;
                 effects.CriticalPowerMultiplier.Value += 0.1f;
                 effects.WeaponSpeedMultiplier.Value += 0.1f;
