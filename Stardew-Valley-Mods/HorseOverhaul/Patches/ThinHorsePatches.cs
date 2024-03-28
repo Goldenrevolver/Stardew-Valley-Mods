@@ -2,12 +2,12 @@
 {
     using HarmonyLib;
     using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
     using StardewValley;
     using StardewValley.Characters;
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Reflection.Emit;
 
     internal class ThinHorsePatches
@@ -19,146 +19,48 @@
             mod = horseOverhaul;
 
             harmony.Patch(
-               original: AccessTools.Method(typeof(Character), nameof(Character.GetSpriteWidthForPositioning)),
-               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(SetOneTileWide)));
-
-            harmony.Patch(
-               original: AccessTools.Method(typeof(Farmer), nameof(Farmer.showRiding)),
-               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixRidingPosition)));
-
-            harmony.Patch(
-               original: AccessTools.Method(typeof(Horse), nameof(Horse.squeezeForGate)),
-               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(DoNothing)));
-
-            harmony.Patch(
-               original: AccessTools.Method(typeof(Horse), nameof(Horse.draw), new Type[] { typeof(SpriteBatch) }),
-               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(PreventBaseEmoteDraw)));
-
-            harmony.Patch(
-               original: AccessTools.Method(typeof(Horse), nameof(Horse.draw), new Type[] { typeof(SpriteBatch) }),
-               postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(DrawEmoteAndSaddleBags)));
-
-            harmony.Patch(
-               original: AccessTools.Method(typeof(Horse), nameof(Horse.draw), new Type[] { typeof(SpriteBatch) }),
-               transpiler: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixHeadAndHatPosition)));
+                original: AccessTools.Method(typeof(Horse), nameof(Horse.GetBoundingBox)),
+                postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(OverrideBoundingBox)));
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Horse), nameof(Horse.update), new Type[] { typeof(GameTime), typeof(GameLocation) }),
-               prefix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(DoMountingAnimation)));
+               transpiler: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixMountingAnimation)));
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Farmer), "setMount"),
-               postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixSetMount)));
+               postfix: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixMountPosition)));
+
+            harmony.Patch(
+               original: AccessTools.Method(typeof(Horse), nameof(Horse.checkAction)),
+               transpiler: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixDismountingPosition)));
+
+            harmony.Patch(
+               original: AccessTools.Method(typeof(Horse), nameof(Horse.update), new Type[] { typeof(GameTime), typeof(GameLocation) }),
+               transpiler: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixDismountingPosition)));
         }
 
-        // transpiler checked for 1.6
-        public static IEnumerable<CodeInstruction> FixHeadAndHatPosition(IEnumerable<CodeInstruction> instructions)
+        // transpiler checked for 1.6.3:
+        //    IL_00b4: ldc.r4 64
+        //    IL_00b9: mul
+        //    IL_00ba: ldc.r4 32
+        //    IL_00bf: add
+        public static IEnumerable<CodeInstruction> FixDismountingPosition(IEnumerable<CodeInstruction> instructions)
         {
             try
             {
                 var instructionsList = instructions.ToList();
 
-                bool foundHead = false;
-                bool foundHat = false;
-
-                bool foundFirstMunch = false;
-                bool foundSecondMunch = false;
-
-                for (int i = 0; i < instructionsList.Count; i++)
+                for (int i = 0; i < instructionsList.Count - 4; i++)
                 {
-                    if (!foundHead)
+                    if (instructionsList[i].opcode == OpCodes.Ldc_R4
+                       && OperandIsAbout((float)instructionsList[i].operand, 64f)
+                       && instructionsList[i + 1].opcode == OpCodes.Mul
+                       && instructionsList[i + 2].opcode == OpCodes.Ldc_R4
+                       && OperandIsAbout((float)instructionsList[i + 2].operand, 32f)
+                       && instructionsList[i + 3].opcode == OpCodes.Add)
                     {
-                        // exact 48f check does not work reliably
-                        if (instructionsList[i].opcode == OpCodes.Ldc_R4
-                            && (float)instructionsList[i].operand >= 47.9f
-                            && (float)instructionsList[i].operand <= 48.1f)
-                        {
-                            var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPosition));
-                            var oldLables = instructionsList[i].labels;
-                            instructionsList[i] = new CodeInstruction(OpCodes.Call, info)
-                            {
-                                labels = oldLables
-                            };
-
-                            foundHead = true;
-                        }
-                    }
-
-                    // TODO clean this all up later
-                    if (!foundFirstMunch || !foundSecondMunch)
-                    {
-                        if (instructionsList[i].opcode == OpCodes.Ldfld
-                            && instructionsList[i].operand != null
-                            && instructionsList[i].operand.ToString().ToLower().Contains("munchingcarrottimer"))
-                        {
-                            if (!foundFirstMunch)
-                            {
-                                foundFirstMunch = true;
-                            }
-                            else if (!foundSecondMunch)
-                            {
-                                foundSecondMunch = true;
-                            }
-
-                            for (int j = i; j < instructionsList.Count; j++)
-                            {
-                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
-                                    && (float)instructionsList[j].operand >= 23.9f
-                                    && (float)instructionsList[j].operand <= 24.1f)
-                                {
-                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchOne));
-                                    var oldLables = instructionsList[j].labels;
-                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
-                                    {
-                                        labels = oldLables
-                                    };
-                                }
-
-                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
-                                    && (float)instructionsList[j].operand >= 79.9f
-                                    && (float)instructionsList[j].operand <= 80.1f)
-                                {
-                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchTwo));
-                                    var oldLables = instructionsList[j].labels;
-                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
-                                    {
-                                        labels = oldLables
-                                    };
-                                }
-
-                                if (instructionsList[j].opcode == OpCodes.Ldc_R4
-                                    && (float)instructionsList[j].operand >= -16.1f
-                                    && (float)instructionsList[j].operand <= -15.9f)
-                                {
-                                    var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHorseHeadXPositionMunchThree));
-                                    var oldLables = instructionsList[j].labels;
-                                    instructionsList[j] = new CodeInstruction(OpCodes.Call, info)
-                                    {
-                                        labels = oldLables
-                                    };
-                                }
-                            }
-                        }
-                    }
-
-                    if (!foundHat)
-                    {
-                        if (i + 2 < instructionsList.Count
-                            && instructionsList[i].opcode == OpCodes.Call
-                            && instructionsList[i].operand != null
-                            && instructionsList[i].operand.ToString().ToLower().Contains("get_zero")
-                            && instructionsList[i + 1].opcode == OpCodes.Stloc_1
-                            && instructionsList[i + 2].opcode == OpCodes.Ldarg_0)
-                        {
-                            var info = typeof(ThinHorsePatches).GetMethod(nameof(GetHatVector));
-                            var oldLables = instructionsList[i].labels;
-                            instructionsList[i] = new CodeInstruction(OpCodes.Call, info)
-                            {
-                                labels = oldLables
-                            };
-
-                            foundHat = true;
-                        }
+                        instructionsList[i + 2].opcode = OpCodes.Call;
+                        instructionsList[i + 2].operand = typeof(ThinHorsePatches).GetMethod(nameof(GetDismountingXOffset));
                     }
                 }
 
@@ -171,275 +73,91 @@
             }
         }
 
-        public static float GetHorseHeadXPositionMunchOne()
+        public static float GetDismountingXOffset()
         {
-            return mod.Config.ThinHorse ? -8f : 24f;
+            return mod.Config.ThinHorse ? 16f : 32f;
         }
 
-        public static float GetHorseHeadXPositionMunchTwo()
+        private static bool OperandIsAbout(float operand, float value)
         {
-            return mod.Config.ThinHorse ? 52f : 80f;
+            return operand >= (value - 0.1f) && operand <= (value + 0.1f);
         }
 
-        public static float GetHorseHeadXPositionMunchThree()
-        {
-            return mod.Config.ThinHorse ? -48f : -16f;
-        }
-
-        public static float GetHorseHeadXPosition()
-        {
-            return mod.Config.ThinHorse ? 16f : 48f;
-        }
-
-        public static bool PreventBaseEmoteDraw(Horse __instance, ref bool __state)
-        {
-            if (mod.Config.ThinHorse)
-            {
-                __state = __instance.IsEmoting;
-                __instance.IsEmoting = false;
-            }
-
-            return true;
-        }
-
-        public static void DrawEmoteAndSaddleBags(Horse __instance, SpriteBatch b, ref bool __state)
-        {
-            if (__instance.IsTractor())
-            {
-                return;
-            }
-
-            Horse horse = __instance;
-
-            if (mod.Config.SaddleBag && mod.Config.VisibleSaddleBags != SaddleBagOption.Disabled.ToString())
-            {
-                float yOffset = -80f;
-                float xOffset = mod.Config.ThinHorse ? -32f : 0f;
-
-                // all player sprites being off by 1 is really obvious if using horsemanship and facing north
-                if (horse.FacingDirection == Game1.up && mod.IsUsingHorsemanship && mod.Config.ThinHorse)
-                {
-                    xOffset += 1;
-                }
-
-                // draw one layer above the usual sprite of the horse so there is no z-fighting
-                float layer = horse.StandingPixel.Y + 1;
-
-                // draw on top of the player instead of below them, uses the same value as the head of the horse
-                if (horse.FacingDirection == Game1.up && horse.rider != null)
-                {
-                    layer = horse.Position.Y + 64f;
-                }
-
-                bool shouldFlip = horse.Sprite.CurrentAnimation != null && horse.Sprite.CurrentAnimation[horse.Sprite.currentAnimationIndex].flip;
-
-                if (horse.FacingDirection == Game1.left)
-                {
-                    shouldFlip = true;
-                }
-
-                if (mod.SaddleBagOverlay != null)
-                {
-                    b.Draw(mod.SaddleBagOverlay, horse.getLocalPosition(Game1.viewport) + new Vector2(xOffset, yOffset), horse.Sprite.SourceRect, Color.White, 0f, Vector2.Zero, 4f, shouldFlip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, layer / 10000f);
-                }
-            }
-
-            if (!mod.Config.ThinHorse)
-            {
-                return;
-            }
-
-            __instance.IsEmoting = __state;
-
-            if (horse.IsEmoting)
-            {
-                Vector2 emotePosition = horse.getLocalPosition(Game1.viewport);
-
-                emotePosition.Y -= 96f;
-
-                switch (horse.FacingDirection)
-                {
-                    case Game1.up:
-                        emotePosition.Y -= 40f;
-                        break;
-
-                    case Game1.right:
-                        emotePosition.X += 40f;
-                        emotePosition.Y -= 30f;
-                        break;
-
-                    case Game1.down:
-                        emotePosition.Y += 5f;
-                        break;
-
-                    case Game1.left:
-                        emotePosition.X -= 40f;
-                        emotePosition.Y -= 30f;
-                        break;
-
-                    default:
-                        break;
-                }
-
-                b.Draw(Game1.emoteSpriteSheet, emotePosition, new Microsoft.Xna.Framework.Rectangle?(new Microsoft.Xna.Framework.Rectangle((horse.CurrentEmoteIndex * 16) % Game1.emoteSpriteSheet.Width, horse.CurrentEmoteIndex * 16 / Game1.emoteSpriteSheet.Width * 16, 16, 16)), Color.White, 0f, Vector2.Zero, 4f, SpriteEffects.None, horse.StandingPixel.Y / 10000f);
-            }
-        }
-
-        public static bool DoNothing()
-        {
-            return !mod.Config.ThinHorse;
-        }
-
-        public static bool SetOneTileWide(Character __instance, ref int __result)
-        {
-            if (mod.Config.ThinHorse && __instance is Horse)
-            {
-                __result = 16;
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        public static bool FixRidingPosition(Farmer __instance)
-        {
-            if (!mod.Config.ThinHorse)
-            {
-                return true;
-            }
-
-            if (!__instance.isRidingHorse())
-            {
-                return false;
-            }
-
-            switch (__instance.FacingDirection)
-            {
-                case Game1.up:
-                    __instance.FarmerSprite.setCurrentSingleFrame(113, 32000, false, false);
-                    __instance.xOffset = 4f; // old: -6f, diff: +10
-                    break;
-
-                case Game1.right:
-                    __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, false);
-                    __instance.xOffset = 7f; // old: -3f, diff: +10
-                    break;
-
-                case Game1.down:
-                    __instance.FarmerSprite.setCurrentSingleFrame(107, 32000, false, false);
-                    __instance.xOffset = 4f; // old: -6f, diff: +10
-                    break;
-
-                case Game1.left:
-                    __instance.FarmerSprite.setCurrentSingleFrame(106, 32000, false, true);
-                    __instance.xOffset = -2f; // old: -12f, diff: +10
-                    break;
-            }
-
-            if (!__instance.isMoving())
-            {
-                __instance.yOffset = 0f;
-                return false;
-            }
-
-            switch (__instance.mount.Sprite.currentAnimationIndex)
-            {
-                case 0:
-                    __instance.yOffset = 0f;
-                    return false;
-
-                case 1:
-                    __instance.yOffset = -4f;
-                    return false;
-
-                case 2:
-                    __instance.yOffset = -4f;
-                    return false;
-
-                case 3:
-                    __instance.yOffset = 0f;
-                    return false;
-
-                case 4:
-                    __instance.yOffset = 4f;
-                    return false;
-
-                case 5:
-                    __instance.yOffset = 4f;
-                    return false;
-
-                default:
-                    return false;
-            }
-        }
-
-        public static bool DoMountingAnimation(Horse __instance)
-        {
-            Horse horse = __instance;
-
-            // all the vanilla conditions to get to the case in question
-            if (!mod.Config.ThinHorse || horse.rider == null || horse.rider.mount != null || !horse.rider.IsLocalPlayer || !horse.mounting.Value || (horse.rider != null && horse.rider.hidden.Value))
-            {
-                return true;
-            }
-
-            if (horse.FacingDirection == Game1.left)
-            {
-                horse.rider.xOffset = 0f;
-            }
-            else
-            {
-                horse.rider.xOffset = 4f;
-            }
-
-            var positionDifference = horse.rider.Position.X - horse.Position.X;
-
-            if (Math.Abs(positionDifference) < 4)
-            {
-                horse.rider.position.X = horse.Position.X;
-            }
-            else if (positionDifference < 0)
-            {
-                horse.rider.position.X += 4f;
-            }
-            else if (positionDifference > 0)
-            {
-                horse.rider.position.X -= 4f;
-            }
-
-            // invert whatever the overridden method will do
-            if (horse.rider.Position.X < (horse.GetBoundingBox().X + 16 - 4))
-            {
-                horse.rider.position.X -= 4f;
-            }
-            else if (horse.rider.Position.X > (horse.GetBoundingBox().X + 16 + 4))
-            {
-                horse.rider.position.X += 4f;
-            }
-
-            return true;
-        }
-
-        public static void FixSetMount(Farmer __instance, Horse mount)
+        public static void FixMountPosition(Farmer __instance, Horse mount)
         {
             if (mod.Config.ThinHorse && mount != null)
             {
-                __instance.xOffset = mount.FacingDirection switch
+                __instance.xOffset += mount.FacingDirection switch
                 {
-                    Game1.right => -4f, // counteracts the +8 from the horse update method to arrive at +4
-                    Game1.left => 0,
-                    _ => 4f,
+                    Game1.right => 0f, // counteracts the +8 from the horse update method to arrive at +8
+                    Game1.left => 4f,
+                    _ => 8f,
                 };
+                __instance.position.X -= 24f;
             }
         }
 
-        private static readonly Vector2 thinHorseHatVector = new(-8f, 0f);
-
-        public static Vector2 GetHatVector()
+        // postfix, so we can't get skipped by 'return false' prefixes
+        public static void OverrideBoundingBox(Horse __instance, ref Rectangle __result)
         {
-            return mod.Config.ThinHorse ? thinHorseHatVector : Vector2.Zero;
+            if (mod.Config.ThinHorse)
+            {
+                __result = GetFixedBoundingBox(__instance);
+            }
+        }
+
+        private static Rectangle GetFixedBoundingBox(Horse horse)
+        {
+            if (horse.Sprite == null)
+            {
+                return Rectangle.Empty;
+            }
+
+            return new Rectangle((int)horse.position.X + 32, (int)horse.position.Y + 16, 48, 32);
+        }
+
+        // transpiler checked for 1.6.3:
+        //    IL_0144: ldfld int32[MonoGame.Framework]Microsoft.Xna.Framework.Rectangle::X
+        //    IL_0149: ldc.i4.s 16
+        public static IEnumerable<CodeInstruction> FixMountingAnimation(IEnumerable<CodeInstruction> instructions)
+        {
+            try
+            {
+                var instructionsList = instructions.ToList();
+
+                for (int i = 0; i < instructionsList.Count - 2; i++)
+                {
+                    if (instructionsList[i].opcode == OpCodes.Ldfld
+                        && (FieldInfo)instructionsList[i].operand == typeof(Rectangle).GetField(nameof(Rectangle.X))
+                        && instructionsList[i + 1].opcode == OpCodes.Ldc_I4_S
+                        && (sbyte)instructionsList[i + 1].operand == 16
+                        && instructionsList[i + 2].opcode == OpCodes.Add)
+                    {
+                        instructionsList[i + 1].opcode = OpCodes.Call;
+                        instructionsList[i + 1].operand = typeof(ThinHorsePatches).GetMethod(nameof(GetMountingXOffset));
+                    }
+                }
+
+                return instructionsList.AsEnumerable();
+            }
+            catch (Exception e)
+            {
+                mod.ErrorLog("There was an exception in a transpiler patch", e);
+                return instructions;
+            }
+        }
+
+        // intentionally replace the original sbyte with an sbyte to make the transpiler more future proof
+        public static sbyte GetMountingXOffset()
+        {
+            if (mod.Config.ThinHorse)
+            {
+                return -16;
+            }
+            else
+            {
+                return 16;
+            }
         }
     }
 }

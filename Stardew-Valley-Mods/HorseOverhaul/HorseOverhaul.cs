@@ -45,6 +45,19 @@
         internal SeasonalVersion SeasonalVersion { get; set; }
 
         internal bool UsingMyStableTextures { get; set; }
+        internal bool UsingIncompatibleTextures { get; set; }
+
+        private IRawTextureData repairTroughOverlay;
+
+        internal IRawTextureData RepairTroughOverlay
+        {
+            get => repairTroughOverlay; set
+            {
+                repairTroughOverlay = value;
+                filledTroughTexture = null;
+                emptyTroughTexture = null;
+            }
+        }
 
         private IRawTextureData filledTroughOverlay;
 
@@ -65,7 +78,13 @@
             {
                 if (filledTroughTexture == null)
                 {
-                    filledTroughTexture = FilledTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(FilledTroughOverlay, GetCurrentStableTexture(this));
+                    filledTroughTexture = RepairTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(RepairTroughOverlay, GetCurrentStableTexture(this));
+
+                    if (FilledTroughOverlay != null)
+                    {
+                        filledTroughTexture = MergeTextures(FilledTroughOverlay, filledTroughTexture);
+                    }
+
                     filledTroughTexture.Name = ModManifest.UniqueID + ".FilledTrough";
                 }
 
@@ -92,7 +111,13 @@
             {
                 if (emptyTroughTexture == null)
                 {
-                    emptyTroughTexture = EmptyTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(EmptyTroughOverlay, GetCurrentStableTexture(this));
+                    emptyTroughTexture = RepairTroughOverlay == null ? GetCurrentStableTexture(this) : MergeTextures(RepairTroughOverlay, GetCurrentStableTexture(this));
+
+                    if (EmptyTroughOverlay != null)
+                    {
+                        emptyTroughTexture = MergeTextures(EmptyTroughOverlay, emptyTroughTexture);
+                    }
+
                     emptyTroughTexture.Name = ModManifest.UniqueID + ".EmptyTrough";
                 }
 
@@ -315,6 +340,7 @@
             }
 
             filledTroughOverlay = null;
+            repairTroughOverlay = null;
             emptyTroughOverlay = null;
 
             SetOverlays(this);

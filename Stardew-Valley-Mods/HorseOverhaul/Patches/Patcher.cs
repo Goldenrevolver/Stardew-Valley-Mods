@@ -1,16 +1,12 @@
 ﻿namespace HorseOverhaul
 {
+    using global::HorseOverhaul.Patches;
     using HarmonyLib;
     using Microsoft.Xna.Framework;
-    using Microsoft.Xna.Framework.Graphics;
-    using StardewModdingAPI;
     using StardewValley;
-    using StardewValley.Buildings;
     using StardewValley.Characters;
     using StardewValley.Locations;
-    using StardewValley.Objects;
     using StardewValley.TerrainFeatures;
-    using StardewValley.Tools;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -33,40 +29,12 @@
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(PreventSoftlock)));
 
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(Chest), nameof(Chest.draw), new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(Chest), nameof(Chest.draw), new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float), typeof(bool) }),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(Chest), nameof(Chest.performToolAction)),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(DoNothingIfSaddleBag)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.performToolAction)),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(CheckForWaterHit)));
-
-                harmony.Patch(
                    original: AccessTools.Method(typeof(Farmer), nameof(Farmer.getMovementSpeed)),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(ChangeHorseMovementSpeed)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), nameof(Horse.checkAction)),
                    prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckForPetting)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(Stable), nameof(Stable.performActionOnDemolition)),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(SaveItemsFromDemolition)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(Utility), nameof(Utility.iterateChestsAndStorage)),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(IterateOverSaddles)));
-
-                harmony.Patch(
-                   original: AccessTools.Method(typeof(Building), nameof(Building.resetTexture)),
-                   postfix: new HarmonyMethod(typeof(Patcher), nameof(ResetStableTexture)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), nameof(Horse.PerformDefaultHorseFootstep)),
@@ -76,9 +44,13 @@
                    original: AccessTools.Method(typeof(FarmerSprite), "checkForFootstep"),
                    transpiler: new HarmonyMethod(typeof(Patcher), nameof(FixMultiplayerFootstepDisplay)));
 
+                StableAndSaddleBagPatches.ApplyPatches(horseOverhaul, harmony);
+
                 ThinHorsePatches.ApplyPatches(horseOverhaul, harmony);
 
                 InteractPatches.ApplyPatches(horseOverhaul, harmony);
+
+                HorseDrawPatches.ApplyPatches(horseOverhaul, harmony);
             }
             catch (Exception e)
             {
@@ -91,12 +63,6 @@
         {
             try
             {
-                // requires restart when you change config but not that important, it's only for when this errors at some point
-                if (!mod.Config.HorseHoofstepEffects)
-                {
-                    return instructions;
-                }
-
                 var instructionList = instructions.ToList();
 
                 // use nops instead of removeal in case there are labels (unlikely but more safe)
@@ -131,19 +97,27 @@
 
         public static bool CheckSpriteOwnerIsRidingHorse(FarmerSprite sprite)
         {
-            return sprite.Owner is Farmer farmer && farmer.isRidingHorse();
+            if (mod.Config.HorseHoofstepEffects)
+            {
+                // multiplayer/split screen compatibility
+                return sprite.Owner is Farmer farmer && farmer.isRidingHorse();
+            }
+            else
+            {
+                return Game1.player.isRidingHorse();
+            }
         }
 
         public static void PerformDefaultHorseFootstep(Horse __instance, string step_type)
         {
-            if (!mod.Config.HorseHoofstepEffects)
+            if (!mod.Config.HorseHoofstepEffects || __instance.IsTractor())
             {
                 return;
             }
 
             var rider = __instance.rider;
 
-            if (rider?.currentLocation == null || __instance.IsTractor())
+            if (rider?.currentLocation == null || rider.currentLocation != Game1.currentLocation)
             {
                 return;
             }
@@ -255,83 +229,6 @@
             }
         }
 
-        public static bool DoNothingIfSaddleBag(Chest __instance)
-        {
-            return !__instance?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/isSaddleBag") == true;
-        }
-
-        public static void ResetStableTexture(Building __instance)
-        {
-            if (__instance is not Stable stable || stable.IsTractorGarage() || !mod.Config.Water || mod.Config.DisableStableSpriteChanges)
-            {
-                return;
-            }
-
-            __instance.texture = new Lazy<Texture2D>(CreateUpdatedStableTexture(stable));
-        }
-
-        internal static Texture2D CreateUpdatedStableTexture(Stable stable)
-        {
-            if (stable.paintedTexture != null)
-            {
-                stable.paintedTexture.Dispose();
-                stable.paintedTexture = null;
-            }
-
-            string text = stable.textureName();
-            Texture2D texture2D;
-
-            try
-            {
-                texture2D = Game1.content.Load<Texture2D>(text);
-            }
-            catch
-            {
-                return Game1.content.Load<Texture2D>("Buildings\\Error");
-            }
-
-            bool isTroughFull = stable?.modData?.ContainsKey($"{mod.ModManifest.UniqueID}/gotWater") == true;
-
-            if (isTroughFull)
-            {
-                texture2D = mod.FilledTroughTexture;
-            }
-            else
-            {
-                texture2D = mod.EmptyTroughTexture;
-            }
-
-            stable.paintedTexture = BuildingPainter.Apply(texture2D, text + "_PaintMask", stable.netBuildingPaintColor.Value);
-
-            if (stable.paintedTexture != null)
-            {
-                texture2D = stable.paintedTexture;
-            }
-
-            return texture2D;
-        }
-
-        public static void IterateOverSaddles(Action<Item> action)
-        {
-            var farmItems = Game1.getFarm().Objects.Values;
-
-            // do this even if saddle bags are disabled
-            foreach (var horse in mod.Horses)
-            {
-                // check if it is placed on the farm, then it was checked already from the overridden method
-                if (horse != null && horse.SaddleBag != null && !farmItems.Contains(horse.SaddleBag))
-                {
-                    foreach (Item item in horse.SaddleBag.Items)
-                    {
-                        if (item != null)
-                        {
-                            action(item);
-                        }
-                    }
-                }
-            }
-        }
-
         public static void ChangeHorseMovementSpeed(Farmer __instance, ref float __result)
         {
             if (mod.Config.MovementSpeed && !Game1.eventUp && (Game1.CurrentEvent == null || Game1.CurrentEvent.playerControlSequence) && !(__instance.hasBuff("19") && Game1.CurrentEvent == null))
@@ -357,68 +254,6 @@
                     __result += addedMovementSpeed;
                 }
             }
-        }
-
-        public static void CheckForWaterHit(GameLocation __instance, Tool t, int tileX, int tileY)
-        {
-            if (__instance is not Farm)
-            {
-                return;
-            }
-
-            if (!Context.IsWorldReady || !mod.Config.Water)
-            {
-                return;
-            }
-
-            if (t is WateringCan can && can.WaterLeft > 0)
-            {
-                foreach (Building building in __instance.buildings)
-                {
-                    if (building is Stable stable && !stable.IsTractorGarage())
-                    {
-                        bool doesXHit = stable.tileX.Value + 1 == tileX || stable.tileX.Value + 2 == tileX;
-
-                        if (doesXHit && stable.tileY.Value == tileY)
-                        {
-                            mod.Horses.Where(h => h?.Stable?.HorseId == stable.HorseId).Do(h => h.JustGotWater());
-                        }
-                    }
-                }
-            }
-        }
-
-        public static bool SaveItemsFromDemolition(Stable __instance)
-        {
-            if (__instance.IsTractorGarage() || !Context.IsMainPlayer)
-            {
-                return true;
-            }
-
-            var horseW = mod.Horses.Where(h => h?.Stable?.HorseId == __instance.HorseId).FirstOrDefault();
-
-            if (horseW != null && horseW.SaddleBag != null)
-            {
-                if (horseW.SaddleBag.Items.Count > 0)
-                {
-                    foreach (var item in horseW.SaddleBag.Items)
-                    {
-                        Game1.player.team.returnedDonations.Add(item);
-                        Game1.player.team.newLostAndFoundItems.Value = true;
-                    }
-
-                    horseW.SaddleBag.Items.Clear();
-                }
-
-                Game1.getFarm().Objects.Remove(horseW.SaddleBag.TileLocation);
-
-                if (__instance.modData.ContainsKey($"{mod.ModManifest.UniqueID}/stableID"))
-                {
-                    __instance.modData.Remove($"{mod.ModManifest.UniqueID}/stableID");
-                }
-            }
-
-            return true;
         }
 
         public static bool CheckForPetting(Horse __instance, ref bool __result)

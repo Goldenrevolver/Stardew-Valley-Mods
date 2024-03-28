@@ -167,12 +167,18 @@
 
             bool yes = mod.Config.InteractWithForageWhileRiding && obj.IsSpawnedObject && obj.isForage();
             bool yes2 = mod.Config.InteractWithTappersWhileRiding && obj.IsTapper();
-            // || obj is CrabPot || obj.QualifiedItemId == "(BC)128";
+            // '|=' is 'x = x | y' which still calculates y
+            yes2 = yes2 || (mod.Config.InteractWithMushroomLogsAndBoxesWhileRiding && IsMushroomLogOrBox(obj));
 
             bool allowForage = !no && !no2 && yes;
             bool allowMachine = !no && no2 && yes2;
 
             return allowForage || allowMachine;
+        }
+
+        private static bool IsMushroomLogOrBox(StardewValley.Object obj)
+        {
+            return obj.QualifiedItemId is "(BC)128" or "(BC)MushroomLog";
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("SMAPI.CommonErrors", "AvoidImplicitNetFieldCast:Netcode types shouldn't be implicitly converted", Justification = "No other choice")]
