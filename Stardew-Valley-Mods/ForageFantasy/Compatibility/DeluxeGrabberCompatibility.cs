@@ -52,7 +52,8 @@
 
             if (mod.Config.BerryBushQuality)
             {
-                item.Quality = ForageFantasy.DetermineForageQuality(Game1.player);
+                Random r = Utility.CreateDaySaveRandom(tile.X, tile.Y * 777f);
+                item.Quality = ForageFantasy.DetermineForageQuality(Game1.player, r);
             }
             else
             {
@@ -71,7 +72,8 @@
 
             int expAmount = 0;
 
-            item.Quality = mod.Config.MushroomBoxQuality ? ForageFantasy.DetermineForageQuality(Game1.MasterPlayer) : StardewObject.lowQuality;
+            Random r = Utility.CreateDaySaveRandom(tile.X, tile.Y * 777f);
+            item.Quality = mod.Config.MushroomBoxQuality ? ForageFantasy.DetermineForageQuality(Game1.MasterPlayer, r) : StardewObject.lowQuality;
 
             return new KeyValuePair<StardewObject, int>(item, expAmount);
         }

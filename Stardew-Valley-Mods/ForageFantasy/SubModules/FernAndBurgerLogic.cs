@@ -246,10 +246,10 @@
         // revert forage level increase
         private const string cookingInfix = "/70 1/241 2/s Foraging 3/";
 
-        private const string springCraftingRecipe = "216 1 16 1 20 1 22 1";
-        private const string summerCraftingRecipe = "216 1 398 1 396 1 259 1";
-        private const string fallCraftingRecipe = "216 1 404 1 406 1 408 1";
-        private const string winterCraftingRecipe = "216 1 412 1 414 1 416 1";
+        private const string springCraftingRecipe = "216 1 16 n 20 n 22 n";
+        private const string summerCraftingRecipe = "216 1 398 n 396 n 259 n";
+        private const string fallCraftingRecipe = "216 1 404 n 406 n 408 n";
+        private const string winterCraftingRecipe = "216 1 412 n 414 n 416 n";
 
         private static void ApplyCraftingorCookingChanges(IAssetData asset, ITranslationHelper translation, bool useCookingRecipes)
         {
@@ -263,10 +263,10 @@
             string infix = useCookingRecipes ? cookingInfix : craftingInfix;
 
             data.Remove("Survival Burger");
-            data["Survival Burger (Sp)"] = $"{springCraftingRecipe}{infix}{springBurgerName}";
-            data["Survival Burger (Su)"] = $"{summerCraftingRecipe}{infix}{summerBurgerName}";
-            data["Survival Burger (Fa)"] = $"{fallCraftingRecipe}{infix}{fallBurgerName}";
-            data["Survival Burger (Wi)"] = $"{winterCraftingRecipe}{infix}{winterBurgerName}";
+            data["Survival Burger (Sp)"] = $"{springCraftingRecipe.Replace('n', useCookingRecipes ? '2' : '1')}{infix}{springBurgerName}";
+            data["Survival Burger (Su)"] = $"{summerCraftingRecipe.Replace('n', useCookingRecipes ? '2' : '1')}{infix}{summerBurgerName}";
+            data["Survival Burger (Fa)"] = $"{fallCraftingRecipe.Replace('n', useCookingRecipes ? '2' : '1')}{infix}{fallBurgerName}";
+            data["Survival Burger (Wi)"] = $"{winterCraftingRecipe.Replace('n', useCookingRecipes ? '2' : '1')}{infix}{winterBurgerName}";
         }
 
         public static string GetWildSeedSummerForage()

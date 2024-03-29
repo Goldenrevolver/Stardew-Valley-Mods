@@ -68,7 +68,8 @@
 
             if (mod.Config.MushroomBoxQuality)
             {
-                mushroomBox.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
+                Random r = Utility.CreateDaySaveRandom(mushroomBox.TileLocation.X, mushroomBox.TileLocation.Y * 777f);
+                mushroomBox.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who, r);
             }
         }
 
@@ -92,19 +93,19 @@
             }
         }
 
+        public static int DetermineForageQuality(Farmer farmer)
+        {
+            return ForageFantasy.DetermineForageQuality(farmer, Game1.random);
+        }
+
         public static IEnumerable<CodeInstruction> TranspileBushMachineQuality(IEnumerable<CodeInstruction> instructions)
         {
             try
             {
-                if (!mod.Config.BerryBushQuality)
-                {
-                    return instructions;
-                }
-
                 var instructionsList = instructions.ToList();
 
                 var getFarmer = typeof(Game1).GetProperty(nameof(Game1.player)).GetGetMethod();
-                var getFixedQuality = typeof(ForageFantasy).GetMethod(nameof(ForageFantasy.DetermineForageQuality), new Type[] { typeof(Farmer) });
+                var getFixedQuality = typeof(AutomateCompatibility).GetMethod(nameof(AutomateCompatibility.DetermineForageQuality), new Type[] { typeof(Farmer) });
 
                 int index = -1;
 

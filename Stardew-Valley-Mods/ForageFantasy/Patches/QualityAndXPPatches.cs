@@ -92,7 +92,7 @@
 
         public static void PatchTapperAndMushroomBoxQuality(StardewObject __instance, Farmer who, bool justCheckingForActivity)
         {
-            if (justCheckingForActivity)
+            if (justCheckingForActivity || who == null)
             {
                 return;
             }
@@ -107,7 +107,7 @@
                         return;
                     }
 
-                    if (who.currentLocation.terrainFeatures.TryGetValue(__instance.TileLocation, out var terrainFeature)
+                    if (__instance.Location != null && __instance.Location.terrainFeatures.TryGetValue(__instance.TileLocation, out var terrainFeature)
                         && terrainFeature is Tree tree)
                     {
                         __instance.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(config, who, tree);
@@ -120,7 +120,8 @@
                 {
                     if (config.MushroomBoxQuality)
                     {
-                        __instance.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who);
+                        Random r = Utility.CreateDaySaveRandom(__instance.TileLocation.X, __instance.TileLocation.Y * 777f);
+                        __instance.heldObject.Value.Quality = ForageFantasy.DetermineForageQuality(who, r);
                     }
                 }
             }

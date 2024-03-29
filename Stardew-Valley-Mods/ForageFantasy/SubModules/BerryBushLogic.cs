@@ -2,6 +2,7 @@
 {
     using StardewValley;
     using StardewValley.TerrainFeatures;
+    using System;
     using StardewObject = StardewValley.Object;
 
     internal class BerryBushLogic
@@ -40,11 +41,12 @@
             }
 
             // change quality of every nearby matching berry debris
+            Random r = Utility.CreateDaySaveRandom(bush.Tile.X, bush.Tile.Y * 777f);
             foreach (var item in bush.Location.debris)
             {
                 if (item?.item?.QualifiedItemId == shakeOff && item.timeSinceDoneBouncing == 0f)
                 {
-                    ((StardewObject)item.item).Quality = ForageFantasy.DetermineForageQuality(Game1.player);
+                    ((StardewObject)item.item).Quality = ForageFantasy.DetermineForageQuality(Game1.player, r);
                 }
             }
         }

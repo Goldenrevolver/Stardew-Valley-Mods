@@ -71,7 +71,8 @@
                     // has tapper profession or it's not required
                     if (!config.TapperQualityRequiresTapperPerk || player.professions.Contains(Farmer.tapper))
                     {
-                        return ForageFantasy.DetermineForageQuality(player, config.TapperQualityOptions == 1);
+                        Random r = Utility.CreateDaySaveRandom(tree.Tile.X, tree.Tile.Y * 777f);
+                        return ForageFantasy.DetermineForageQuality(player, r, config.TapperQualityOptions == 1);
                     }
                     break;
 

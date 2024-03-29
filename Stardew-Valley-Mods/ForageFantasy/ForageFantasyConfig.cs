@@ -23,8 +23,6 @@
         void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue, Func<string> name, Func<string> tooltip = null, string[] allowedValues = null, Func<string, string> formatAllowedValue = null, string fieldId = null);
 
         void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue, Func<string> name, Func<string> tooltip = null, string fieldId = null);
-
-        void SetTitleScreenOnlyForNextOptions(IManifest mod, bool titleScreenOnly);
     }
 
     /// <summary>
@@ -132,11 +130,12 @@
 
                 // CommonFiddleheadFern
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Locations");
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Bundles");
 
                 // ForageSurvivalBurger
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/CookingRecipes");
 
-                // Tapper XP
+                // Tapper XP, Fine Grapes
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
 
                 // Tapper days needed changes, Fine Grapes
@@ -171,16 +170,7 @@
                 mod: manifest,
                 reset: delegate
                 {
-                    // if the world is ready, then we are not in the main menu, so reset should only reset the keybindings and calendar
-                    if (Context.IsWorldReady)
-                    {
-                        config.TreeMenuKey = TreeMenuKeyDefault;
-                        config.MushroomTapperCalendar = false;
-                    }
-                    else
-                    {
-                        config = new ForageFantasyConfig();
-                    }
+                    config = new ForageFantasyConfig();
                     InvalidateCache(mod);
                 },
                 save: delegate
@@ -190,8 +180,6 @@
                     InvalidateCache(mod);
                 }
             );
-
-            api.SetTitleScreenOnlyForNextOptions(manifest, true);
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "SectionQualityTweaks"));
 
@@ -226,7 +214,7 @@
             api.AddNumberOption(manifest, () => config.PineTapperDaysNeeded, (int val) => config.PineTapperDaysNeeded = val,
                 GetConfigName(mod, "PineDaysNeeded"), GetConfigDescription(mod, "PineDaysNeeded"), 1);
             api.AddBoolOption(manifest, () => config.MushroomTreeTappersConsistentDaysNeeded, (bool val) => config.MushroomTreeTappersConsistentDaysNeeded = val,
-                GetConfigName(mod, "MushroomTreeTappersConsistencyChange"), GetConfigDescription(mod, "MushroomTreeTappersConsistencyChange"));
+                GetConfigName(mod, "MushroomTreeTappersConsistentDaysNeeded"), GetConfigDescription(mod, "MushroomTreeTappersConsistentDaysNeeded"));
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "SectionOtherFeatures"));
 
@@ -237,15 +225,11 @@
             api.AddBoolOption(manifest, () => config.WildAndFineGrapes, (bool val) => config.WildAndFineGrapes = val,
                 GetConfigName(mod, "WildAndFineGrapes"), GetConfigDescription(mod, "WildAndFineGrapes"));
 
-            api.SetTitleScreenOnlyForNextOptions(manifest, false);
-
             api.AddBoolOption(manifest, () => config.MushroomTapperCalendar, (bool val) => config.MushroomTapperCalendar = val,
                 GetConfigName(mod, "MushroomTapperCalendar"), GetConfigDescription(mod, "MushroomTapperCalendar"));
 
             api.AddKeybindList(manifest, () => config.TreeMenuKey, (KeybindList keybindList) => config.TreeMenuKey = keybindList,
                 GetConfigName(mod, "TreeMenuKey"), GetConfigDescription(mod, "TreeMenuKey"));
-
-            api.SetTitleScreenOnlyForNextOptions(manifest, true);
         }
 
         private static Func<string, string> GetConfigDropdownChoice(ForageFantasy mod, string key)

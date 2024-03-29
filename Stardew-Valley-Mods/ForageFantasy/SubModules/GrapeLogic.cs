@@ -3,9 +3,11 @@
     using StardewModdingAPI;
     using StardewModdingAPI.Events;
     using StardewValley;
+    using StardewValley.GameData.Machines;
     using StardewValley.GameData.Objects;
     using StardewValley.TerrainFeatures;
     using System.Collections.Generic;
+    using System.Linq;
     using StardewObject = StardewValley.Object;
 
     internal class GrapeLogic
@@ -22,41 +24,78 @@
                 return;
             }
 
+            if (e.NameWithoutLocale.IsEquivalentTo("Data/Machines"))
+            {
+                e.Edit((asset) =>
+                {
+                    IDictionary<string, MachineData> data = asset.AsDictionary<string, MachineData>().Data;
+
+                    if (!data.TryGetValue("(BC)Dehydrator", out var dehydrator))
+                    {
+                        return;
+                    }
+
+                    var raisinRule = dehydrator.OutputRules.Where((r) => r.Id == "Raisins").FirstOrDefault();
+
+                    if (raisinRule != null)
+                    {
+                        var fineRaisinRule = raisinRule.Triggers.Where((r) => r.Id == fineGrapeNonQID).FirstOrDefault();
+
+                        if (fineRaisinRule == null)
+                        {
+                            fineRaisinRule = new MachineOutputTriggerRule
+                            {
+                                Id = fineGrapeNonQID,
+                                Trigger = MachineOutputTrigger.ItemPlacedInMachine,
+                                RequiredItemId = $"(O){fineGrapeNonQID}",
+                                RequiredCount = 4, // one less than normal grapes due to price difference
+                                RequiredTags = null,
+                                Condition = null
+                            };
+
+                            raisinRule.Triggers.Add(fineRaisinRule);
+                        }
+                    }
+                });
+            }
+
             if (e.NameWithoutLocale.IsEquivalentTo("Data/Objects"))
             {
                 e.Edit((asset) =>
                 {
                     IDictionary<string, ObjectData> data = asset.AsDictionary<string, ObjectData>().Data;
 
-                    if (data.TryGetValue(grapeNonQID, out var grapeData))
+                    if (!data.TryGetValue(grapeNonQID, out var grapeData))
                     {
-                        grapeData.DisplayName = translation.Get("WildGrape");
-
-                        var fineGrapeData = new ObjectData
-                        {
-                            Name = fineGrapeNonQID,
-                            DisplayName = translation.Get("FineGrape"),
-                            Description = grapeData.Description,
-                            Type = "Basic",
-                            Category = StardewObject.FruitsCategory,
-                            Price = 110,
-                            Texture = ForageFantasy.FineGrapeAssetPath,
-                            SpriteIndex = 0,
-                            Edibility = 17,
-                            IsDrink = false,
-                            Buffs = null,
-                            GeodeDropsDefaultItems = false,
-                            GeodeDrops = null,
-                            ArtifactSpotChances = null,
-                            ExcludeFromFishingCollection = false,
-                            ExcludeFromShippingCollection = false,
-                            ExcludeFromRandomSale = false,
-                            ContextTags = new List<string>() { "color_purple", "season_summer" }, // removed forage tag
-                            CustomFields = null
-                        };
-
-                        data[fineGrapeNonQID] = fineGrapeData;
+                        return;
                     }
+
+                    grapeData.DisplayName = translation.Get("WildGrape");
+
+                    var fineGrapeData = new ObjectData
+                    {
+                        Name = fineGrapeNonQID,
+                        DisplayName = translation.Get("FineGrape"),
+                        Description = grapeData.Description,
+                        Type = "Basic",
+                        Category = StardewObject.FruitsCategory,
+                        Price = 110,
+                        Texture = ForageFantasy.FineGrapeAssetPath,
+                        SpriteIndex = 0,
+                        Edibility = 17,
+                        IsDrink = false,
+                        Buffs = null,
+                        GeodeDropsDefaultItems = false,
+                        GeodeDrops = null,
+                        ArtifactSpotChances = null,
+                        ExcludeFromFishingCollection = false,
+                        ExcludeFromShippingCollection = false,
+                        ExcludeFromRandomSale = false,
+                        ContextTags = new List<string>() { "color_purple", "season_summer" }, // removed forage tag
+                        CustomFields = null
+                    };
+
+                    data[fineGrapeNonQID] = fineGrapeData;
                 }, AssetEditPriority.Late);
             }
 

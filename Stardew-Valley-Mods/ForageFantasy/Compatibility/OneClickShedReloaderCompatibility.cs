@@ -38,7 +38,8 @@
         {
             if (mod.Config.MushroomBoxQuality && container.IsMushroomBox())
             {
-                item.Quality = ForageFantasy.DetermineForageQuality(player);
+                Random r = Utility.CreateDaySaveRandom(container.TileLocation.X, container.TileLocation.Y * 777f);
+                item.Quality = ForageFantasy.DetermineForageQuality(player, r);
             }
         }
 
