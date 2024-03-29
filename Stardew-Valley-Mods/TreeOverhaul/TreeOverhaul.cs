@@ -53,7 +53,7 @@
                 {
                     IDictionary<string, WildTreeData> data = asset.AsDictionary<string, WildTreeData>().Data;
 
-                    var normalTrees = new string[] { Tree.bushyTree, Tree.leafyTree, Tree.pineTree, Tree.mahoganyTree, Tree.palmTree, Tree.palmTree2, Tree.greenRainTreeBushy, Tree.greenRainTreeLeafy, Tree.greenRainTreeFern, Tree.mysticTree };
+                    var normalTrees = new string[] { Tree.bushyTree, Tree.leafyTree, Tree.pineTree, Tree.mahoganyTree, Tree.greenRainTreeBushy, Tree.greenRainTreeLeafy, Tree.greenRainTreeFern, Tree.mysticTree };
 
                     foreach (var entry in data)
                     {
@@ -86,6 +86,41 @@
                             if (Config.CustomMushroomTreeGrowthChance >= 0)
                             {
                                 mushroomTreeData.GrowthChance = Math.Clamp(Config.CustomMushroomTreeGrowthChance / 100f, 0f, 1f);
+                            }
+                        }
+                        else if (entry.Key is Tree.palmTree or Tree.palmTree2)
+                        {
+                            var palmTreeData = entry.Value;
+
+                            if (Config.NormalTreesGrowInWinter)
+                            {
+                                palmTreeData.GrowsInWinter = true;
+
+                                if (palmTreeData.IsStumpDuringWinter)
+                                {
+                                    palmTreeData.IsStumpDuringWinter = false;
+                                    FixWinterTapper(palmTreeData);
+                                }
+                            }
+
+                            if (Config.CustomPalmTreeSeedOnShakeChance >= 0)
+                            {
+                                palmTreeData.SeedOnShakeChance = Math.Clamp(Config.CustomPalmTreeSeedOnShakeChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomPalmTreeSeedOnChopChance >= 0)
+                            {
+                                palmTreeData.SeedOnChopChance = Math.Clamp(Config.CustomPalmTreeSeedOnChopChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomPalmTreeSpawnSeedNearbyChance >= 0)
+                            {
+                                palmTreeData.SeedSpreadChance = Math.Clamp(Config.CustomPalmTreeSpawnSeedNearbyChance / 100f, 0f, 1f);
+                            }
+
+                            if (Config.CustomPalmTreeGrowthChance >= 0)
+                            {
+                                palmTreeData.GrowthChance = Math.Clamp(Config.CustomPalmTreeGrowthChance / 100f, 0f, 1f);
                             }
                         }
                         else
