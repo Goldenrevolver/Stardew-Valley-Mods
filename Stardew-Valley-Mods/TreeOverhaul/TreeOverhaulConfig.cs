@@ -245,7 +245,7 @@
 
             api.AddNumberOption(manifest, () => config.CustomMushroomTreeSeedOnShakeChance, (int val) => config.CustomMushroomTreeSeedOnShakeChance = val,
                 () => "'Seed On Shake' Chance", () => "Chance that a seed drops when shaking a mushroom tree (base game: 0%, -1 to use base game value)", -1, 100);
-            api.AddNumberOption(manifest, () => config.CustomSeedOnChopChance, (int val) => config.CustomSeedOnChopChance = val,
+            api.AddNumberOption(manifest, () => config.CustomMushroomTreeSeedOnChopChance, (int val) => config.CustomMushroomTreeSeedOnChopChance = val,
                 () => "'Seed On Chop' Chance", () => "Chance that a seed drops when chopping down a mushroom tree (base game: 0%, -1 to use base game value)", -1, 100);
             api.AddNumberOption(manifest, () => config.CustomMushroomTreeSpawnSeedNearbyChance, (int val) => config.CustomMushroomTreeSpawnSeedNearbyChance = val,
                 () => "'Spawn Seed Nearby' Chance", () => "Chance to attempt to spawn a seed near a mushroom tree (on the farm) overnight (base game: 15%, -1 to use base game value)", -1, 100);
