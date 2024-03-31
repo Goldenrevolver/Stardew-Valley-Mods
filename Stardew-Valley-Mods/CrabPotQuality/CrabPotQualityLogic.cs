@@ -86,7 +86,7 @@ namespace CrabPotQuality
         {
             if (pot?.bait.Value == null)
             {
-                return 1f;
+                return 0f;
             }
 
             return (pot?.bait.Value.QualifiedItemId) switch
@@ -96,7 +96,7 @@ namespace CrabPotQuality
                 challengeBaitQID => EvaluateBaitDoubleItemAmountChanceConfig(Config.EnableChallengeBaitEffect, Config.ChallengeBaitDoubleItemAmountChance),
                 deluxeBaitQID => EvaluateBaitDoubleItemAmountChanceConfig(Config.EnableDeluxeBaitEffect, Config.DeluxeBaitDoubleItemAmountChance),
                 magnetBaitQID => EvaluateBaitDoubleItemAmountChanceConfig(Config.EnableMagnetBaitEffect, Config.MagnetBaitDoubleItemAmountChance),
-                defaultBaitQID => 1f,
+                defaultBaitQID => 0f,
                 _ => EvaluateBaitDoubleItemAmountChanceConfig(Config.EnableCustomModdedBaitEffect, Config.CustomModdedBaitDoubleItemAmountChance),
             };
         }
