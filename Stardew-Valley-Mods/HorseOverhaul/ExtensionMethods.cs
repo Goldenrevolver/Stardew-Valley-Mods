@@ -29,6 +29,11 @@ namespace HorseOverhaul
             return stable != null && stable.buildingType.Value == "Pathoschild.TractorMod_Stable";
         }
 
+        public static bool IsAboutEqualTo(this float firstValue, float secondValue)
+        {
+            return firstValue >= (secondValue - 0.1f) && firstValue <= (secondValue + 0.1f);
+        }
+
         internal static bool MouseOrPlayerIsInRange(this Character chara, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)
         {
             if (!ignoreMousePosition)

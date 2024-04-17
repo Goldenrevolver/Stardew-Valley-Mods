@@ -48,6 +48,8 @@
 
                 ThinHorsePatches.ApplyPatches(horseOverhaul, harmony);
 
+                ThinHorseDrawPatches.ApplyPatches(horseOverhaul, harmony);
+
                 InteractPatches.ApplyPatches(horseOverhaul, harmony);
 
                 HorseDrawPatches.ApplyPatches(horseOverhaul, harmony);
