@@ -11,6 +11,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection.Emit;
+    using static StardewValley.Menus.AnimalPage;
 
     public class Patcher
     {
@@ -34,7 +35,7 @@
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), nameof(Horse.checkAction)),
-                   prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckForPetting)));
+                   prefix: new HarmonyMethod(typeof(Patcher), nameof(CheckHorseActionForPetting)));
 
                 harmony.Patch(
                    original: AccessTools.Method(typeof(Horse), nameof(Horse.PerformDefaultHorseFootstep)),
@@ -43,6 +44,10 @@
                 harmony.Patch(
                    original: AccessTools.Method(typeof(FarmerSprite), "checkForFootstep"),
                    transpiler: new HarmonyMethod(typeof(Patcher), nameof(FixMultiplayerFootstepDisplay)));
+
+                harmony.Patch(
+                   original: AccessTools.Constructor(typeof(AnimalEntry), new Type[] { typeof(Character) }),
+                   postfix: new HarmonyMethod(typeof(Patcher), nameof(FixHorseAnimalPage)));
 
                 StableAndSaddleBagPatches.ApplyPatches(horseOverhaul, harmony);
 
@@ -107,6 +112,36 @@
             else
             {
                 return Game1.player.isRidingHorse();
+            }
+        }
+
+        public static void FixHorseAnimalPage(AnimalEntry __instance, Character animal)
+        {
+            if (animal is not Horse horse || horse.IsTractor())
+            {
+                return;
+            }
+
+            var horseWrapper = mod.Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).FirstOrDefault();
+
+            if (horseWrapper == null)
+            {
+                return;
+            }
+
+            // variables are read-only (and C# doesn't know that we are in a constructor postfix), so we set them with reflection
+
+            AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.FriendshipLevel)).SetValue(__instance, horseWrapper.Friendship);
+            //AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.special)).SetValue(__instance, horse.ateCarrotToday ? 1 : 0);
+
+            // 'special == 1' means we are drawing a carrot, so we set 'WasPetYet' to -1, so they don't overlap
+            if (__instance.special == 1)
+            {
+                AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.WasPetYet)).SetValue(__instance, -1);
+            }
+            else
+            {
+                AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.WasPetYet)).SetValue(__instance, horseWrapper.WasPet ? 2 : 0);
             }
         }
 
@@ -258,7 +293,7 @@
             }
         }
 
-        public static bool CheckForPetting(Horse __instance, ref bool __result)
+        public static bool CheckHorseActionForPetting(Horse __instance, ref bool __result)
         {
             if (!mod.Config.Petting || __instance.IsTractor())
             {
@@ -271,18 +306,13 @@
             {
                 horseW.JustGotPetted();
 
-                if (mod.Config.ThinHorse)
-                {
-                    __instance.doEmote(Character.heartEmote);
-                }
+                horseW.Horse.doEmote(Character.heartEmote);
 
                 __result = true;
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
     }
 }
