@@ -23,18 +23,21 @@ namespace HorseOverhaul
             if (e.Button.IsUseToolButton())
             {
                 bool ignoreMousePosition = !mouseButtons.Contains(e.Button);
-                Point cursorPosition = Game1.getMousePosition();
 
-                bool interacted = Feeding.CheckHorseInteraction(mod, Game1.player, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
+                Point cursorPosition = Game1.getMousePosition();
+                var mouseX = cursorPosition.X + Game1.viewport.X;
+                var mouseY = cursorPosition.Y + Game1.viewport.Y;
+
+                bool interacted = HorsePetInteraction.CheckHorseInteraction(mod, Game1.player, mouseX, mouseY, ignoreMousePosition);
 
                 if (!interacted)
                 {
-                    Feeding.CheckPetInteraction(mod, Game1.player, cursorPosition.X + Game1.viewport.X, cursorPosition.Y + Game1.viewport.Y, ignoreMousePosition);
+                    HorsePetInteraction.CheckPetInteraction(mod, Game1.player, mouseX, mouseY, ignoreMousePosition);
                 }
             }
         }
 
-        internal static void OnButtonsChanged(HorseOverhaul mod, ButtonsChangedEventArgs e)
+        internal static void OnButtonsChanged(HorseOverhaul mod)
         {
             if (!Context.IsWorldReady || !Context.IsPlayerFree)
             {
@@ -84,16 +87,26 @@ namespace HorseOverhaul
 
             if (mod.Config.AlternateSaddleBagAndFeedKey.JustPressed())
             {
-                bool interacted = Feeding.CheckHorseInteraction(mod, Game1.player, 0, 0, true);
+                bool interacted = HorsePetInteraction.CheckHorseInteraction(mod, Game1.player, 0, 0, true);
 
                 if (!interacted)
                 {
-                    Feeding.CheckPetInteraction(mod, Game1.player, 0, 0, true);
+                    HorsePetInteraction.CheckPetInteraction(mod, Game1.player, 0, 0, true);
                 }
             }
         }
 
         private static void OpenHorseMenu(HorseOverhaul mod, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)
+        {
+            var horse = GetHorseMenuHorse(mod, who, mouseX, mouseY, ignoreMousePosition);
+
+            if (horse != null)
+            {
+                Game1.activeClickableMenu = new HorseMenu(mod, horse);
+            }
+        }
+
+        private static HorseWrapper GetHorseMenuHorse(HorseOverhaul mod, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)
         {
             HorseWrapper horse;
 
@@ -103,8 +116,7 @@ namespace HorseOverhaul
 
                 if (horse != null)
                 {
-                    Game1.activeClickableMenu = new HorseMenu(mod, horse);
-                    return;
+                    return horse;
                 }
             }
 
@@ -112,17 +124,17 @@ namespace HorseOverhaul
             {
                 foreach (NPC npc in who.currentLocation.characters)
                 {
-                    if (npc is not Horse nearbyHorse)
+                    if (npc is not Horse nearbyHorse || nearbyHorse.IsTractor())
                     {
                         continue;
                     }
 
-                    if (ignoreMousePosition && !Utility.withinRadiusOfPlayer((int)nearbyHorse.Position.X, (int)nearbyHorse.Position.Y, 1, who))
+                    if (ignoreMousePosition && !nearbyHorse.WithinRangeOfPlayer(mod, who))
                     {
                         continue;
                     }
 
-                    if (!nearbyHorse.MouseOrPlayerIsInRange(who, mouseX, mouseY, ignoreMousePosition))
+                    if (!nearbyHorse.MouseOrPlayerIsInRange(mod, who, mouseX, mouseY, ignoreMousePosition))
                     {
                         continue;
                     }
@@ -131,19 +143,13 @@ namespace HorseOverhaul
 
                     if (horse != null)
                     {
-                        Game1.activeClickableMenu = new HorseMenu(mod, horse);
-                        return;
+                        return horse;
                     }
                 }
             }
 
             // get the exact first horse you got
-            horse = mod.Horses.Where(h => h?.Horse?.getOwner() == who && h?.Horse?.getName() == who.horseName.Value).FirstOrDefault();
-
-            if (horse != null)
-            {
-                Game1.activeClickableMenu = new HorseMenu(mod, horse);
-            }
+            return mod.Horses.Where(h => h?.Horse?.getOwner() == who && h?.Horse?.getName() == who.horseName.Value).FirstOrDefault();
         }
 
         private static void OpenPetMenu(HorseOverhaul mod, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)
@@ -157,12 +163,12 @@ namespace HorseOverhaul
                         continue;
                     }
 
-                    if (ignoreMousePosition && !Utility.withinRadiusOfPlayer((int)pet.Position.X, (int)pet.Position.Y, 1, who))
+                    if (ignoreMousePosition && !pet.WithinRangeOfPlayer(mod, who))
                     {
                         continue;
                     }
 
-                    if (!pet.MouseOrPlayerIsInRange(who, mouseX, mouseY, ignoreMousePosition))
+                    if (!pet.MouseOrPlayerIsInRange(mod, who, mouseX, mouseY, ignoreMousePosition))
                     {
                         continue;
                     }

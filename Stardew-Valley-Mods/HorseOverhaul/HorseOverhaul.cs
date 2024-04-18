@@ -158,7 +158,7 @@
             helper.Events.Content.AssetReady += InvalidateStableTroughTexture;
 
             helper.Events.Input.ButtonPressed += (_, e) => ButtonHandling.OnButtonPressed(this, e);
-            helper.Events.Input.ButtonsChanged += (_, e) => ButtonHandling.OnButtonsChanged(this, e);
+            helper.Events.Input.ButtonsChanged += (_, _) => ButtonHandling.OnButtonsChanged(this);
 
             Patcher.PatchAll(this);
         }
