@@ -113,13 +113,30 @@ namespace HorseOverhaul
             mod.EmptyTroughOverlay = null;
             mod.RepairTroughOverlay = null;
 
-            if (mod.Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings") || mod.Helper.ModRegistry.IsLoaded("leroymilo.USJB"))
+            if (mod.Helper.ModRegistry.IsLoaded("sonreirblah.JBuildings"))
             {
                 // seasonal overlays are assigned in LateDayStarted
-                mod.EmptyTroughOverlay = null;
-
                 mod.SeasonalVersion = SeasonalVersion.Sonr;
                 return;
+            }
+
+            if (mod.Helper.ModRegistry.IsLoaded("leroymilo.USJB"))
+            {
+                var data = mod.Helper.ModRegistry.Get("leroymilo.USJB");
+
+                var path = data.GetType().GetProperty("DirectoryPath");
+
+                if (path != null && path.GetValue(data) != null)
+                {
+                    var dict = mod.ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "Buildings", "Stable" }, data.Manifest.Name, false);
+
+                    if (dict["Buildings"].ToLower() == "true" && dict["Stable"].ToLower() == "true")
+                    {
+                        // seasonal overlays are assigned in LateDayStarted
+                        mod.SeasonalVersion = SeasonalVersion.Sonr;
+                        return;
+                    }
+                }
             }
 
             if (mod.Helper.ModRegistry.IsLoaded("Oklinq.CleanStable"))

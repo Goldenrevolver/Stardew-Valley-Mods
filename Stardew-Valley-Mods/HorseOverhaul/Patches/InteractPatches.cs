@@ -49,6 +49,7 @@
             }
         }
 
+        // transpiler checked for 1.6.4
         public static IEnumerable<CodeInstruction> AllowInteractWhileRiding(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
             try

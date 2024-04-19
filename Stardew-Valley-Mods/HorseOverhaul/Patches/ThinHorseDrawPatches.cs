@@ -22,7 +22,7 @@ namespace HorseOverhaul.Patches
                transpiler: new HarmonyMethod(typeof(ThinHorseDrawPatches), nameof(FixHeadAndHatPosition)));
         }
 
-        // transpiler checked for 1.6.3
+        // transpiler checked for 1.6.4
         public static IEnumerable<CodeInstruction> FixHeadAndHatPosition(IEnumerable<CodeInstruction> instructions)
         {
             try

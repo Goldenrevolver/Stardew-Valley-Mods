@@ -50,38 +50,18 @@ namespace HorseOverhaul
 
             // this is done in buttonsChanged instead of buttonPressed as recommended
             // in the documentation: https://stardewcommunitywiki.com/Modding:Modder_Guide/APIs/Input#KeybindList
-            if (mod.Config.HorseMenuKey.JustPressed() || mod.Config.PetMenuKey.JustPressed())
+            if (mod.Config.HorseMenuKey.JustPressed())
             {
-                var keyBindToCheck = mod.Config.HorseMenuKey.JustPressed() ? mod.Config.HorseMenuKey : mod.Config.PetMenuKey;
+                bool isControllerInput = JustPressedControllerKey(mod.Config.HorseMenuKey);
 
-                bool isControllerInput = false;
+                OpenHorseMenu(mod, Game1.player, mouseX, mouseY, isControllerInput);
+                return;
+            }
+            else if (mod.Config.PetMenuKey.JustPressed())
+            {
+                bool isControllerInput = JustPressedControllerKey(mod.Config.PetMenuKey);
 
-                foreach (Keybind keybind in keyBindToCheck.Keybinds)
-                {
-                    if (keybind.GetState() != SButtonState.Pressed)
-                    {
-                        continue;
-                    }
-
-                    foreach (var button in keybind.Buttons)
-                    {
-                        if (button.TryGetController(out _))
-                        {
-                            isControllerInput = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (keyBindToCheck == mod.Config.HorseMenuKey)
-                {
-                    OpenHorseMenu(mod, Game1.player, mouseX, mouseY, isControllerInput);
-                }
-                else
-                {
-                    OpenPetMenu(mod, Game1.player, mouseX, mouseY, isControllerInput);
-                }
-
+                OpenPetMenu(mod, Game1.player, mouseX, mouseY, isControllerInput);
                 return;
             }
 
@@ -94,6 +74,27 @@ namespace HorseOverhaul
                     HorsePetInteraction.CheckPetInteraction(mod, Game1.player, 0, 0, true);
                 }
             }
+        }
+
+        private static bool JustPressedControllerKey(KeybindList keyBindToCheck)
+        {
+            foreach (Keybind keybind in keyBindToCheck.Keybinds)
+            {
+                if (keybind.GetState() != SButtonState.Pressed)
+                {
+                    continue;
+                }
+
+                foreach (var button in keybind.Buttons)
+                {
+                    if (button.TryGetController(out _))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static void OpenHorseMenu(HorseOverhaul mod, Farmer who, int mouseX, int mouseY, bool ignoreMousePosition)

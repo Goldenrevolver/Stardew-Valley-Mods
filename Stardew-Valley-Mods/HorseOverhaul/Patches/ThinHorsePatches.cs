@@ -47,7 +47,7 @@
                transpiler: new HarmonyMethod(typeof(ThinHorsePatches), nameof(FixDismountingPosition)));
         }
 
-        // transpiler checked for 1.6.3:
+        // transpiler checked for 1.6.4:
         //    IL_00b4: ldc.r4 64
         //    IL_00b9: mul
         //    IL_00ba: ldc.r4 32
@@ -81,7 +81,7 @@
             }
         }
 
-        // transpiler checked for 1.6.3:
+        // transpiler checked for 1.6.4:
         //    IL_0144: ldfld int32[MonoGame.Framework]Microsoft.Xna.Framework.Rectangle::X
         //    IL_0149: ldc.i4.s 16
         //    IL_014b: add
