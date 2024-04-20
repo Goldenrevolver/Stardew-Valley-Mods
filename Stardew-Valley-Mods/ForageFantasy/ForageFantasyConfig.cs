@@ -48,11 +48,15 @@
 
         public bool TapperDaysNeededChangesEnabled { get; set; } = true;
 
-        public int MapleTapperDaysNeeded { get; set; } = 9;
+        public int MapleTapperDaysNeeded { get; set; } = 7;
 
         public int OakTapperDaysNeeded { get; set; } = 7;
 
-        public int PineTapperDaysNeeded { get; set; } = 5;
+        public int PineTapperDaysNeeded { get; set; } = 7;
+
+        public int MysticTapperDaysNeeded { get; set; } = 7;
+
+        public int EqualizedPricePerDayForMapleOakPineTapperProduct { get; set; } = 0;
 
         public bool MushroomTreeTappersConsistentDaysNeeded { get; set; } = true;
 
@@ -68,7 +72,9 @@
 
         public bool HazelnutSeasonCalendarReminder { get; set; } = false;
 
-        private static string[] TQChoices { get; set; } = new string[] { "Disabled", "ForageLevelBased", "ForageLevelBasedNoBotanist", "TreeAgeBasedMonths", "TreeAgeBasedYears" };
+        private static string[] TapperQualityOptionsChoices { get; set; } = new string[] { "Disabled", "ForageLevelBased", "ForageLevelBasedNoBotanist", "TreeAgeBasedMonths", "TreeAgeBasedYears" };
+
+        private static string[] EqualizedPricePerDayChoices { get; set; } = new string[] { "Disabled", "BasedOnMaple", "BasedOnOak", "BasedOnPine" };
 
         public static void VerifyConfigValues(ForageFantasyConfig config, ForageFantasy mod)
         {
@@ -92,10 +98,22 @@
                 config.OakTapperDaysNeeded = 1;
             }
 
+            if (config.MysticTapperDaysNeeded <= 0)
+            {
+                invalidConfig = true;
+                config.MysticTapperDaysNeeded = 1;
+            }
+
             if (config.TapperQualityOptions < 0 || config.TapperQualityOptions > 4)
             {
                 invalidConfig = true;
                 config.TapperQualityOptions = 0;
+            }
+
+            if (config.EqualizedPricePerDayForMapleOakPineTapperProduct < 0 || config.EqualizedPricePerDayForMapleOakPineTapperProduct > 3)
+            {
+                invalidConfig = true;
+                config.EqualizedPricePerDayForMapleOakPineTapperProduct = 0;
             }
 
             if (config.TapperXPAmount < 0)
@@ -127,24 +145,25 @@
         {
             try
             {
-                // CommonFiddleheadFern, ForageSurvivalBurger
+                // Common Fiddlehead Fern, Forage Survival Burger
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/CraftingRecipes");
 
-                // CommonFiddleheadFern
+                // Common Fiddlehead Fern
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Locations");
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Bundles");
 
-                // ForageSurvivalBurger
+                // Forage Survival Burger
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/CookingRecipes");
 
                 // Tapper XP, Fine Grapes
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Machines");
 
-                // Tapper days needed changes, Fine Grapes
-                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Objects");
-
+                // needs to be done before 'Data/Objects' is invalidated, so the tapper prices are correct
                 // Tapper days needed changes, Tree Menu
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/WildTrees");
+
+                // Tapper days needed changes, Fine Grapes, Common Fiddlehead Fern, Forage Survival Burger
+                mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/Objects");
 
                 // Fine Grapes
                 mod.Helper.GameContent.InvalidateCacheAndLocalized("Data/NPCGiftTastes");
@@ -189,8 +208,8 @@
                 GetConfigName(mod, "BerryBushQuality"), GetConfigDescription(mod, "BerryBushQuality"));
             api.AddBoolOption(manifest, () => config.MushroomBoxQuality, (bool val) => config.MushroomBoxQuality = val,
                 GetConfigName(mod, "MushroomBoxQuality"), GetConfigDescription(mod, "MushroomBoxQuality"));
-            api.AddTextOption(manifest, () => GetElementFromConfig(TQChoices, config.TapperQualityOptions), (string val) => config.TapperQualityOptions = GetIndexFromArrayElement(TQChoices, val),
-                GetConfigName(mod, "TapperQualityOptions"), GetConfigDescription(mod, "TapperQualityOptions"), TQChoices, GetConfigDropdownChoice(mod, "TapperQualityOptions"));
+            api.AddTextOption(manifest, () => GetElementFromConfig(TapperQualityOptionsChoices, config.TapperQualityOptions), (string val) => config.TapperQualityOptions = GetIndexFromArrayElement(TapperQualityOptionsChoices, val),
+                GetConfigName(mod, "TapperQualityOptions"), GetConfigDescription(mod, "TapperQualityOptions"), TapperQualityOptionsChoices, GetConfigDropdownChoice(mod, "TapperQualityOptions"));
             api.AddBoolOption(manifest, () => config.TapperQualityRequiresTapperPerk, (bool val) => config.TapperQualityRequiresTapperPerk = val,
                 GetConfigName(mod, "TapperQualityRequiresTapperPerk"), GetConfigDescription(mod, "TapperQualityRequiresTapperPerk"));
 
@@ -215,6 +234,12 @@
                 GetConfigName(mod, "OakDaysNeeded"), GetConfigDescription(mod, "OakDaysNeeded"), 1);
             api.AddNumberOption(manifest, () => config.PineTapperDaysNeeded, (int val) => config.PineTapperDaysNeeded = val,
                 GetConfigName(mod, "PineDaysNeeded"), GetConfigDescription(mod, "PineDaysNeeded"), 1);
+
+            api.AddTextOption(manifest, () => GetElementFromConfig(EqualizedPricePerDayChoices, config.EqualizedPricePerDayForMapleOakPineTapperProduct), (string val) => config.EqualizedPricePerDayForMapleOakPineTapperProduct = GetIndexFromArrayElement(EqualizedPricePerDayChoices, val),
+                GetConfigName(mod, "EqualizedPricePerDayForMapleOakPineTapperProduct"), GetConfigDescription(mod, "EqualizedPricePerDayForMapleOakPineTapperProduct"), EqualizedPricePerDayChoices, GetConfigDropdownChoice(mod, "EqualizedPricePerDayOptions"));
+
+            api.AddNumberOption(manifest, () => config.MysticTapperDaysNeeded, (int val) => config.MysticTapperDaysNeeded = val,
+                GetConfigName(mod, "MysticDaysNeeded"), GetConfigDescription(mod, "MysticDaysNeeded"), 1);
             api.AddBoolOption(manifest, () => config.MushroomTreeTappersConsistentDaysNeeded, (bool val) => config.MushroomTreeTappersConsistentDaysNeeded = val,
                 GetConfigName(mod, "MushroomTreeTappersConsistentDaysNeeded"), GetConfigDescription(mod, "MushroomTreeTappersConsistentDaysNeeded"));
 
@@ -238,7 +263,7 @@
 
         private static Func<string, string> GetConfigDropdownChoice(ForageFantasy mod, string key)
         {
-            return (s) => mod.Helper.Translation.Get($"Config{key}{s}");
+            return (choice) => mod.Helper.Translation.Get($"Config{key}{choice}");
         }
 
         private static Func<string> GetConfigName(ForageFantasy mod, string key)
