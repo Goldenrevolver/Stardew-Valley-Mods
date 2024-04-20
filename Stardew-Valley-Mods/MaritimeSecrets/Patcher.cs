@@ -198,23 +198,25 @@ namespace MaritimeSecrets
 
         public static void Billboard_PerformHoverAction_Postfix(ref Billboard __instance, int x, int y, ref string ___hoverText)
         {
-            if (__instance.calendarDays != null && Game1.player?.modData?.ContainsKey(summerForageCalendarKey) == true)
+            if (__instance.calendarDays == null || !Game1.IsSummer || (Game1.player?.modData?.ContainsKey(summerForageCalendarKey)) != true)
             {
-                for (int day = 0; day < __instance.calendarDays.Count;)
+                return;
+            }
+
+            for (int day = 0; day < __instance.calendarDays.Count;)
+            {
+                ClickableTextureComponent c = __instance.calendarDays[day++];
+
+                if (c.bounds.Contains(x, y))
                 {
-                    ClickableTextureComponent c = __instance.calendarDays[day++];
-
-                    if (c.bounds.Contains(x, y))
+                    if (12 <= day && day <= 14)
                     {
-                        if (Game1.IsSummer && 12 <= day && day <= 14)
+                        if (___hoverText.Length > 0)
                         {
-                            if (___hoverText.Length > 0)
-                            {
-                                ___hoverText += Environment.NewLine;
-                            }
-
-                            ___hoverText += mod.Helper.Translation.Get("GreenOcean");
+                            ___hoverText += Environment.NewLine;
                         }
+
+                        ___hoverText += mod.Helper.Translation.Get("GreenOcean");
                     }
                 }
             }

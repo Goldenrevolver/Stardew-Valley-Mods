@@ -66,6 +66,8 @@
 
         public bool MushroomTapperCalendar { get; set; } = false;
 
+        public bool HazelnutSeasonCalendarReminder { get; set; } = false;
+
         private static string[] TQChoices { get; set; } = new string[] { "Disabled", "ForageLevelBased", "ForageLevelBasedNoBotanist", "TreeAgeBasedMonths", "TreeAgeBasedYears" };
 
         public static void VerifyConfigValues(ForageFantasyConfig config, ForageFantasy mod)
@@ -225,6 +227,8 @@
             api.AddBoolOption(manifest, () => config.WildAndFineGrapes, (bool val) => config.WildAndFineGrapes = val,
                 GetConfigName(mod, "WildAndFineGrapes"), GetConfigDescription(mod, "WildAndFineGrapes"));
 
+            api.AddBoolOption(manifest, () => config.HazelnutSeasonCalendarReminder, (bool val) => config.HazelnutSeasonCalendarReminder = val,
+                GetConfigName(mod, "HazelnutSeasonCalendarReminder"), GetConfigDescription(mod, "HazelnutSeasonCalendarReminder"));
             api.AddBoolOption(manifest, () => config.MushroomTapperCalendar, (bool val) => config.MushroomTapperCalendar = val,
                 GetConfigName(mod, "MushroomTapperCalendar"), GetConfigDescription(mod, "MushroomTapperCalendar"));
 

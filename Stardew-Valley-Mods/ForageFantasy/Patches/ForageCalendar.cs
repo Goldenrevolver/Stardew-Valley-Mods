@@ -7,31 +7,78 @@
     using StardewValley.Menus;
     using System;
 
-    internal class MushroomTapperCalendar
+    internal class ForageCalendar
     {
         private static readonly Rectangle redMushroom = new(192, 272, 16, 16);
         private static readonly Rectangle purpleMushroom = new(224, 272, 16, 16);
         private static readonly Rectangle commonMushroom = new(320, 256, 16, 16);
 
-        private static ForageFantasyConfig config;
+        private static readonly Rectangle hazelnut = new(0, 272, 16, 16);
+        private const int startOfHazelnutSeason = 15;
 
-        internal static void ApplyPatches(ForageFantasyConfig forageFantasyConfig, Harmony harmony)
+        private static ForageFantasy mod;
+
+        internal static void ApplyPatches(ForageFantasy forageFantasy, Harmony harmony)
         {
-            config = forageFantasyConfig;
+            mod = forageFantasy;
 
             harmony.Patch(
                original: AccessTools.Method(typeof(Billboard), nameof(Billboard.draw), new Type[] { typeof(SpriteBatch) }),
-               postfix: new HarmonyMethod(typeof(MushroomTapperCalendar), nameof(Draw_Postfix)));
+               postfix: new HarmonyMethod(typeof(ForageCalendar), nameof(Draw_Postfix)));
+
+            harmony.Patch(
+               original: AccessTools.Method(typeof(Billboard), nameof(Billboard.performHoverAction)),
+               postfix: new HarmonyMethod(typeof(ForageCalendar), nameof(PerformHoverAction_Postfix)));
         }
 
-        public static void Draw_Postfix(Billboard __instance, SpriteBatch b, bool ___dailyQuestBoard)
+        public static void PerformHoverAction_Postfix(ref Billboard __instance, int x, int y, ref string ___hoverText)
         {
-            if (___dailyQuestBoard || !config.MushroomTapperCalendar)
+            if (__instance.calendarDays == null || !mod.Config.HazelnutSeasonCalendarReminder || !Game1.IsFall)
             {
                 return;
             }
 
-            if (config.TapperDaysNeededChangesEnabled && config.MushroomTreeTappersConsistentDaysNeeded)
+            if (__instance.calendarDays.Count >= startOfHazelnutSeason - 1)
+            {
+                ClickableTextureComponent c = __instance.calendarDays[startOfHazelnutSeason - 1];
+
+                if (c.bounds.Contains(x, y))
+                {
+                    if (___hoverText.Length > 0)
+                    {
+                        ___hoverText += Environment.NewLine;
+                    }
+
+                    ___hoverText += mod.Helper.Translation.Get("HazelnutSeason");
+                }
+            }
+        }
+
+        public static void Draw_Postfix(Billboard __instance, SpriteBatch b, bool ___dailyQuestBoard, string ___hoverText)
+        {
+            if (___dailyQuestBoard)
+            {
+                return;
+            }
+
+            if (mod.Config.HazelnutSeasonCalendarReminder && Game1.season == Season.Fall)
+            {
+                DrawCalendarHazelnut(__instance, b, startOfHazelnutSeason);
+
+                Game1.mouseCursorTransparency = 1f;
+                __instance.drawMouse(b);
+                if (___hoverText.Length > 0)
+                {
+                    IClickableMenu.drawHoverText(b, ___hoverText, Game1.dialogueFont);
+                }
+            }
+
+            if (!mod.Config.MushroomTapperCalendar)
+            {
+                return;
+            }
+
+            if (mod.Config.TapperDaysNeededChangesEnabled && mod.Config.MushroomTreeTappersConsistentDaysNeeded)
             {
                 for (int day = 2; day <= 28; day += 2)
                 {
@@ -69,9 +116,19 @@
             }
         }
 
+        private static void DrawCalendarHazelnut(Billboard billboard, SpriteBatch b, int day)
+        {
+            DrawCalendarForage(billboard, b, hazelnut, day, 12, 60);
+        }
+
         private static void DrawCalendarMushroom(Billboard billboard, SpriteBatch b, Rectangle toDraw, int day)
         {
-            Utility.drawWithShadow(b, Game1.objectSpriteSheet, new Vector2((float)(billboard.calendarDays[day - 1].bounds.X + 95), (float)(billboard.calendarDays[day - 1].bounds.Y + 5) - Game1.dialogueButtonScale / 2f), toDraw, Color.White, 0f, Vector2.Zero, 2f, false, 1f, -1, -1, 0.35f);
+            DrawCalendarForage(billboard, b, toDraw, day, 95, 5);
+        }
+
+        private static void DrawCalendarForage(Billboard billboard, SpriteBatch b, Rectangle toDraw, int day, int xOffset, int yOffset)
+        {
+            Utility.drawWithShadow(b, Game1.objectSpriteSheet, new Vector2((float)(billboard.calendarDays[day - 1].bounds.X + xOffset), (float)(billboard.calendarDays[day - 1].bounds.Y + yOffset) - Game1.dialogueButtonScale / 2f), toDraw, Color.White, 0f, Vector2.Zero, 2f, false, 1f, -1, -1, 0.35f);
         }
 
         private static Rectangle GetBaseGameRecommendedHarvestCalendar(Season season, int day)
