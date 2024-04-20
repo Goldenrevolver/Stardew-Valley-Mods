@@ -269,6 +269,45 @@
             data["Survival Burger (Wi)"] = $"{winterCraftingRecipe.Replace('n', useCookingRecipes ? '2' : '1')}{infix}{winterBurgerName}";
         }
 
+        public static void AllowSurvivalBurgerRecipeCompletion()
+        {
+            foreach (var farmer in Game1.getAllFarmers())
+            {
+                if (farmer.cookingRecipes.ContainsKey("Survival Burger") && !HasCookedRecipe(farmer, "Survival Burger"))
+                {
+                    if (HasCookedRecipe(farmer, "Survival Burger (Sp)")
+                        || HasCookedRecipe(farmer, "Survival Burger (Su)")
+                        || HasCookedRecipe(farmer, "Survival Burger (Fa)")
+                        || HasCookedRecipe(farmer, "Survival Burger (Wi)"))
+                    {
+                        farmer.recipesCooked["Survival Burger"] = 1;
+                    }
+                }
+
+                // this one technically doesn't exist, but better safe than sorry
+                if (farmer.craftingRecipes.TryGetValue("Survival Burger", out var timesCrafted) && timesCrafted <= 0)
+                {
+                    if (HasCraftedRecipe(farmer, "Survival Burger (Sp)")
+                        || HasCraftedRecipe(farmer, "Survival Burger (Su)")
+                        || HasCraftedRecipe(farmer, "Survival Burger (Fa)")
+                        || HasCraftedRecipe(farmer, "Survival Burger (Wi)"))
+                    {
+                        farmer.craftingRecipes["Survival Burger"] = 1;
+                    }
+                }
+            }
+        }
+
+        private static bool HasCookedRecipe(Farmer farmer, string recipe)
+        {
+            return farmer.recipesCooked.TryGetValue(recipe, out var timesCooked) && timesCooked > 0;
+        }
+
+        private static bool HasCraftedRecipe(Farmer farmer, string recipe)
+        {
+            return farmer.craftingRecipes.TryGetValue(recipe, out var timesCrafted) && timesCrafted > 0;
+        }
+
         public static string GetWildSeedSummerForage()
         {
             int ran = Game1.random.Next(4);

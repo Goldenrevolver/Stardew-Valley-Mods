@@ -39,6 +39,7 @@
             {
                 TapperAndMushroomQualityLogic.IncreaseTreeAges(this);
                 GrapeLogic.SetDropToNewGrapes(this);
+                FernAndBurgerLogic.AllowSurvivalBurgerRecipeCompletion();
             };
 
             helper.Events.GameLoop.DayEnding += delegate { GrapeLogic.ResetGrapes(this); };
