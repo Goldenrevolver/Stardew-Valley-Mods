@@ -1,0 +1,14 @@
+{
+	"Name": "[CP] Example Forage Fantasy Price Changes",
+	"Author": "TODO",
+	"Version": "1.0",
+	"Description": "TODO",
+	"UniqueID": "TODO.ForageFantasyPriceChanges",
+	"ContentPackFor": {"UniqueID": "Pathoschild.ContentPatcher"},
+	"Dependencies": [
+		{
+		"UniqueID": "Goldenrevolver.ForageFantasy",
+		"IsRequired": true
+		}
+	]
+}
