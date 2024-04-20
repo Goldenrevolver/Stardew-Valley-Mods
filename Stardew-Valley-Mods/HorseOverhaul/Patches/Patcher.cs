@@ -117,7 +117,7 @@
 
         public static void FixHorseAnimalPage(AnimalEntry __instance, Character animal)
         {
-            if (animal is not Horse horse || horse.IsTractor())
+            if (animal is not Horse horse || horse.IsTractor() || !mod.Config.ShowHorseInfoInAnimalsMenu)
             {
                 return;
             }
@@ -131,11 +131,14 @@
 
             // variables are read-only (and C# doesn't know that we are in a constructor postfix), so we set them with reflection
 
-            AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.FriendshipLevel)).SetValue(__instance, horseWrapper.Friendship);
-            //AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.special)).SetValue(__instance, horse.ateCarrotToday ? 1 : 0);
+            if (horseWrapper.Friendship > 0)
+            {
+                AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.FriendshipLevel)).SetValue(__instance, horseWrapper.Friendship);
+            }
 
-            // 'special == 1' means we are drawing a carrot, so we set 'WasPetYet' to -1, so they don't overlap
-            if (__instance.special == 1)
+            // 'special == 1' means we are drawing a carrot, so we set 'WasPetYet' to -1 to disable it, so they don't overlap
+            // alternatively, if petting is disabled
+            if (__instance.special == 1 || !mod.Config.Petting)
             {
                 AccessTools.Field(typeof(AnimalEntry), nameof(AnimalEntry.WasPetYet)).SetValue(__instance, -1);
             }

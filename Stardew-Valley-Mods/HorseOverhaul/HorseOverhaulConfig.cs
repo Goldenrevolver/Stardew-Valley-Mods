@@ -75,6 +75,8 @@
 
         public bool AllowMultipleFeedingsADay { get; set; } = false;
 
+        public bool ShowHorseInfoInAnimalsMenu { get; set; } = true;
+
         public KeybindList HorseMenuKey { get; set; } = HorseMenuKeyDefault;
 
         public KeybindList PetMenuKey { get; set; } = PetMenuKeyDefault;
@@ -192,6 +194,8 @@
                 () => "Preferred Water Container", () => "If the current stable sprite has both a trough and a bucket, which container to fill. If it has only one, this option is ignored", Enum.GetNames(typeof(WaterOption)), (s) => s.Replace('_', ' '));
             api.AddBoolOption(manifest, () => config.DisableStableSpriteChanges, (bool val) => config.DisableStableSpriteChanges = val,
                 () => "Disable Stable Sprite Changes", null);
+            api.AddBoolOption(manifest, () => config.ShowHorseInfoInAnimalsMenu, (bool val) => config.ShowHorseInfoInAnimalsMenu = val,
+                () => "Show Horse Info In Animals Menu", null);
 
             api.AddSectionTitle(manifest, () => "Interact While Riding", null);
 
