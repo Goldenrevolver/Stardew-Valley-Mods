@@ -38,6 +38,8 @@
   "TreeMenuNGrowthStages": "{{n}} Growth Stages",
   "TreeMenuYes": "Yes",
   "TreeMenuNo": "No",
+  "TreeMenuYesDueToItem": "Yes ({{itemName}})",
+  "TreeMenuNoDueToItem": "No ({{itemName}})",
   "TreeMenuNotInGreenHouse": "Not In Greenhouse",
   "TreeMenuNotInWinter": "Not In Winter",
   "FineGrape": "Fine Grape",

@@ -66,6 +66,7 @@
             };
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Fallthrough is easier to read")]
         public string QualityToName(int quality)
         {
             switch (quality)
@@ -245,6 +246,10 @@
                 {
                     infoText = mod.Helper.Translation.Get("TreeMenuNo");
                 }
+                else if (normalTree.stopGrowingMoss.Value)
+                {
+                    infoText = mod.Helper.Translation.Get("TreeMenuNoDueToItem", new { itemName = ItemRegistry.Create("(O)419").DisplayName });
+                }
                 else if (normalTree.Location.IsGreenhouse)
                 {
                     infoText = mod.Helper.Translation.Get("TreeMenuNotInGreenHouse");
@@ -294,7 +299,7 @@
             return output.ToString()[0..^1];
         }
 
-        private Season? GetTreeSeason(Tree normalTree)
+        private static Season? GetTreeSeason(Tree normalTree)
         {
             return (Season?)AccessTools.Field(typeof(Tree), "localSeason").GetValue(normalTree);
         }
