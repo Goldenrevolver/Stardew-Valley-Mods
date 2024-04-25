@@ -224,6 +224,12 @@ namespace MushroomRancher
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
+            ApplyHutchInteriorChanges(e);
+            MushroomIncubator.AddIncubatorAssetChanges(e);
+        }
+
+        private void ApplyHutchInteriorChanges(AssetRequestedEventArgs e)
+        {
             if (!(Config.HutchInterior > 0 && Config.HutchInterior < MushroomRancherConfig.InteriorChoices.Length))
             {
                 return;
@@ -260,8 +266,6 @@ namespace MushroomRancher
                     }
                 });
             }
-
-            MushroomIncubator.AddIncubatorAssetChanges(e);
         }
     }
 
