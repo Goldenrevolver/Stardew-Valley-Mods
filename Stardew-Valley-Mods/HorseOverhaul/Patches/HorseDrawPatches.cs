@@ -42,13 +42,14 @@
                 __instance.IsEmoting = __state;
             }
 
+            DrawEmote(__instance, b);
+
             if (__instance.IsTractor())
             {
                 return;
             }
 
             DrawSaddleBags(__instance, b);
-            DrawEmote(__instance, b);
         }
 
         private static void DrawEmote(Horse horse, SpriteBatch b)
@@ -102,6 +103,11 @@
         private static void DrawSaddleBags(Horse horse, SpriteBatch b)
         {
             if (!mod.Config.SaddleBag || mod.Config.VisibleSaddleBags == SaddleBagOption.Disabled.ToString())
+            {
+                return;
+            }
+
+            if (!SaddleBagAccess.HasAccessToSaddleBag(horse))
             {
                 return;
             }

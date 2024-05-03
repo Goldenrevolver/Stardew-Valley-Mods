@@ -40,6 +40,8 @@
 
         public HorseOverhaulConfig Config { get; set; }
 
+        private static IManifest Manifest { get; set; }
+
         internal string GwenOption { get; set; } = "1";
 
         internal SeasonalVersion SeasonalVersion { get; set; }
@@ -131,8 +133,12 @@
 
         private const int maximumSaddleBagPositionsChecked = 10;
 
+        public static readonly string saddleBagBookNonQID = $"{Manifest?.UniqueID}.SaddleBagBook";
+        public static readonly string saddleBagBookQID = $"(O){saddleBagBookNonQID}";
+
         public override void Entry(IModHelper helper)
         {
+            Manifest = this.ModManifest;
             Config = Helper.ReadConfig<HorseOverhaulConfig>();
 
             HorseOverhaulConfig.VerifyConfigValues(Config, this);
@@ -155,6 +161,7 @@
 
             helper.Events.Multiplayer.ModMessageReceived += OnModMessageReceived;
 
+            helper.Events.Content.AssetRequested += (_, e) => SaddleBagAccess.ApplySaddleBagUnlockChanges(e, this);
             helper.Events.Content.AssetReady += InvalidateStableTroughTexture;
 
             helper.Events.Input.ButtonPressed += (_, e) => ButtonHandling.OnButtonPressed(this, e);
@@ -192,9 +199,14 @@
             Utility.ForEachBuilding(delegate (Building building)
             {
                 // also do it for tractors
-                if (building is Stable stable && stable.getStableHorse() != null)
+                if (building is Stable stable)
                 {
-                    stable.getStableHorse().forceOneTileWide.Value = false;
+                    Horse horse = stable.getStableHorse();
+
+                    if (horse != null)
+                    {
+                        horse.forceOneTileWide.Value = false;
+                    }
                 }
 
                 return true;
@@ -489,11 +501,9 @@
 
                     if (Context.IsMainPlayer && Config.HorseHeater && Game1.IsWinter)
                     {
-                        var horse = stable.getStableHorse();
-
-                        if (horse != null && CheckForHeater(location, stable))
+                        if (CheckForHeater(location, stable))
                         {
-                            var horseW = Horses.Where(h => h?.Horse?.HorseId == horse.HorseId).FirstOrDefault();
+                            var horseW = Horses.Where(h => h?.Stable?.HorseId == stable.HorseId).FirstOrDefault();
 
                             horseW?.AddHeaterBonus();
                         }
