@@ -65,6 +65,8 @@
 
         public bool InteractWithFruitTreesWhileRiding { get; set; } = true;
 
+        public bool InteractWithTrashCansWhileRiding { get; set; } = false;
+
         public bool HorseHoofstepEffects { get; set; } = true;
 
         public bool Feeding { get; set; } = true;
@@ -213,6 +215,8 @@
                 () => "Interact With Trees", null);
             api.AddBoolOption(manifest, () => config.InteractWithFruitTreesWhileRiding, (bool val) => config.InteractWithFruitTreesWhileRiding = val,
                 () => "Interact With Fruit Trees", null);
+            api.AddBoolOption(manifest, () => config.InteractWithTrashCansWhileRiding, (bool val) => config.InteractWithTrashCansWhileRiding = val,
+                () => "Interact With Trash Cans", () => "This may cause issues with some trash can or event mods that don't expect you to be riding a horse, but should work with almost all of them");
 
             api.AddSectionTitle(manifest, () => "Other", null);
 
