@@ -72,6 +72,15 @@
 
                     grapeData.DisplayName = translation.Get("WildGrape");
 
+                    string baseGameGrapeDescription = grapeData.Description;
+
+                    Translation wildGrapeDescriptionOverwrite = translation.Get("WildGrapeDescriptionOverwrite");
+
+                    if (wildGrapeDescriptionOverwrite.HasValue() && !string.IsNullOrWhiteSpace(wildGrapeDescriptionOverwrite.ToString()))
+                    {
+                        grapeData.Description = wildGrapeDescriptionOverwrite.ToString().Trim();
+                    }
+
                     int fineGrapePrice = 110;
 
                     if (grapeData.CustomFields != null)
@@ -91,7 +100,7 @@
                     {
                         Name = fineGrapeNonQID,
                         DisplayName = translation.Get("FineGrape"),
-                        Description = grapeData.Description,
+                        Description = baseGameGrapeDescription,
                         Type = "Basic",
                         Category = StardewObject.FruitsCategory,
                         Price = fineGrapePrice,
@@ -109,6 +118,13 @@
                         ContextTags = new List<string>() { "color_purple", "season_summer" }, // removed forage tag
                         CustomFields = null
                     };
+
+                    Translation fineGrapeDescriptionOverwrite = translation.Get("FineGrapeDescriptionOverwrite");
+
+                    if (fineGrapeDescriptionOverwrite.HasValue() && !string.IsNullOrWhiteSpace(fineGrapeDescriptionOverwrite.ToString()))
+                    {
+                        fineGrapeData.Description = fineGrapeDescriptionOverwrite.ToString().Trim();
+                    }
 
                     data[fineGrapeNonQID] = fineGrapeData;
                 }, AssetEditPriority.Late);
