@@ -107,7 +107,8 @@
                         return;
                     }
 
-                    if (__instance.Location != null && __instance.Location.terrainFeatures.TryGetValue(__instance.TileLocation, out var terrainFeature)
+                    if (__instance.heldObject.Value.QualifiedItemId != TapperAndMushroomQualityLogic.sapQID
+                        && __instance.Location != null && __instance.Location.terrainFeatures.TryGetValue(__instance.TileLocation, out var terrainFeature)
                         && terrainFeature is Tree tree)
                     {
                         __instance.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(config, who, tree);

@@ -87,7 +87,7 @@
             }
             var tree = mod.Helper.Reflection.GetField<Tree>(__instance, "Tree").GetValue();
 
-            if (tree != null)
+            if (tree != null && tapper.heldObject.Value.QualifiedItemId != TapperAndMushroomQualityLogic.sapQID)
             {
                 tapper.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod.Config, who, tree);
             }

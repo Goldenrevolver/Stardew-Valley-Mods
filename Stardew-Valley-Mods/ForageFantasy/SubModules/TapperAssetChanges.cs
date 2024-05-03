@@ -119,13 +119,26 @@
                 }
             }
 
-            if (data.TryGetValue(Tree.mysticTree, out var mysticData))
+            if (data.TryGetValue(Tree.mysticTree, out var mysticData) && config.MysticTapperDaysNeeded > 0)
             {
                 foreach (var item in mysticData.TapItems)
                 {
                     if (item.Id == "Default")
                     {
                         item.DaysUntilReady = config.MysticTapperDaysNeeded;
+                    }
+                }
+            }
+
+            if (data.TryGetValue(Tree.mahoganyTree, out var mahoganyData) && config.MahoganyTapperDaysNeeded > 0)
+            {
+                foreach (var item in mahoganyData.TapItems)
+                {
+                    if (item.Id == "Default")
+                    {
+                        item.DaysUntilReady = config.MahoganyTapperDaysNeeded;
+                        item.MinStack *= config.MahoganyTapperDaysNeeded;
+                        item.MaxStack *= config.MahoganyTapperDaysNeeded;
                     }
                 }
             }
@@ -259,7 +272,7 @@
                 pineTarData.Price = GetTapperProductValueForDaysNeededWithEqualizedPriceCheck(config, config.PineTapperDaysNeeded, pineTarNonQID, pineTarPriceOverride, mapleSyrupPriceOverride, oakResinPriceOverride, pineTarPriceOverride);
             }
 
-            if (data.TryGetValue(mysticSyrupNonQID, out var mysticSyrupData))
+            if (data.TryGetValue(mysticSyrupNonQID, out var mysticSyrupData) && config.MysticTapperDaysNeeded > 0)
             {
                 int? priceOverride = GetTapperProductDefaultPriceOverride(mysticSyrupData, "MysticSyrupPriceBasedOn7Days");
                 mysticSyrupData.Price = GetTapperProductValueForDaysNeeded(config.MysticTapperDaysNeeded, mysticSyrupNonQID, priceOverride);
