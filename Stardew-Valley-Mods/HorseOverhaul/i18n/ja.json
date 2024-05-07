@@ -32,4 +32,6 @@
   "HorseEatDislike": "馬はそれを食べたがらない。",
   "Owner": "飼い主：{{ownerName}}",
   "UnknownName": "不明"
+  "BookSaddleBagName": "サドルバッグの使い方",
+  "BookSaddleBagDescription": "馬にサドルバッグを装着して、アイテムを運ぶことができる。"
 }
