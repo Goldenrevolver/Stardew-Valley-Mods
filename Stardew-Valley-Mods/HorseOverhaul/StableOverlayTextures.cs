@@ -333,7 +333,7 @@ namespace HorseOverhaul
 
                 if (path != null && path.GetValue(data) != null)
                 {
-                    var dict = mod.ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "StyleStable", "StableSeasonOptions" }, data.Manifest.Name, false);
+                    var dict = mod.ReadConfigFile("config.json", path.GetValue(data) as string, new[] { "StyleStable" }, data.Manifest.Name, false);
 
                     if (dict["StyleStable"].ToLower() != "none")
                     {

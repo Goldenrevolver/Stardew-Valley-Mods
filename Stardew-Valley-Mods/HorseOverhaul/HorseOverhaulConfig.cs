@@ -91,7 +91,7 @@
 
         public int MaximumWarpDetectionRange { get; set; } = 200;
 
-        public bool WarpHorseWithFluteIgnoresRange { get; set; } = true;
+        public bool WarpHorseWithFluteIgnoresRange { get; set; } = false;
 
         public bool HorseHoofstepEffects { get; set; } = true;
 
