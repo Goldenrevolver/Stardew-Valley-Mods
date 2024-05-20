@@ -20,8 +20,11 @@
         None,
         Sonr,
         Gwen,
-        Magimatica
+        Magimatica,
+        Lumi
     }
+
+    // TODO: UI info suite 2 compatibility (issue #313)
 
     public class HorseOverhaul : Mod
     {
@@ -84,7 +87,7 @@
 
                     if (FilledTroughOverlay != null)
                     {
-                        filledTroughTexture = MergeTextures(FilledTroughOverlay, filledTroughTexture);
+                        filledTroughTexture = MergeTextures(FilledTroughOverlay, filledTroughTexture, SeasonalVersion == SeasonalVersion.Lumi);
                     }
 
                     filledTroughTexture.Name = ModManifest.UniqueID + ".FilledTrough";
@@ -117,7 +120,7 @@
 
                     if (EmptyTroughOverlay != null)
                     {
-                        emptyTroughTexture = MergeTextures(EmptyTroughOverlay, emptyTroughTexture);
+                        emptyTroughTexture = MergeTextures(EmptyTroughOverlay, emptyTroughTexture, SeasonalVersion == SeasonalVersion.Lumi);
                     }
 
                     emptyTroughTexture.Name = ModManifest.UniqueID + ".EmptyTrough";
@@ -433,6 +436,10 @@
                 {
                     EmptyTroughOverlay = Helper.ModContent.Load<IRawTextureData>($"assets/gwen/overlay_{GwenOption}.png");
                 }
+            }
+            else if (SeasonalVersion == SeasonalVersion.Lumi)
+            {
+                emptyTroughTexture = null;
             }
 
             // call this even if water or sprite changes are disabled to reset the texture
