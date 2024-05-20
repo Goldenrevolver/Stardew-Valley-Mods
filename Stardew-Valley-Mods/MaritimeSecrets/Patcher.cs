@@ -219,7 +219,7 @@ namespace MaritimeSecrets
                             ___hoverText += Environment.NewLine;
                         }
 
-                        ___hoverText += mod.Helper.Translation.Get("GreenOcean");
+                        ___hoverText += GetTranslation("GreenOcean");
                     }
                 }
             }
@@ -381,7 +381,7 @@ namespace MaritimeSecrets
             }
 
             // maybe I should refactor everything to a string builder instead, but it doesn't seem worth it yet for only about 3 string concatenations
-            string secret = mod.Helper.Translation.Get("Secret" + speechTypeSuffix, new { name = marinerName }) + " ";
+            string secret = GetTranslation("Secret" + speechTypeSuffix, marinerName) + " ";
 
             __result = true;
 
@@ -390,7 +390,7 @@ namespace MaritimeSecrets
             if (!who.modData.ContainsKey(summerForageCalendarKey))
             {
                 who.modData[summerForageCalendarKey] = "true";
-                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("SummerForageCalendar" + speechTypeSuffix)));
+                Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation("SummerForageCalendar" + speechTypeSuffix)));
                 return false;
             }
 
@@ -398,7 +398,7 @@ namespace MaritimeSecrets
             if ((who.fishingLevel.Value >= 8 || who.craftingRecipes.ContainsKey("Worm Bin")) && !who.modData.ContainsKey(wormBinUpgradeKey))
             {
                 who.modData[wormBinUpgradeKey] = "true";
-                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("WormBinUpgrade" + speechTypeSuffix)));
+                Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation("WormBinUpgrade" + speechTypeSuffix)));
                 return false;
             }
 
@@ -411,7 +411,7 @@ namespace MaritimeSecrets
                 // yes, if people set the speech pattern to sailor and use a mermaid mod, the mermaid will say the mermaid specific line like a sailor
                 string transl = mod.IsUsingMermaidMod ? marinerName == "Vanilla" ? "MermaidSecretNote_MermaidBlueHair" : "MermaidSecretNote_Mermaid" : "MermaidSecretNote";
 
-                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(transl + speechTypeSuffix)));
+                Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation(transl + speechTypeSuffix)));
                 return false;
             }
 
@@ -427,7 +427,7 @@ namespace MaritimeSecrets
 
                 string transl = oneDone ? "SpaPaintingOrNecklace" : "SpaPaintingAndNecklace";
 
-                Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(transl + speechTypeSuffix)));
+                Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation(transl + speechTypeSuffix)));
                 return false;
             }
 
@@ -557,19 +557,43 @@ namespace MaritimeSecrets
             {
                 if (selectedMinorSecret && translation != null)
                 {
-                    Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get(translation) + " " + mod.Helper.Translation.Get("AlsoBeachSupplyCrate" + speechTypeSuffix)));
+                    Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation(translation) + " " + GetTranslation("AlsoBeachSupplyCrate" + speechTypeSuffix)));
                 }
                 else
                 {
-                    Game1.drawObjectDialogue(Game1.parseText(secret + mod.Helper.Translation.Get("BeachSupplyCrate" + speechTypeSuffix)));
+                    Game1.drawObjectDialogue(Game1.parseText(secret + GetTranslation("BeachSupplyCrate" + speechTypeSuffix)));
                 }
 
                 return false;
             }
 
             // if somehow failed to place a crate
-            Game1.drawObjectDialogue(Game1.parseText(mod.Helper.Translation.Get("NoSecret" + speechTypeSuffix, new { name = marinerName })));
+            Game1.drawObjectDialogue(Game1.parseText(GetTranslation("NoSecret" + speechTypeSuffix, marinerName)));
             return false;
+        }
+
+        private static string GetTranslation(string key)
+        {
+            if (mod.marinerDialogueOverride.TryGetValue(key, out string overrideTranslation))
+            {
+                return overrideTranslation;
+            }
+            else
+            {
+                return mod.Helper.Translation.Get(key);
+            }
+        }
+
+        private static string GetTranslation(string key, string marinerName)
+        {
+            if (mod.marinerDialogueOverride.TryGetValue(key, out string overrideTranslation))
+            {
+                return overrideTranslation.Replace("{{name}}", marinerName);
+            }
+            else
+            {
+                return mod.Helper.Translation.Get(key, new { name = marinerName });
+            }
         }
 
         private static string GetMarinerName()
@@ -597,7 +621,7 @@ namespace MaritimeSecrets
             else
             {
                 // if we couldn't find a name, use fallback
-                return mod.Helper.Translation.Get("FallbackOldMarinerName");
+                return GetTranslation("FallbackOldMarinerName");
             }
         }
 

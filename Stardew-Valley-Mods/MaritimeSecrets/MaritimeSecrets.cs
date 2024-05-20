@@ -1,4 +1,5 @@
 ﻿using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -25,11 +26,17 @@ namespace MaritimeSecrets
             "mi.Mermaids",
             "DragonMaus.MermaidsReplaceOldMarinerRedux",
             "peaachdew.OldMarinerToMermaid",
-            "JennaJuffuffles.MarinerToMermaid"
+            "JennaJuffuffles.MarinerToMermaid",
+            "DolphINaF.MermaidMariner"
         };
+
+        internal Dictionary<string, string> marinerDialogueOverride;
+
+        private string translationOverrideKey;
 
         public override void Entry(IModHelper helper)
         {
+            translationOverrideKey = $"Mods/{ModManifest.UniqueID}/MarinerDialogueOverride";
             talkedToMarinerTodayKey = $"{ModManifest.UniqueID}/TalkedToMarinerToday";
 
             Config = Helper.ReadConfig<MaritimeSecretsConfig>();
@@ -51,7 +58,32 @@ namespace MaritimeSecrets
 
             Helper.Events.GameLoop.DayEnding += delegate { ResetMarinerTalk(); };
 
+            Helper.Events.Content.AssetRequested += this.OnAssetRequested;
+            Helper.Events.Content.AssetReady += this.OnAssetReady;
+            Helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+
             Patcher.PatchAll(this);
+        }
+
+        private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+        {
+            if (e.Name.IsEquivalentTo(translationOverrideKey))
+            {
+                e.LoadFromModFile<Dictionary<string, string>>("dialogueOverride/override-dummy.json", AssetLoadPriority.Medium);
+            }
+        }
+
+        private void OnAssetReady(object sender, AssetReadyEventArgs e)
+        {
+            if (e.Name.IsEquivalentTo(translationOverrideKey))
+            {
+                this.marinerDialogueOverride = Game1.content.Load<Dictionary<string, string>>(translationOverrideKey);
+            }
+        }
+
+        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
+        {
+            this.marinerDialogueOverride = Game1.content.Load<Dictionary<string, string>>(translationOverrideKey);
         }
 
         private void ResetMarinerTalk()
