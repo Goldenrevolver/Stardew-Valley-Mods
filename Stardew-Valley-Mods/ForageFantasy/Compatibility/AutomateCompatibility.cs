@@ -85,9 +85,15 @@
             {
                 return;
             }
+
+            if (!mod.Config.TapperSapHasQuality && tapper.heldObject.Value.QualifiedItemId == TapperAndMushroomQualityLogic.sapQID)
+            {
+                return;
+            }
+
             var tree = mod.Helper.Reflection.GetField<Tree>(__instance, "Tree").GetValue();
 
-            if (tree != null && tapper.heldObject.Value.QualifiedItemId != TapperAndMushroomQualityLogic.sapQID)
+            if (tree != null)
             {
                 tapper.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod.Config, who, tree);
             }

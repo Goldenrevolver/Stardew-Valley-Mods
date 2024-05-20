@@ -71,6 +71,8 @@
   "ConfigTapperQualityRequiresTapperPerkDescription": "Whether you need to have the 'Tapper' perk, before tapper products can have quality.",
   "ConfigTapperQualityOptions": "Tapper Quality Options",
   "ConfigTapperQualityOptionsDescription": "Whether quality should scale with foraging level or with the age of the tree (like fruit trees). Does not affect sap.",
+  "ConfigTapperSapHasQuality": "Tapper Sap Has Quality",
+  "ConfigTapperSapHasQualityDescription": "Whether sap from tappers (mostly mahogany trees) is always default quality or can gain higher quality.",
   "ConfigBerryBushChanceToGetXP": "Berry Bush Chance To Get XP",
   "ConfigBerryBushChanceToGetXPDescription": "Chance to get foraging experience when harvesting bushes.\nSet to 0 to disable feature.",
   "ConfigBerryBushXPAmount": "Berry Bush XP Amount",

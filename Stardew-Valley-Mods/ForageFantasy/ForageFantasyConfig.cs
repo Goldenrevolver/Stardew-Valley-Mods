@@ -40,6 +40,8 @@
 
         public bool TapperQualityRequiresTapperPerk { get; set; } = false;
 
+        public bool TapperSapHasQuality { get; set; } = false;
+
         public int TapperXPAmount { get; set; } = 3;
 
         public int SmallStumpBonusXPAmount { get; set; } = 1;
@@ -222,6 +224,8 @@
                 GetConfigName(mod, "TapperQualityOptions"), GetConfigDescription(mod, "TapperQualityOptions"), TapperQualityOptionsChoices, GetConfigDropdownChoice(mod, "TapperQualityOptions"));
             api.AddBoolOption(manifest, () => config.TapperQualityRequiresTapperPerk, (bool val) => config.TapperQualityRequiresTapperPerk = val,
                 GetConfigName(mod, "TapperQualityRequiresTapperPerk"), GetConfigDescription(mod, "TapperQualityRequiresTapperPerk"));
+            api.AddBoolOption(manifest, () => config.TapperSapHasQuality, (bool val) => config.TapperSapHasQuality = val,
+                GetConfigName(mod, "TapperSapHasQuality"), GetConfigDescription(mod, "TapperSapHasQuality"));
 
             api.AddSectionTitle(manifest, GetConfigName(mod, "SectionXPRewards"));
 
