@@ -27,6 +27,13 @@
         Buy_From_Animal_Shop = 1
     }
 
+    public enum WarpHorseFluteRequirementOption
+    {
+        None = 0,
+        In_Inventory = 1,
+        Owned = 2
+    }
+
     /// <summary>
     /// Config file for the mod
     /// </summary>
@@ -77,6 +84,14 @@
         public bool InteractWithFruitTreesWhileRiding { get; set; } = true;
 
         public bool InteractWithTrashCansWhileRiding { get; set; } = false;
+
+        public bool WarpHorseWithYou { get; set; } = true;
+
+        public string WarpHorseFluteRequirement { get; set; } = WarpHorseFluteRequirementOption.None.ToString();
+
+        public int MaximumWarpDetectionRange { get; set; } = 200;
+
+        public bool WarpHorseWithFluteIgnoresRange { get; set; } = true;
 
         public bool HorseHoofstepEffects { get; set; } = true;
 
@@ -271,6 +286,17 @@
                 () => "Interact With Fruit Trees", null);
             api.AddBoolOption(manifest, () => config.InteractWithTrashCansWhileRiding, (bool val) => config.InteractWithTrashCansWhileRiding = val,
                 () => "Interact With Trash Cans", () => "This may cause issues with some trash can or event mods that don't expect you to be riding a horse, but should work with almost all of them");
+
+            api.AddSectionTitle(manifest, () => "Warp Horse With You", null);
+
+            api.AddBoolOption(manifest, () => config.WarpHorseWithYou, (bool val) => config.WarpHorseWithYou = val,
+                () => "Enable Warp Horse With You", () => "When using a warp totem, obelisk or scepter, also teleport your horse with you if it's nearby");
+            api.AddTextOption(manifest, () => config.WarpHorseFluteRequirement, (string val) => config.WarpHorseFluteRequirement = val,
+                () => "Warp Horse Flute Requirement", () => "Whether you need the horse flute for 'Warp Horse With You'", Enum.GetNames(typeof(WarpHorseFluteRequirementOption)), (s) => s.Replace('_', ' '));
+            api.AddNumberOption(manifest, () => config.MaximumWarpDetectionRange, (int val) => config.MaximumWarpDetectionRange = val,
+                () => "Maximum Warp\nDetection Range", () => "How close the horse has to be to be considered nearby");
+            api.AddBoolOption(manifest, () => config.WarpHorseWithFluteIgnoresRange, (bool val) => config.WarpHorseWithFluteIgnoresRange = val,
+                () => "Warp Horse With Flute\nIgnores Range", () => "When using 'Warp Horse With You' while you have a horse flute, always teleport your horse, even if it's not nearby");
 
             api.AddSectionTitle(manifest, () => "Other", null);
 

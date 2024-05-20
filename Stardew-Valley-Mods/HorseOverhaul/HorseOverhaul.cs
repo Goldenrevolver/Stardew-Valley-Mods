@@ -37,6 +37,8 @@
 
         private readonly PerScreen<bool> dayJustStarted = new(createNewState: () => false);
 
+        internal readonly PerScreen<bool> isDoingHorseWarp = new(createNewState: () => false);
+
         public List<HorseWrapper> Horses { get => horses.Value; }
 
         public IBetterRanchingApi BetterRanchingApi { get; set; }
