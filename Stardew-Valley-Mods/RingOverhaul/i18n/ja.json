@@ -1,0 +1,32 @@
+{
+  /*
+		The first entry before the : is the translation key, leave that one unchanged. Only change the translation in the "" behind it.
+		Every value that you don't translate (or that is missing when I update) will simply take the english translation I wrote.
+		So if you don't want to translate the gmcm config menu, you don't have to.
+		\n means insert a line break (you can see I use line breaks in the gmcm config menu because it doesn't do that automatically).
+  */
+  "IridiumBandTooltip": "全武器性能が10％上昇する。",
+  "ExplorerRingName": "エクスプローラーリング",
+  "BerserkerRingName": "バーサーカーリング",
+  "PaladinRingName": "パラディンリング",
+  "GemBandName": "ジェムバンド", // this one is used when you combined the gem rings at the forge for some reason, instead of crafting an iridium band, so it's almost never seen
+  "ConfigCraftableGemRings": "クラフト可能な宝石の指輪",
+  "ConfigCraftableGemRingsMetalBar": "必要なのべ棒",
+  "ConfigCraftableGemRingsProgressive": "鉱山の到達階層で変動",
+  "ConfigCraftableGemRingsUnlockLevel": "アンロックレベル",
+  "ConfigCraftableGemRingsCustomSprites": "カスタムスプライト",
+  "ConfigCraftableGemRingsCustomSpritesBetterRings": "カスタムスプライトを無効化し、「Better Rings」MODを優先する。",
+  "ConfigOtherCraftingChangesCategory": "製作設定の変更",
+  "ConfigOtherCategory": "その他",
+  "ConfigJukeboxRing": "ジュークボックスの指輪",
+  "ConfigJukeboxRingWorksInRain": "雨でもジュークボックスの指輪が使用可能",
+  "ConfigMinorRingCraftingChanges": "指輪のクラフト設定の変更",
+  "ConfigMinorRingCraftingChangesDescription": "戦士の指輪と鉄壁の指輪の製作コストを下げる。",
+  "ConfigRemoveCITooltip": "合成した指輪にはクラブシェルリングと\nイリジウムバンドの説明文を記載しない",
+  "ConfigRemoveLTooltip": "合成した指輪には\n幸運の指輪の説明文を記載しない",
+  "ConfigOldGlowStoneRingRecipe": "グロウストーンの指輪をバニラレシピに戻す",
+  "ConfigOldIridiumBandRecipe": "イリジウムバンドをバニラレシピに戻す",
+  "ConfigOldIridiumBandRecipeDescription": "この設定を無効にすると、「イリジウムバンドの設定を有効にする」も強制で変更となる。",
+  "ConfigIridiumBandChangesEnabled": "イリジウムバンドの設定を有効にする",
+  "ConfigIridiumBandChangesEnabledDescription": "この設定を無効にすると、「イリジウムバンドをバニラレシピに戻す」も強制で変更となる。"
+}
