@@ -31,9 +31,7 @@
 
     public interface IAnimalsNeedWaterAPI
     {
-        List<string> GetCoopsWithWateredTrough();
-
-        List<string> GetBarnsWithWateredTrough();
+        List<string> GetBuildingsWithWateredTrough();
 
         List<long> GetAnimalsLeftThirstyYesterday();
 
