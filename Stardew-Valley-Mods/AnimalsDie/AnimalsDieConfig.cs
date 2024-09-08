@@ -190,17 +190,17 @@
                 {
                     if (prop.PropertyType == typeof(int))
                     {
-                        string betterName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                        string betterMinName = Regex.Replace(prop.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
                         api.AddNumberOption(manifest, () => (int)prop.GetValue(config), (int i) => prop.SetValue(config, i),
-                            () => betterName, () => "must at least 0 and smaller or equal to maximum age, otherwise it's reset");
+                            () => betterMinName, () => "must at least 0 and smaller or equal to maximum age, otherwise it's reset");
 
                         var maxProp = typeof(AnimalsDieConfig).GetProperty("Max" + prop.Name[3..]);
 
-                        betterName = Regex.Replace(maxProp.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
+                        string betterMaxName = Regex.Replace(maxProp.Name, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
 
                         api.AddNumberOption(manifest, () => (int)maxProp.GetValue(config), (int i) => maxProp.SetValue(config, i),
-                            () => betterName, () => "must be larger or equal to the minimum age, otherwise it's reset");
+                            () => betterMaxName, () => "must be larger or equal to the minimum age, otherwise it's reset");
                     }
                 }
             }

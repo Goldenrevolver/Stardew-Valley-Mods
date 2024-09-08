@@ -31,15 +31,7 @@
 
     public interface IAnimalsNeedWaterAPI
     {
-        List<string> GetBuildingsWithWateredTrough();
-
-        List<long> GetAnimalsLeftThirstyYesterday();
-
-        List<long> GetFullAnimals();
-
         bool WasAnimalLeftThirstyYesterday(FarmAnimal animal);
-
-        bool IsAnimalFull(FarmAnimal animal);
     }
 
     //// planned features: healing item, display mood messages
