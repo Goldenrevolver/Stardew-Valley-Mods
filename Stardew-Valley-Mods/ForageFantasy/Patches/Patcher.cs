@@ -17,7 +17,7 @@
             try
             {
                 harmony.Patch(
-                   original: AccessTools.Method(typeof(Crop), nameof(Crop.getRandomWildCropForSeason)),
+                   original: AccessTools.Method(typeof(Crop), nameof(Crop.getRandomWildCropForSeason), new Type[] { typeof(Season) }),
                    postfix: new HarmonyMethod(typeof(Patcher), nameof(PatchSummerWildSeedResult)));
 
                 ForageCalendar.ApplyPatches(forageFantasy, harmony);

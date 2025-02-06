@@ -22,7 +22,9 @@
             {
                 mod.DebugLog("This mod patches Automate. If you notice issues with Automate, make sure it happens without this mod before reporting it to the Automate page.");
 
-                var tapper = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.Objects.TapperMachine");
+                // var tapper = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.Objects.TapperMachine");
+                var tapper = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.DataBasedObjectMachine");
+
                 var berryBush = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.Machines.TerrainFeatures.BushMachine");
                 var mushroomBox = AccessTools.TypeByName("Pathoschild.Stardew.Automate.Framework.MachineWrapper");
 
@@ -64,7 +66,7 @@
             }
 
             // intentionally not using getFarmerMaybeOffline because that is a waste
-            var who = Game1.getFarmer(mushroomBox.owner.Value) ?? Game1.MasterPlayer;
+            var who = Game1.GetPlayer(mushroomBox.owner.Value) ?? Game1.MasterPlayer;
 
             if (mod.Config.MushroomBoxQuality)
             {
@@ -77,8 +79,13 @@
         {
             var tapper = mod.Helper.Reflection.GetProperty<StardewObject>(__instance, "Machine").GetValue();
 
+            if (!tapper.IsTapper())
+            {
+                return;
+            }
+
             // intentionally not using getFarmerMaybeOffline because that is a waste
-            var who = Game1.getFarmer(tapper.owner.Value) ?? Game1.MasterPlayer;
+            var who = Game1.GetPlayer(tapper.owner.Value) ?? Game1.MasterPlayer;
 
             // if tapper quality feature is disabled
             if (mod.Config.TapperQualityOptions <= 0 || mod.Config.TapperQualityOptions > 4)
@@ -91,9 +98,7 @@
                 return;
             }
 
-            var tree = mod.Helper.Reflection.GetField<Tree>(__instance, "Tree").GetValue();
-
-            if (tree != null)
+            if (tapper.Location.terrainFeatures.TryGetValue(tapper.TileLocation, out TerrainFeature terrainFeature) && terrainFeature is Tree tree)
             {
                 tapper.heldObject.Value.Quality = TapperAndMushroomQualityLogic.DetermineTapperQuality(mod.Config, who, tree);
             }
